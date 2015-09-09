@@ -49,6 +49,10 @@ namespace CRH.Framework.Disk
                 if (buildIndex)
                     BuildIndex();
             }
+            catch (FrameworkException ex)
+            {
+                throw ex;
+            }
             catch (Exception)
             {
                 throw new FrameworkException("Error while reading ISO : Unable to open the ISO File");
@@ -165,7 +169,7 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Read a sector's data (only data : does not include FORM's specifics fields)
+        /// Read a sector's data (only data : does not include modes specifics fields)
         /// </summary>
         /// <param name="mode">Sector's mode</param>
         private byte[] ReadSectorData(SectorMode mode)
@@ -207,7 +211,7 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Read a sector's data (only data : does not include FORM's specifics fields)
+        /// Read a sector's data (only data : does not include modes specifics fields)
         /// </summary>
         /// <param name="lba">Sector's LBA to read</param>
         /// <param name="mode">Sector's mode</param>
@@ -218,7 +222,7 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Read several consecutives sectors data (only data : does not include FORM's specifics fields)
+        /// Read several consecutives sectors data (only data : does not include modes specifics fields)
         /// </summary>
         /// <param name="nb">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
@@ -235,7 +239,7 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Read several consecutives sectors data (only data : does not include FORM's specifics fields)
+        /// Read several consecutives sectors data (only data : does not include modes specifics fields)
         /// </summary>
         /// <param name="lba">Starting sector's LBA</param>
         /// <param name="nb">Number of sectors to read</param>
@@ -396,10 +400,6 @@ namespace CRH.Framework.Disk
             {
                 throw ex;
             }
-            catch (FrameworkNotSupportedException ex)
-            {
-                throw ex;
-            }
             catch (Exception)
             {
                 throw new FrameworkException("Error while reading volume descriptors : Invalid list of descriptors");
@@ -435,10 +435,6 @@ namespace CRH.Framework.Disk
                 }
             }
             catch (FrameworkException ex)
-            {
-                throw ex;
-            }
-            catch (FrameworkNotSupportedException ex)
             {
                 throw ex;
             }
@@ -542,61 +538,49 @@ namespace CRH.Framework.Disk
             try
             {
                 long position = stream.Position;
-                short b = stream.TestByte();
 
-                if (b == 0)
+                entry = new DirectoryEntry();
+                entry.Length = stream.ReadByte();
+                entry.ExtendedAttributeRecordlength = stream.ReadByte();
+
+                entry.ExtentLba = stream.ReadUInt32();
+                if (entry.ExtentLba != stream.ReadUInt32BE())
+                    throw new FrameworkException("Error while reading DirectoryEntry : ExtentLBA is not valid");
+
+                entry.ExtentSize = stream.ReadUInt32();
+                if (entry.ExtentSize != stream.ReadUInt32BE())
+                    throw new FrameworkException("Error while reading DirectoryEntry : ExtentSize is not valid");
+
+                byte[] buffer = stream.ReadBytes(7);
+                entry.Date = new DateTime(buffer[0] + 1900, buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], DateTimeKind.Utc);
+
+                entry.Flags = stream.ReadByte();
+                entry.FileUnitSize = stream.ReadByte();
+                entry.Interleave = stream.ReadByte();
+
+                entry.VolumeSequenceNumber = stream.ReadUInt16();
+                if (entry.VolumeSequenceNumber != stream.ReadUInt16BE())
+                    throw new FrameworkException("Error while reading DirectoryEntry : VolumeSequenceNumber is not valid");
+
+                entry.NameLength = stream.ReadByte();
+                entry.Name = m_regFileName.Match(stream.ReadAsciiString(entry.NameLength, false)).Groups[1].Value;
+
+                if (entry.NameLength % 2 == 0)
+                    stream.Position += 1;
+
+                if (m_isXa && (stream.Position != position + entry.Length))
                 {
-                    // DirectoryEntry cannot be "splitted" on two sectors
-                    int dataSize = DiskSector.GetDataSize(m_sectorSize, m_defaultSectorMode);
-                    stream.Position = (((stream.Position / dataSize) + 1) * dataSize);
-                    b = stream.TestByte();
-                }
+                    entry.XaEntry = new XaEntry();
+                    entry.XaEntry.GroupId = stream.ReadUInt16BE();
+                    entry.XaEntry.UserId = stream.ReadUInt16BE();
+                    entry.XaEntry.Attributes = stream.ReadUInt16BE();
 
-                if (b > 0)
-                {
-                    entry = new DirectoryEntry();
-                    entry.Length = stream.ReadByte();
-                    entry.ExtendedAttributeRecordlength = stream.ReadByte();
+                    entry.XaEntry.Signature = stream.ReadAsciiString(2);
+                    if (entry.XaEntry.Signature != XaEntry.XA_SIGNATURE)
+                        throw new FrameworkException("Error while reading DirectoryEntry : XaEntry is not valid");
 
-                    entry.ExtentLba = stream.ReadUInt32();
-                    if (entry.ExtentLba != stream.ReadUInt32BE())
-                        throw new FrameworkException("Error while reading DirectoryEntry : ExtentLBA is not valid");
-
-                    entry.ExtentSize = stream.ReadUInt32();
-                    if (entry.ExtentSize != stream.ReadUInt32BE())
-                        throw new FrameworkException("Error while reading DirectoryEntry : ExtentSize is not valid");
-
-                    byte[] buffer = stream.ReadBytes(7);
-                    entry.Date = new DateTime(buffer[0] + 1900, buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], DateTimeKind.Utc);
-
-                    entry.Flags = stream.ReadByte();
-                    entry.FileUnitSize = stream.ReadByte();
-                    entry.Interleave = stream.ReadByte();
-
-                    entry.VolumeSequenceNumber = stream.ReadUInt16();
-                    if (entry.VolumeSequenceNumber != stream.ReadUInt16BE())
-                        throw new FrameworkException("Error while reading DirectoryEntry : VolumeSequenceNumber is not valid");
-
-                    entry.NameLength = stream.ReadByte();
-                    entry.Name = m_regFileName.Match(stream.ReadAsciiString(entry.NameLength, false)).Groups[1].Value;
-
-                    if (entry.NameLength % 2 == 0)
-                        stream.Position += 1;
-
-                    if (m_isXa && (stream.Position != position + entry.Length))
-                    {
-                        entry.XaEntry = new XaEntry();
-                        entry.XaEntry.GroupId = stream.ReadUInt16BE();
-                        entry.XaEntry.UserId = stream.ReadUInt16BE();
-                        entry.XaEntry.Attributes = stream.ReadUInt16BE();
-
-                        entry.XaEntry.Signature = stream.ReadAsciiString(2);
-                        if (entry.XaEntry.Signature != XaEntry.XA_SIGNATURE)
-                            throw new FrameworkException("Error while reading DirectoryEntry : XaEntry is not valid");
-
-                        entry.XaEntry.FileNumber = stream.ReadByte();
-                        entry.XaEntry.Unused = stream.ReadBytes(5);
-                    }
+                    entry.XaEntry.FileNumber = stream.ReadByte();
+                    entry.XaEntry.Unused = stream.ReadBytes(5);
                 }
             }
             catch (FrameworkException ex)
@@ -679,10 +663,10 @@ namespace CRH.Framework.Disk
         {
             DirectoryEntry entry;
             DiskIndexEntry indexEntry;
-            int size      = (int)indexDirectoryEntry.DirectoryEntry.ExtentSize;
+            long size     = indexDirectoryEntry.DirectoryEntry.ExtentSize;
             int nbSectors = (int)(size / DiskSector.GetDataSize(m_sectorSize, m_defaultSectorMode));
 
-            CBinaryReader stream = new CBinaryReader(ReadSectorsData((int)indexDirectoryEntry.DirectoryEntry.ExtentLba, nbSectors, m_defaultSectorMode));
+            CBinaryReader stream = new CBinaryReader(ReadSectorsData(indexDirectoryEntry.DirectoryEntry.ExtentLba, nbSectors, m_defaultSectorMode));
 
             // First directory entry of a directory entry is the directory itself, so let's skip it
             ReadDirectoryEntry(stream);
@@ -693,17 +677,29 @@ namespace CRH.Framework.Disk
 
             while (stream.Position < size)
             {
-                entry = ReadDirectoryEntry(stream);
+                short b = stream.TestByte();
 
-                if (entry == null)
+                if (b == 0)
+                {
+                    // DirectoryEntry cannot be "splitted" on two sectors
+                    int dataSize = DiskSector.GetDataSize(m_sectorSize, m_defaultSectorMode);
+                    stream.Position = (((stream.Position / dataSize) + 1) * dataSize);
+                    b = stream.TestByte();
+                }
+
+                if (b <= 0)
                     break;
+                else
+                {
+                    entry = ReadDirectoryEntry(stream);
 
-                indexEntry = new DiskIndexEntry(indexDirectoryEntry, entry);
-                indexDirectoryEntry.Add(indexEntry);
-                m_index.AddToIndex(indexEntry);
+                    indexEntry = new DiskIndexEntry(indexDirectoryEntry, entry);
+                    indexDirectoryEntry.Add(indexEntry);
+                    m_index.AddToIndex(indexEntry);
 
-                if (indexEntry.IsDIrectory)
-                    AddDirectoryToIndex(indexEntry);
+                    if (indexEntry.IsDIrectory)
+                        AddDirectoryToIndex(indexEntry);
+                }
             }
 
             stream.CloseAndDispose();

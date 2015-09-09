@@ -10,6 +10,9 @@ namespace CRH.Framework.Common
     /// </summary>
     internal class FrameworkException : Exception
     {
+        public FrameworkException()
+        {}
+
         public FrameworkException(string message)
             : base(message)
         {}
@@ -26,7 +29,7 @@ namespace CRH.Framework.Common
     /// <summary>
     /// Exception for features that are not yet implemented
     /// </summary>
-    internal class FrameworkNotYetImplementedException : Exception
+    internal class FrameworkNotYetImplementedException : FrameworkException
     {
         public FrameworkNotYetImplementedException()
         {}
@@ -47,7 +50,7 @@ namespace CRH.Framework.Common
     /// <summary>
     /// Exception features that are not supported and will never be (who said 'never say never ?')
     /// </summary>
-    internal class FrameworkNotSupportedException : Exception
+    internal class FrameworkNotSupportedException : FrameworkException
     {
         public FrameworkNotSupportedException()
         {}

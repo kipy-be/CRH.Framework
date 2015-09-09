@@ -53,9 +53,6 @@ namespace CRH.TestApp
                 foreach(DiskIndexEntry entry in diskIn.FileEntries)
                     diskIn.ExtractFile(entry.FullPath, outPath + entry.FullPath);
 
-                Console.WriteLine(diskIn.SectorCount);
-                Console.WriteLine(Converter.DecToHex(diskIn.SectorPosition));
-
                 diskIn.Close();
             }
             catch(Exception ex)
