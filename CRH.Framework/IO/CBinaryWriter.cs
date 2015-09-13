@@ -86,6 +86,17 @@ namespace CRH.Framework.IO
             this.Write(Encoding.ASCII.GetBytes(str));
         }
 
+        /// <summary>
+        /// Write padding
+        /// </summary>
+        /// <param name="length">Length of padding</param>
+        /// <param name="value">Value to use (default 0)</param>
+        public void WritePadding(int length, byte value = 0)
+        {
+            for (int i = 0; i < length; i++)
+                this.Write(value);
+        }
+
     // Accessors
 
         /// <summary>

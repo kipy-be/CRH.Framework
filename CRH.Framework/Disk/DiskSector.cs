@@ -96,6 +96,86 @@ namespace CRH.Framework.Disk
             throw new FrameworkNotYetImplementedException();
         }
 
+    // Indexers
+
+        /// <summary>
+        /// Indexer to navigate the entire sector
+        /// </summary>
+        /// <returns></returns>
+        public byte this[int i]
+        {
+            get
+            {
+                if (m_mode == SectorMode.MODE1 || m_mode == SectorMode.MODE2 || m_mode == SectorMode.XA_FORM1 || m_mode == SectorMode.XA_FORM2)
+                {
+                    if (i < SYNC_SIZE)
+                        return m_sync[i];
+                    else
+                        i -= SYNC_SIZE;
+
+                    if (i < HEADER_SIZE)
+                        return m_header[i];
+                    else
+                        i -= HEADER_SIZE;
+                }
+
+                if (m_mode == SectorMode.XA_FORM1 || m_mode == SectorMode.XA_FORM2)
+                {
+                    if (i < SUBHEADER_SIZE)
+                    {
+                        if (i < SUBHEADER_SIZE / 2)
+                            return m_subHeader[i];
+                        else
+                            return m_subHeader[i - SUBHEADER_SIZE / 2];
+                    }
+                    else
+                        i -= SUBHEADER_SIZE;
+                }
+
+                if (i < m_dataSize)
+                    return m_data[i];
+                else
+                    i -= m_dataSize;
+
+                if (m_mode == SectorMode.MODE1 || m_mode == SectorMode.XA_FORM1)
+                {
+                    if (i < EDC_SIZE)
+                        return m_edc[i];
+                    else
+                        i -= EDC_SIZE;
+                }
+
+                if (m_mode == SectorMode.MODE1)
+                {
+                    if (i < INTERMEDIATE_SIZE)
+                        return m_intermediate[i];
+                    else
+                        i -= INTERMEDIATE_SIZE;
+                }
+
+                if (m_mode == SectorMode.MODE1 || m_mode == SectorMode.XA_FORM1)
+                {
+                    if (i < ECC_P_SIZE)
+                        return m_eccP[i];
+                    else
+                        i -= ECC_P_SIZE;
+
+                    if (i < ECC_Q_SIZE)
+                        return m_eccQ[i];
+                    else
+                        i -= ECC_Q_SIZE;
+                }
+
+                if (m_mode == SectorMode.XA_FORM2)
+                {
+                    if (i < EDC_SIZE)
+                        return m_edc[i];
+                }
+
+                throw new IndexOutOfRangeException();
+            }
+        }
+
     // Accessors
 
         /// <summary>
@@ -104,12 +184,13 @@ namespace CRH.Framework.Disk
         public SectorMode Mode
         {
             get { return m_mode; }
+            internal set { m_mode = value; }
         }
 
         /// <summary>
         /// The size of the sector (including metadata)
         /// </summary>
-        public int Size
+        public int Length
         {
             get { return m_size; }
         }
@@ -117,7 +198,7 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// The size of the user's data (size of sector excluding metadata)
         /// </summary>
-        public int DataSize
+        public int DataLength
         {
             get { return m_dataSize; }
         }
@@ -208,7 +289,7 @@ namespace CRH.Framework.Disk
         public byte[] Data
         {
             get { return m_data; }
-            set { m_data = value; }
+            internal set { m_data = value; }
         }
 
         /// <summary>

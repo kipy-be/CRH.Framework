@@ -48,6 +48,8 @@ namespace CRH.Framework.Disk
 
                 if (buildIndex)
                     BuildIndex();
+
+                m_stream.Position = 0;
             }
             catch (FrameworkException ex)
             {
@@ -99,7 +101,7 @@ namespace CRH.Framework.Disk
                         throw new FrameworkException("Error while reading sector : subheader is invalid");
                 }
 
-                m_stream.Read(sector.Data, 0, sector.DataSize);
+                m_stream.Read(sector.Data, 0, sector.DataLength);
 
                 if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
                     m_stream.Read(sector.Edc, 0, DiskSector.EDC_SIZE);

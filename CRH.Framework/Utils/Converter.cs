@@ -13,7 +13,7 @@ namespace CRH.Framework.Utils
         /// <param name="value">The value to convert</param>
         /// <param name="minSize">The minimum size of the result (will be pre-padded with 0)</param>
         /// <param name="prefix">Prefix result with "0x"</param>
-        private static string DecToHex<T>(T value, int minSize = 1, bool prefix = false)
+        private static string DecToHex<T>(T value, int minSize = 2, bool prefix = false)
         {
             string hexValue = String.Format("{0:X}", value);
 
@@ -29,7 +29,18 @@ namespace CRH.Framework.Utils
         /// <param name="value">The value to convert</param>
         /// <param name="minSize">The minimum size of the result (will be pre-padded with 0)</param>
         /// <param name="prefix">Prefix result with "0x"</param>
-        public static string DecToHex(uint value, int minSize = 1, bool prefix = false)
+        public static string DecToHex(byte value, int minSize = 2, bool prefix = false)
+        {
+            return DecToHex<byte>(value, minSize, prefix);
+        }
+
+        /// <summary>
+        /// Convert decimal to hexadecimal representation
+        /// </summary>
+        /// <param name="value">The value to convert</param>
+        /// <param name="minSize">The minimum size of the result (will be pre-padded with 0)</param>
+        /// <param name="prefix">Prefix result with "0x"</param>
+        public static string DecToHex(uint value, int minSize = 2, bool prefix = false)
         {
             return DecToHex<uint>(value, minSize, prefix);
         }
@@ -40,7 +51,7 @@ namespace CRH.Framework.Utils
         /// <param name="value">The value to convert</param>
         /// <param name="minSize">The minimum size of the result (will be pre-padded with 0)</param>
         /// <param name="prefix">Prefix result with "0x"</param>
-        public static string DecToHex(int value, int minSize = 1, bool prefix = false)
+        public static string DecToHex(int value, int minSize = 2, bool prefix = false)
         {
             return DecToHex<int>(value, minSize, prefix);
         }
@@ -51,7 +62,7 @@ namespace CRH.Framework.Utils
         /// <param name="value">The value to convert</param>
         /// <param name="minSize">The minimum size of the result (will be pre-padded with 0)</param>
         /// <param name="prefix">Prefix result with "0x"</param>
-        public static string DecToHex(long value, int minSize = 1, bool prefix = false)
+        public static string DecToHex(long value, int minSize = 2, bool prefix = false)
         {
             return DecToHex<long>(value, minSize, prefix);
         }
@@ -62,7 +73,7 @@ namespace CRH.Framework.Utils
         /// <param name="value">The value to convert</param>
         /// <param name="minSize">The minimum size of the result (will be pre-padded with 0)</param>
         /// <param name="prefix">Prefix result with "0x"</param>
-        public static string DecToHex(ulong value, int minSize = 1, bool prefix = false)
+        public static string DecToHex(ulong value, int minSize = 2, bool prefix = false)
         {
             return DecToHex<ulong>(value, minSize, prefix);
         }

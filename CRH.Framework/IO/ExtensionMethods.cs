@@ -59,6 +59,19 @@ namespace CRH.Framework.IO
         }
 
         /// <summary>
+        /// Close and dispose the stream
+        /// </summary>
+        internal static void CloseAndDispose(this CBinaryWriter stream)
+        {
+            if (stream != null)
+            {
+                stream.Close();
+                stream.Dispose();
+                stream = null;
+            }
+        }
+
+        /// <summary>
         /// Check if the buffer is equals to the provided one
         /// </summary>
         /// <param name="bufferToCompare">The buffer to compare to</param>

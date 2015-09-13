@@ -62,10 +62,10 @@ namespace CRH.Framework.IO
         {
             byte[] buffer = this.ReadBytes(4);
             return (int)
-                ((buffer[0] << 24)
+                ( (buffer[0] << 24)
                 | (buffer[1] << 16)
                 | (buffer[2] << 8)
-                | buffer[3]);
+                |  buffer[3]);
         }
 
         /// <summary>
@@ -76,10 +76,10 @@ namespace CRH.Framework.IO
         {
             byte[] buffer = this.ReadBytes(4);
             return (uint)
-                ((buffer[0] << 24)
+                ( (buffer[0] << 24)
                 | (buffer[1] << 16)
                 | (buffer[2] << 8)
-                | buffer[3]);
+                |  buffer[3]);
         }
 
         /// <summary>
