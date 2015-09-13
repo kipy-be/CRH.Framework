@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IO\CBinaryWriter.cs" />
     <Compile Include="IO\ExtensionMethods.cs" />
     <Compile Include="Common\Infos.cs" />
     <Compile Include="Disk\DiskBase.cs" />
