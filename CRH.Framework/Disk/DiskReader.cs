@@ -38,10 +38,10 @@ namespace CRH.Framework.Disk
 
             try
             {
-                m_file         = new FileInfo(m_fileUrl);
-                m_fileStream   = new FileStream(m_file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
-                m_stream       = new CBinaryReader(m_fileStream);
-                m_fileOpen     = true;
+                m_file       = new FileInfo(m_fileUrl);
+                m_fileStream = new FileStream(m_file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
+                m_stream     = new CBinaryReader(m_fileStream);
+                m_fileOpen   = true;
 
                 if (readDescriptors)
                     ReadVolumeDescriptors();
@@ -86,7 +86,7 @@ namespace CRH.Framework.Disk
                 if (mode == SectorMode.MODE1 || mode == SectorMode.MODE2 || mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
                 {
                     m_stream.Read(sector.Sync, 0, DiskSector.SYNC_SIZE);
-                    if (sector.Sync != DiskSector.SYNC)
+                    if (!sector.Sync.IsEquals(DiskSector.SYNC))
                         throw new FrameworkException("Error while reading sector : sync is invalid");
 
                     m_stream.Read(sector.Header, 0, DiskSector.HEADER_SIZE);
@@ -95,7 +95,7 @@ namespace CRH.Framework.Disk
                 if (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
                 {
                     m_stream.Read(sector.SubHeader, 0, DiskSector.SUBHEADER_SIZE / 2);
-                    if (sector.SubHeader != m_stream.ReadBytes(DiskSector.SUBHEADER_SIZE / 2))
+                    if (!sector.SubHeader.IsEquals(m_stream.ReadBytes(DiskSector.SUBHEADER_SIZE / 2)))
                         throw new FrameworkException("Error while reading sector : subheader is invalid");
                 }
 
@@ -117,6 +117,10 @@ namespace CRH.Framework.Disk
                     m_stream.Read(sector.Edc, 0, DiskSector.EDC_SIZE);
 
                 return sector;
+            }
+            catch (FrameworkException ex)
+            {
+                throw ex;
             }
             catch (EndOfStreamException)
             {
@@ -142,14 +146,14 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Read several consecutives sectors
         /// </summary>
-        /// <param name="nb">Number of sectors to read</param>
+        /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
         /// <returns></returns>
-        public DiskSector[] ReadSectors(int nb, SectorMode mode)
+        public DiskSector[] ReadSectors(int count, SectorMode mode)
         {
-            DiskSector[] sectors = new DiskSector[nb];
+            DiskSector[] sectors = new DiskSector[count];
 
-            for (int i = 0; i < nb; i++)
+            for (int i = 0; i < count; i++)
                 sectors[i] = ReadSector(mode);
 
             return sectors;
@@ -159,13 +163,13 @@ namespace CRH.Framework.Disk
         /// Read several consecutives sectors
         /// </summary>
         /// <param name="lba">Starting sector's LBA</param>
-        /// <param name="nb">Number of sectors to read</param>
+        /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
         /// <returns></returns>
-        public DiskSector[] ReadSectors(long lba, int nb, SectorMode mode)
+        public DiskSector[] ReadSectors(long lba, int count, SectorMode mode)
         {
             SeekSector(lba);
-            return ReadSectors(nb, mode);
+            return ReadSectors(count, mode);
         }
 
         /// <summary>
@@ -224,15 +228,15 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Read several consecutives sectors data (only data : does not include modes specifics fields)
         /// </summary>
-        /// <param name="nb">Number of sectors to read</param>
+        /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
         /// <returns></returns>
-        public byte[] ReadSectorsData(int nb, SectorMode mode)
+        public byte[] ReadSectorsData(int count, SectorMode mode)
         {
             int dataSize = DiskSector.GetDataSize(m_sectorSize, mode);
-            byte[] data = new byte[nb * dataSize];
+            byte[] data = new byte[count * dataSize];
 
-            for (int i = 0, offset = 0; i < nb; i++, offset += dataSize)
+            for (int i = 0, offset = 0; i < count; i++, offset += dataSize)
                 CBuffer.Copy(ReadSectorData(mode), data, 0, offset);
 
             return data;
@@ -242,13 +246,13 @@ namespace CRH.Framework.Disk
         /// Read several consecutives sectors data (only data : does not include modes specifics fields)
         /// </summary>
         /// <param name="lba">Starting sector's LBA</param>
-        /// <param name="nb">Number of sectors to read</param>
+        /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
         /// <returns></returns>
-        public byte[] ReadSectorsData(long lba, int nb, SectorMode mode)
+        public byte[] ReadSectorsData(long lba, int count, SectorMode mode)
         {
             SeekSector(lba);
-            return ReadSectorsData(nb, mode);
+            return ReadSectorsData(count, mode);
         }
 
         /// <summary>
@@ -663,10 +667,10 @@ namespace CRH.Framework.Disk
         {
             DirectoryEntry entry;
             DiskIndexEntry indexEntry;
-            long size     = indexDirectoryEntry.DirectoryEntry.ExtentSize;
-            int nbSectors = (int)(size / DiskSector.GetDataSize(m_sectorSize, m_defaultSectorMode));
+            long size         = indexDirectoryEntry.DirectoryEntry.ExtentSize;
+            int  sectorsCount = (int)(size / DiskSector.GetDataSize(m_sectorSize, m_defaultSectorMode));
 
-            CBinaryReader stream = new CBinaryReader(ReadSectorsData(indexDirectoryEntry.DirectoryEntry.ExtentLba, nbSectors, m_defaultSectorMode));
+            CBinaryReader stream = new CBinaryReader(ReadSectorsData(indexDirectoryEntry.DirectoryEntry.ExtentLba, sectorsCount, m_defaultSectorMode));
 
             // First directory entry of a directory entry is the directory itself, so let's skip it
             ReadDirectoryEntry(stream);

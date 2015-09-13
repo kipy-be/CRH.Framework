@@ -54,7 +54,7 @@ namespace CRH.Framework.Disk
 
             m_sync         = new byte[SYNC_SIZE];
             m_header       = new byte[HEADER_SIZE];
-            m_subHeader    = new byte[SUBHEADER_SIZE];
+            m_subHeader    = new byte[SUBHEADER_SIZE / 2];
             m_data         = new byte[m_dataSize];
             m_edc          = new byte[EDC_SIZE];
             m_intermediate = new byte[INTERMEDIATE_SIZE];
@@ -171,6 +171,17 @@ namespace CRH.Framework.Disk
         {
             get { return Converter.BcdToDec(m_header[2]); }
             set { m_header[2] = Converter.DecToBcd(value); }
+        }
+
+        /// <summary>
+        /// HMode (stored in header)
+        /// Used in mode : 1, 2
+        /// Value : 0 if sector is empty, mode otherwise (1 or 2)
+        /// </summary>
+        internal byte HMode
+        {
+            get { return m_header[3]; }
+            set { m_header[3] = value; }
         }
 
         /// <summary>

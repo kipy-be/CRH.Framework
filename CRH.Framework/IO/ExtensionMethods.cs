@@ -57,5 +57,15 @@ namespace CRH.Framework.IO
                 stream = null;
             }
         }
+
+        /// <summary>
+        /// Check if the buffer is equals to the provided one
+        /// </summary>
+        /// <param name="bufferToCompare">The buffer to compare to</param>
+        /// <returns></returns>
+        internal static bool IsEquals(this byte[] buffer, byte[] bufferToCompare)
+        {
+            return CBuffer.IsEquals(buffer, bufferToCompare);
+        }
     }
 }

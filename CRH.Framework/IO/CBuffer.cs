@@ -64,5 +64,25 @@ namespace CRH.Framework.IO
 
             return buffer;
         }
+
+        /// <summary>
+        /// Check if two buffer are equals
+        /// </summary>
+        /// <param name="buffer1">The first buffer</param>
+        /// <param name="buffer2">The second buffer</param>
+        /// <returns></returns>
+        public static bool IsEquals(byte[] buffer1, byte[] buffer2)
+        {
+            if (buffer1.Length != buffer2.Length)
+                return false;
+
+            for(int i = 0, max = buffer1.Length; i < max; i++)
+            {
+                if (buffer1[i] != buffer2[i])
+                    return false;
+            }
+
+            return true;
+        }
     }
 }
