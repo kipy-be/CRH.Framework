@@ -32,7 +32,7 @@ namespace CRH.Framework.IO
         /// <param name="index">Start offset</param>
         /// <param name="count">Number of bytes to read (if not set, all bytes from source will be read)</param>
         /// <returns></returns>
-        public static byte[] Create(byte[] data, int index, int count = -1)
+        public static byte[] Create(byte[] data, int index = 0, int count = -1)
         {
             if (count == -1)
                 count = data.Length;

@@ -27,11 +27,10 @@ namespace CRH.Framework.Disk
         /// <param name="fileUrl">Path to the ISO file to read</param>
         /// <param name="type">Type of ISO (ISO9660 / ISO9660_UDF)</param>
         /// <param name="mode">Disk mode</param>
-        /// <param name="sectorSize">The sector size (default depends on mode)</param>
         /// <param name="readDescriptors">Read descriptors immediately</param>
         /// <param name="buildIndex">Build the index cache immediately</param>
-        public DiskReader(string fileUrl, IsoType type, DiskMode mode, int sectorSize = -1, bool readDescriptors = true, bool buildIndex = true)
-            : base(fileUrl, type, mode, sectorSize)
+        public DiskReader(string fileUrl, IsoType type, TrackMode mode, bool readDescriptors = true, bool buildIndex = true)
+            : base(fileUrl, type, mode)
         {
             m_descriptorsRead = false;
             m_indexBuilt      = false;
@@ -76,49 +75,40 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Read a sector
+        /// Read a sector's data
         /// </summary>
         /// <param name="mode">Sector's mode</param>
-        public DiskSector ReadSector(SectorMode mode)
+        /// <param name="includeSubheader">include XA subheader</param>
+        public byte[] ReadSector(SectorMode mode, bool includeSubheader = false)
         {
             try
             {
-                DiskSector sector = new DiskSector(mode, m_sectorSize);
+                byte[] buffer;
 
-                if (mode == SectorMode.MODE1 || mode == SectorMode.MODE2 || mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
-                {
-                    m_stream.Read(sector.Sync, 0, DiskSector.SYNC_SIZE);
-                    if (!sector.Sync.IsEquals(DiskSector.SYNC))
-                        throw new FrameworkException("Error while reading sector : sync is invalid");
+                int dataSize = GetSectorDataSize(mode) + ((includeSubheader && (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)) ? 8 : 0);
+                buffer = new byte[dataSize];
 
-                    m_stream.Read(sector.Header, 0, DiskSector.HEADER_SIZE);
-                }
+                if (mode != SectorMode.RAW)
+                    m_stream.Position += (SYNC_SIZE + HEADER_SIZE);
 
-                if (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
-                {
-                    m_stream.Read(sector.SubHeader, 0, DiskSector.SUBHEADER_SIZE / 2);
-                    if (!sector.SubHeader.IsEquals(m_stream.ReadBytes(DiskSector.SUBHEADER_SIZE / 2)))
-                        throw new FrameworkException("Error while reading sector : subheader is invalid");
-                }
-
-                m_stream.Read(sector.Data, 0, sector.DataLength);
-
+                if (!includeSubheader && (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2))
+                   m_stream.Position += SUBHEADER_SIZE;
+                
+                m_stream.Read(buffer, 0, dataSize);
+                
                 if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
-                    m_stream.Read(sector.Edc, 0, DiskSector.EDC_SIZE);
+                    m_stream.Position += EDC_SIZE;
 
                 if (mode == SectorMode.MODE1)
-                    m_stream.Read(sector.Intermediate, 0, DiskSector.INTERMEDIATE_SIZE);
+                    m_stream.Position += INTERMEDIATE_SIZE;
 
                 if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
-                {
-                    m_stream.Read(sector.EccP, 0, DiskSector.ECC_P_SIZE);
-                    m_stream.Read(sector.EccQ, 0, DiskSector.ECC_Q_SIZE);
-                }
+                    m_stream.Position += ECC_SIZE;
 
                 if (mode == SectorMode.XA_FORM2)
-                    m_stream.Read(sector.Edc, 0, DiskSector.EDC_SIZE);
+                    m_stream.Position += EDC_SIZE;
 
-                return sector;
+                return buffer;
             }
             catch (FrameworkException ex)
             {
@@ -139,10 +129,11 @@ namespace CRH.Framework.Disk
         /// </summary>
         /// <param name="lba">Sector's LBA to read</param>
         /// <param name="mode">Sector's mode</param>
-        public DiskSector ReadSector(long lba, SectorMode mode)
+        /// <param name="includeSubheader">include XA subheader</param>
+        public byte[] ReadSector(long lba, SectorMode mode, bool includeSubheader = false)
         {
             SeekSector(lba);
-            return ReadSector(mode);
+            return ReadSector(mode, includeSubheader);
         }
 
         /// <summary>
@@ -150,96 +141,13 @@ namespace CRH.Framework.Disk
         /// </summary>
         /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
-        /// <returns></returns>
-        public DiskSector[] ReadSectors(int count, SectorMode mode)
+        public byte[] ReadSectors(int count, SectorMode mode)
         {
-            DiskSector[] sectors = new DiskSector[count];
-
-            for (int i = 0; i < count; i++)
-                sectors[i] = ReadSector(mode);
-
-            return sectors;
-        }
-
-        /// <summary>
-        /// Read several consecutives sectors
-        /// </summary>
-        /// <param name="lba">Starting sector's LBA</param>
-        /// <param name="count">Number of sectors to read</param>
-        /// <param name="mode">Sector's mode</param>
-        /// <returns></returns>
-        public DiskSector[] ReadSectors(long lba, int count, SectorMode mode)
-        {
-            SeekSector(lba);
-            return ReadSectors(count, mode);
-        }
-
-        /// <summary>
-        /// Read a sector's data (only data : does not include modes specifics fields)
-        /// </summary>
-        /// <param name="mode">Sector's mode</param>
-        private byte[] ReadSectorData(SectorMode mode)
-        {
-            try
-            {
-                byte[] data;
-
-                if (mode == SectorMode.MODE1 || mode == SectorMode.MODE2 || mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
-                    m_stream.Position += (DiskSector.SYNC_SIZE + DiskSector.HEADER_SIZE);
-
-                if (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
-                    m_stream.Position += DiskSector.SUBHEADER_SIZE;
-
-                data = m_stream.ReadBytes(DiskSector.GetDataSize(m_sectorSize, mode));
-
-                if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
-                    m_stream.Position += DiskSector.EDC_SIZE;
-
-                if (mode == SectorMode.MODE1)
-                    m_stream.Position += DiskSector.INTERMEDIATE_SIZE;
-
-                if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
-                    m_stream.Position += DiskSector.ECC_SIZE;
-
-                if (mode == SectorMode.XA_FORM2)
-                    m_stream.Position += DiskSector.EDC_SIZE;
-
-                return data;
-            }
-            catch (EndOfStreamException)
-            {
-                throw new FrameworkException("Errow while reading sector : end of file occured");
-            }
-            catch (Exception)
-            {
-                throw new FrameworkException("Errow while reading sector : unable to read sector");
-            }
-        }
-
-        /// <summary>
-        /// Read a sector's data (only data : does not include modes specifics fields)
-        /// </summary>
-        /// <param name="lba">Sector's LBA to read</param>
-        /// <param name="mode">Sector's mode</param>
-        public byte[] ReadSectorData(long lba, SectorMode mode)
-        {
-            SeekSector(lba);
-            return ReadSectorData(mode);
-        }
-
-        /// <summary>
-        /// Read several consecutives sectors data (only data : does not include modes specifics fields)
-        /// </summary>
-        /// <param name="count">Number of sectors to read</param>
-        /// <param name="mode">Sector's mode</param>
-        /// <returns></returns>
-        public byte[] ReadSectorsData(int count, SectorMode mode)
-        {
-            int dataSize = DiskSector.GetDataSize(m_sectorSize, mode);
+            int dataSize = GetSectorDataSize(mode);
             byte[] data = new byte[count * dataSize];
 
             for (int i = 0, offset = 0; i < count; i++, offset += dataSize)
-                CBuffer.Copy(ReadSectorData(mode), data, 0, offset);
+                CBuffer.Copy(ReadSector(mode), data, 0, offset);
 
             return data;
         }
@@ -250,11 +158,10 @@ namespace CRH.Framework.Disk
         /// <param name="lba">Starting sector's LBA</param>
         /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
-        /// <returns></returns>
-        public byte[] ReadSectorsData(long lba, int count, SectorMode mode)
+        public byte[] ReadSectors(long lba, int count, SectorMode mode)
         {
             SeekSector(lba);
-            return ReadSectorsData(count, mode);
+            return ReadSectors(count, mode);
         }
 
         /// <summary>
@@ -266,7 +173,7 @@ namespace CRH.Framework.Disk
         /// <param name="stream">The stream to write the data</param>
         private void ReadFile(long lba, long size, SectorMode mode, Stream stream)
         {
-            int sectorDataSize = DiskSector.GetDataSize(m_sectorSize, mode);
+            int sectorDataSize = GetSectorDataSize(mode);
             long bytesRead = 0;
             SeekSector(lba);
 
@@ -275,9 +182,9 @@ namespace CRH.Framework.Disk
             {
                 remaining = size - bytesRead;
                 if (remaining >= sectorDataSize)
-                    stream.Write(ReadSectorData(mode), 0, sectorDataSize);
+                    stream.Write(ReadSector(mode), 0, sectorDataSize);
                 else
-                    stream.Write(ReadSectorData(mode), 0, (int)remaining);
+                    stream.Write(ReadSector(mode), 0, (int)remaining);
 
                 bytesRead += sectorDataSize;
             }
@@ -304,7 +211,7 @@ namespace CRH.Framework.Disk
                 if (entry.IsDIrectory)
                     throw new FrameworkException("Not a file : specified path seems to be a directory, not a file", filePath);
 
-                SectorMode mode = (m_mode != DiskMode.MODE2_XA)
+                SectorMode mode = (m_mode != TrackMode.MODE2_XA)
                                     ? m_defaultSectorMode
                                     : entry.DirectoryEntry.XaEntry.IsMode2Form1
                                         ? SectorMode.XA_FORM1
@@ -380,7 +287,7 @@ namespace CRH.Framework.Disk
 
                 do
                 {
-                    using (CBinaryReader stream = new CBinaryReader(ReadSectorData(m_defaultSectorMode)))
+                    using (CBinaryReader stream = new CBinaryReader(ReadSector(m_defaultSectorMode)))
                     {
                         descriptor = ReadVolumeDescriptor(stream);
                     }
@@ -670,9 +577,9 @@ namespace CRH.Framework.Disk
             DirectoryEntry entry;
             DiskIndexEntry indexEntry;
             long size         = indexDirectoryEntry.DirectoryEntry.ExtentSize;
-            int  sectorsCount = (int)(size / DiskSector.GetDataSize(m_sectorSize, m_defaultSectorMode));
+            int  sectorsCount = (int)(size / GetSectorDataSize(m_defaultSectorMode));
 
-            CBinaryReader stream = new CBinaryReader(ReadSectorsData(indexDirectoryEntry.DirectoryEntry.ExtentLba, sectorsCount, m_defaultSectorMode));
+            CBinaryReader stream = new CBinaryReader(ReadSectors(indexDirectoryEntry.DirectoryEntry.ExtentLba, sectorsCount, m_defaultSectorMode));
 
             // First directory entry of a directory entry is the directory itself, so let's skip it
             ReadDirectoryEntry(stream);
@@ -688,7 +595,7 @@ namespace CRH.Framework.Disk
                 if (b == 0)
                 {
                     // DirectoryEntry cannot be "splitted" on two sectors
-                    int dataSize = DiskSector.GetDataSize(m_sectorSize, m_defaultSectorMode);
+                    int dataSize = GetSectorDataSize(m_defaultSectorMode);
                     stream.Position = (((stream.Position / dataSize) + 1) * dataSize);
                     b = stream.TestByte();
                 }

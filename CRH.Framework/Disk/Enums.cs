@@ -24,7 +24,10 @@ namespace CRH.Framework.Disk
         PS2
     }
 
-    public enum DiskMode
+    /// <summary>
+    /// Track's mode
+    /// </summary>
+    public enum TrackMode
     {
         RAW      = 0,
         MODE1    = 1,
