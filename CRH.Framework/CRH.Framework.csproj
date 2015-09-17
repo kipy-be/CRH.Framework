@@ -42,13 +42,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Disk\DiskWriter.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Disk\EccEdc.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="IO\CBinaryWriter.cs" />
     <Compile Include="IO\ExtensionMethods.cs" />
     <Compile Include="Common\Infos.cs" />
     <Compile Include="Disk\DiskBase.cs" />
     <Compile Include="Disk\DiskReader.cs" />
     <Compile Include="Disk\Enums.cs" />
-    <Compile Include="Disk\DiskSector.cs" />
     <Compile Include="Disk\PathTable.cs" />
     <Compile Include="Disk\DirectoryEntry.cs" />
     <Compile Include="Disk\DiskIndex.cs" />
