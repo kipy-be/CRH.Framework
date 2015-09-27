@@ -80,9 +80,15 @@ namespace CRH.Framework.IO
 
         /// <summary>
         /// Write a ASCII string
+        /// <param name="str">The string to write</param>
+        /// <param name="minSize">The minimum size of the string (will be padded otherwise)</param>
+        /// <param name="paddChar">The padding char used (default = space)</param>
         /// </summary>
-        public void WriteAsciiString(string str)
+        public void WriteAsciiString(string str, int minSize = 0, string paddChar = " ")
         {
+            while (str.Length < minSize)
+                str += paddChar;
+
             this.Write(Encoding.ASCII.GetBytes(str));
         }
 
