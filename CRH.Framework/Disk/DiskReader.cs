@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+
 using System.Text.RegularExpressions;
 using CRH.Framework.Common;
 using CRH.Framework.IO;
@@ -12,10 +12,11 @@ namespace CRH.Framework.Disk
     public sealed class DiskReader : DiskBase
     {
         private CBinaryReader m_stream;
-        private DiskIndex m_index;
+        private DiskIndex     m_index;
 
         private bool m_descriptorsRead;
         private bool m_indexBuilt;
+        private DiskEntriesOrder m_entriesOrder;
 
         private static Regex m_regFileName = new Regex("(.+?)(?:;[0-9]+)?$");
 
@@ -34,6 +35,7 @@ namespace CRH.Framework.Disk
         {
             m_descriptorsRead = false;
             m_indexBuilt      = false;
+            m_entriesOrder    = DiskEntriesOrder.DEFAULT;
 
             try
             {
@@ -78,20 +80,19 @@ namespace CRH.Framework.Disk
         /// Read a sector's data
         /// </summary>
         /// <param name="mode">Sector's mode</param>
-        /// <param name="includeSubheader">include XA subheader</param>
-        public byte[] ReadSector(SectorMode mode, bool includeSubheader = false)
+        public byte[] ReadSector(SectorMode mode)
         {
             try
             {
                 byte[] buffer;
 
-                int dataSize = GetSectorDataSize(mode) + ((includeSubheader && (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)) ? 8 : 0);
+                int dataSize = GetSectorDataSize(mode);
                 buffer = new byte[dataSize];
 
                 if (mode != SectorMode.RAW)
                     m_stream.Position += (SYNC_SIZE + HEADER_SIZE);
 
-                if (!includeSubheader && (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2))
+                if (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
                    m_stream.Position += SUBHEADER_SIZE;
                 
                 m_stream.Read(buffer, 0, dataSize);
@@ -125,15 +126,71 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
+        /// Read a sector's data, including sub header
+        /// </summary>
+        /// <param name="mode">Sector's mode</param>
+        /// <param name="subHeader">Sub header container to write sub header to</param>
+        public byte[] ReadSector(SectorMode mode, out XaSubHeader subHeader)
+        {
+            try
+            {
+                byte[] buffer;
+                subHeader = new XaSubHeader();
+
+                int dataSize = GetSectorDataSize(mode);
+                buffer = new byte[dataSize];
+
+                if (mode != SectorMode.RAW)
+                    m_stream.Position += (SYNC_SIZE + HEADER_SIZE);
+
+                if (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
+                {
+                    subHeader.File     = m_stream.ReadByte();
+                    subHeader.Channel  = m_stream.ReadByte();
+                    subHeader.SubMode  = m_stream.ReadByte();
+                    subHeader.DataType = m_stream.ReadByte();
+                    m_stream.Position += SUBHEADER_SIZE / 2;
+                }
+
+                m_stream.Read(buffer, 0, dataSize);
+
+                if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
+                    m_stream.Position += EDC_SIZE;
+
+                if (mode == SectorMode.MODE1)
+                    m_stream.Position += INTERMEDIATE_SIZE;
+
+                if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
+                    m_stream.Position += ECC_SIZE;
+
+                if (mode == SectorMode.XA_FORM2)
+                    m_stream.Position += EDC_SIZE;
+
+                return buffer;
+            }
+            catch (FrameworkException ex)
+            {
+                throw ex;
+            }
+            catch (EndOfStreamException)
+            {
+                throw new FrameworkException("Errow while reading sector : end of file occured");
+            }
+            catch (Exception)
+            {
+                throw new FrameworkException("Errow while reading sector : unable to read sector");
+            }
+        }
+
+        /// <summary>
         /// Read a sector
         /// </summary>
         /// <param name="lba">Sector's LBA to read</param>
         /// <param name="mode">Sector's mode</param>
-        /// <param name="includeSubheader">include XA subheader</param>
-        public byte[] ReadSector(long lba, SectorMode mode, bool includeSubheader = false)
+        public byte[] ReadSector(long lba, SectorMode mode)
         {
             SeekSector(lba);
-            return ReadSector(mode, includeSubheader);
+            return ReadSector(mode);
         }
 
         /// <summary>
@@ -208,7 +265,7 @@ namespace CRH.Framework.Disk
                 if (entry == null)
                     throw new FrameworkException("File not found : unable to find file \"{0}\"", filePath);
 
-                if (entry.IsDIrectory)
+                if (entry.IsDirectory)
                     throw new FrameworkException("Not a file : specified path seems to be a directory, not a file", filePath);
 
                 SectorMode mode = (m_mode != TrackMode.MODE2_XA)
@@ -227,6 +284,19 @@ namespace CRH.Framework.Disk
             {
                 throw new FrameworkException("Error while reading file : unable to read file \"{0}\"", filePath);
             }
+        }
+
+        /// <summary>
+        /// Read a file
+        /// </summary>
+        /// <param name="filePath">The full file path of the file (eg : /FOO/BAR/FILE.EXT)</param>
+        public Stream ReadFile(string filePath)
+        {
+            MemoryStream stream = new MemoryStream();
+            ReadFile(filePath, stream);
+            stream.Position = 0;
+
+            return stream;
         }
 
         /// <summary>
@@ -554,9 +624,8 @@ namespace CRH.Framework.Disk
 
             try
             {
-                DiskIndexEntry root = new DiskIndexEntry(null, m_primaryVolumeDescriptor.RootDirectoryEntry);
-                m_index = new DiskIndex(root);
-                AddDirectoryToIndex(root);
+                m_index = new DiskIndex(m_primaryVolumeDescriptor.RootDirectoryEntry, m_isXa);
+                AddDirectoryToIndex(m_index.Root);
                 m_indexBuilt = true;
             }
             catch (FrameworkException ex)
@@ -610,7 +679,7 @@ namespace CRH.Framework.Disk
                     indexDirectoryEntry.Add(indexEntry);
                     m_index.AddToIndex(indexEntry);
 
-                    if (indexEntry.IsDIrectory)
+                    if (indexEntry.IsDirectory)
                         AddDirectoryToIndex(indexEntry);
                 }
             }
@@ -621,6 +690,15 @@ namespace CRH.Framework.Disk
     // Accessors
 
         /// <summary>
+        /// Get or set the order in which entries are iterated
+        /// </summary>
+        public DiskEntriesOrder EntriesOrder
+        {
+            get { return m_entriesOrder; }
+            set { m_entriesOrder = value; }
+        }
+
+        /// <summary>
         /// Entries
         /// </summary>
         public IEnumerable<DiskIndexEntry> Entries
@@ -629,7 +707,7 @@ namespace CRH.Framework.Disk
             {
                 if (!m_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.Entries;
+                return m_index.GetEntries(m_entriesOrder);
             }
         }
 
@@ -642,7 +720,7 @@ namespace CRH.Framework.Disk
             {
                 if (!m_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.GetDirectories();
+                return m_index.GetDirectories(m_entriesOrder);
             }
         }
 
@@ -656,7 +734,7 @@ namespace CRH.Framework.Disk
             {
                 if (!m_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.GetFiles();
+                return m_index.GetFiles(m_entriesOrder);
             }
         }
     }

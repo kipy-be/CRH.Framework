@@ -48,6 +48,7 @@
     <Compile Include="Disk\EccEdc.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Disk\XaSubHeader.cs" />
     <Compile Include="IO\CBinaryWriter.cs" />
     <Compile Include="IO\ExtensionMethods.cs" />
     <Compile Include="Common\Infos.cs" />

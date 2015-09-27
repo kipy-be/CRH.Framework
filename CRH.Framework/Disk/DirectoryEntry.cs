@@ -56,6 +56,12 @@ namespace CRH.Framework.Disk
             m_volumeSequenceNumber          = 1;
             m_nameLength                    = 0;
             m_name                          = "";
+
+            if (hasXa)
+            {
+                m_xaEntry = new XaEntry();
+                m_length += XaEntry.SIZE;
+            }
         }
 
     // Methods

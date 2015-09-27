@@ -27,6 +27,7 @@ namespace CRH.Framework.Disk
     /// </summary>
     public sealed class XaEntry
     {
+        public const int SIZE = 14;
         public const string XA_SIGNATURE = "XA";
 
         private ushort m_groupId;

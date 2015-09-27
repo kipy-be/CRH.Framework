@@ -52,6 +52,7 @@ namespace CRH.Framework.Disk
                     break;
                 case TrackMode.MODE2_XA:
                     m_defaultSectorMode = SectorMode.XA_FORM1;
+                    m_isXa = true;
                     break;
                 case TrackMode.RAW:
                 default:
@@ -96,7 +97,7 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Move to a specific sector's LBA
         /// </summary>
-        public void SeekSector(long lba)
+        protected void SeekSector(long lba)
         {
             try
             {
