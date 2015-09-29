@@ -545,10 +545,10 @@ namespace CRH.Framework.Disk
                 if (entry.VolumeSequenceNumber != stream.ReadUInt16BE())
                     throw new FrameworkException("Error while reading DirectoryEntry : VolumeSequenceNumber is not valid");
 
-                entry.NameLength = stream.ReadByte();
-                entry.Name = m_regFileName.Match(stream.ReadAsciiString(entry.NameLength, false)).Groups[1].Value;
+                byte nameLength = stream.ReadByte();
+                entry.Name = m_regFileName.Match(stream.ReadAsciiString(nameLength, false)).Groups[1].Value;
 
-                if (entry.NameLength % 2 == 0)
+                if (nameLength % 2 == 0)
                     stream.Position += 1;
 
                 if (m_isXa && (stream.Position != position + entry.Length))
@@ -624,7 +624,11 @@ namespace CRH.Framework.Disk
 
             try
             {
-                m_index = new DiskIndex(m_primaryVolumeDescriptor.RootDirectoryEntry, m_isXa);
+                long rootLba = m_primaryVolumeDescriptor.RootDirectoryEntry.ExtentLba;
+                CBinaryReader stream     = new CBinaryReader(ReadSector(rootLba, m_defaultSectorMode));
+                DirectoryEntry rootEntry = ReadDirectoryEntry(stream);
+
+                m_index = new DiskIndex(rootEntry);
                 AddDirectoryToIndex(m_index.Root);
                 m_indexBuilt = true;
             }
@@ -645,10 +649,11 @@ namespace CRH.Framework.Disk
         {
             DirectoryEntry entry;
             DiskIndexEntry indexEntry;
+            long lba          = indexDirectoryEntry.DirectoryEntry.ExtentLba;
             long size         = indexDirectoryEntry.DirectoryEntry.ExtentSize;
             int  sectorsCount = (int)(size / GetSectorDataSize(m_defaultSectorMode));
 
-            CBinaryReader stream = new CBinaryReader(ReadSectors(indexDirectoryEntry.DirectoryEntry.ExtentLba, sectorsCount, m_defaultSectorMode));
+            CBinaryReader stream = new CBinaryReader(ReadSectors(lba, sectorsCount, m_defaultSectorMode));
 
             // First directory entry of a directory entry is the directory itself, so let's skip it
             ReadDirectoryEntry(stream);
@@ -676,7 +681,6 @@ namespace CRH.Framework.Disk
                     entry = ReadDirectoryEntry(stream);
 
                     indexEntry = new DiskIndexEntry(indexDirectoryEntry, entry);
-                    indexDirectoryEntry.Add(indexEntry);
                     m_index.AddToIndex(indexEntry);
 
                     if (indexEntry.IsDirectory)

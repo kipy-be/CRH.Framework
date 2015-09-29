@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using CRH.Framework.Common;
 using CRH.Framework.IO;
 using CRH.Framework.Utils;
@@ -12,8 +13,12 @@ namespace CRH.Framework.Disk
         private CBinaryWriter m_stream;
         private DiskIndex m_index;
 
+        private bool m_prepared;
         private bool m_finalized;
-        private bool m_indexBuilt;
+        private bool m_appendVersionToFileName;
+
+        private static Regex m_regDirectoryName = new Regex("[\\/]([^\\/]+)[\\/]?$");
+        private static Regex m_regFileName = new Regex("[\\/]([^\\/]+?)$");
 
     // Constructors
 
@@ -26,8 +31,9 @@ namespace CRH.Framework.Disk
         public DiskWriter(string fileUrl, IsoType type, TrackMode mode, bool overwriteIfExists = true)
             : base(fileUrl, type, mode)
         {
-            m_finalized  = false;
-            m_indexBuilt = false;
+            m_prepared      = false;
+            m_finalized     = false;
+            m_appendVersionToFileName = true;
 
             try
             {
@@ -35,6 +41,9 @@ namespace CRH.Framework.Disk
                 m_fileStream = new FileStream(m_file.FullName, FileMode.Create, FileAccess.Write, FileShare.Read);
                 m_stream     = new CBinaryWriter(m_fileStream);
                 m_fileOpen   = true;
+
+                // Allocation for system area
+                WriteEmptySectors(16);
             }
             catch (FrameworkException ex)
             {
@@ -63,18 +72,103 @@ namespace CRH.Framework.Disk
             m_fileOpen = false;
         }
 
+        /// <summary>
+        /// Init the pvd and allocate some space for the path table and the root directory
+        /// </summary>
+        /// <param name="volumeId">The volume identifier</param>
+        /// <param name="pathTableSize">Size of the path table in sector (default 1)</param>
+        /// <param name="rootDirectorySize">Size of the root directory in sector (default 1)</param>
+        public void Prepare(string volumeId, int pathTableSize = 1, int rootDirectorySize = 1)
+        {
+            if (m_prepared)
+                return;
+
+            SeekSector(16);
+            WriteEmptySectors(2 + pathTableSize * 4);
+
+            DirectoryEntry root = new DirectoryEntry(m_isXa);
+            root.IsDirectory = true;
+            root.ExtentSize = (uint)(rootDirectorySize * GetSectorDataSize(m_defaultSectorMode));
+            root.ExtentLba = (uint)SectorCount;
+
+            m_index = new DiskIndex(root);
+
+            m_primaryVolumeDescriptor = new PrimaryVolumeDescriptor(1);
+            m_primaryVolumeDescriptor.VolumeId = volumeId;
+            m_primaryVolumeDescriptor.PathTableSize = (uint)(pathTableSize * GetSectorDataSize(m_defaultSectorMode));
+
+            // The root directory included in the volume descriptor doesn't allow XA, so let's create a separated one
+            m_primaryVolumeDescriptor.RootDirectoryEntry = new DirectoryEntry(false);
+            m_primaryVolumeDescriptor.RootDirectoryEntry.IsDirectory = true;
+            m_primaryVolumeDescriptor.RootDirectoryEntry.ExtentSize = root.ExtentSize;
+            m_primaryVolumeDescriptor.RootDirectoryEntry.ExtentLba = root.ExtentLba;
+
+            WriteEmptySectors(rootDirectorySize);
+
+            m_prepared = true;
+        }
 
         /// <summary>
-        /// Finalise the disk (write descriptors, path table, etc.)
+        /// Finalise the disk (dump descriptors, path table, directory entries, etc.)
         /// </summary>
         public void Finalize()
         {
             if (m_finalized)
                 return;
 
-            // tmp
+            if(!m_prepared)
+                throw new FrameworkException("Error while finalizing ISO : ISO has not been prepared, it will be unreadable");
+
+            m_primaryVolumeDescriptor.VolumeSpaceSize = (uint)SectorCount;
+            SeekSector(16);
+
+            WriteSector(GetPrimaryVolumeDescriptorBuffer(), m_defaultSectorMode);
+            WriteSector(GetSetTerminatorVolumeDescriptorBuffer(), m_defaultSectorMode);
+            WriteDirectoryEntry(m_index.Root);
+
+            foreach (DiskIndexEntry entry in m_index.GetDirectories(DiskEntriesOrder.LBA))
+                WriteDirectoryEntry(entry);
 
             m_finalized = true;
+        }
+
+        /// <summary>
+        /// Write out the directory entry
+        /// </summary>
+        private void WriteDirectoryEntry(DiskIndexEntry entry)
+        {
+            SeekSector(entry.Lba);
+
+            int size = (int)entry.Size;
+            int sectorSize = GetSectorDataSize(m_defaultSectorMode);
+            byte[] data = new byte[size];
+
+            using (CBinaryWriter stream = new CBinaryWriter(data))
+            {
+                // First directory entry of a directory entry is the directory itself
+                stream.Write(GetDirectoryEntryBuffer(entry.DirectoryEntry, true, false));
+
+                // Second directory entry is the parent directory entry.
+                if (entry.ParentEntry != null)
+                    stream.Write(GetDirectoryEntryBuffer(entry.ParentEntry.DirectoryEntry, false, true));
+                else
+                    stream.Write(GetDirectoryEntryBuffer(entry.DirectoryEntry, false, true));
+
+                foreach (DiskIndexEntry subEntry in entry.SubEntries)
+                {
+                    // DirectoryEntry cannot be "splitted" on two sectors
+                    if ((stream.Position - (stream.Position / sectorSize) * sectorSize) + subEntry.Length >= sectorSize)
+                        stream.Position = ((stream.Position / sectorSize) + 1) * sectorSize;
+
+                    if (stream.Position + subEntry.DirectoryEntry.Length < size)
+                        stream.Write(GetDirectoryEntryBuffer(subEntry.DirectoryEntry));
+                    else
+                        throw new FrameworkException("Error while finalizing disk : directory \"{0}\" is too small", entry.FullPath);
+                }
+            }
+
+            for (int i = 0; i < size; i += sectorSize)
+                WriteSector(CBuffer.Create(data, i, sectorSize), m_defaultSectorMode);
         }
 
         /// <summary>
@@ -82,7 +176,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         /// <param name="data">The sector's data to write</param>
         /// <param name="mode">Sector's mode</param>
-        public void WriteSector(byte[] data, SectorMode mode)
+        /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
+        public void WriteSector(byte[] data, SectorMode mode, XaSubHeader subHeader = null)
         {
             try
             {
@@ -99,6 +194,22 @@ namespace CRH.Framework.Disk
                         header[1] = Converter.DecToBcd((byte)(position % 60)); position /= 60;
                         header[0] = Converter.DecToBcd((byte)(position % 60));
                         bufferStream.Write(header); 
+                    }
+
+                    if(mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
+                    {
+                        if (subHeader == null)
+                            subHeader = new XaSubHeader();
+                        bufferStream.Write(subHeader.File);
+                        bufferStream.Write(subHeader.Channel);
+                        bufferStream.Write(subHeader.SubMode);
+                        bufferStream.Write(subHeader.DataType);
+
+                        // Subheader is written twice
+                        bufferStream.Write(subHeader.File);
+                        bufferStream.Write(subHeader.Channel);
+                        bufferStream.Write(subHeader.SubMode);
+                        bufferStream.Write(subHeader.DataType);
                     }
 
                     bufferStream.Write(data, 0, data.Length);
@@ -156,6 +267,312 @@ namespace CRH.Framework.Disk
                 for (int i = 0; i < count; i++)
                     WriteSector(data, SectorMode.MODE0);
             }
+        }
+
+        /// <summary>
+        /// Get a primary volume descriptor data
+        /// </summary>
+        /// <param name="m_primaryVolumeDescriptor">The primary volume descriptor</param>
+        private byte[] GetPrimaryVolumeDescriptorBuffer()
+        {
+            byte[] buffer = new byte[GetSectorDataSize(m_defaultSectorMode)];
+            try
+            {
+                using (CBinaryWriter stream = new CBinaryWriter(buffer))
+                {
+                    stream.Write((byte)m_primaryVolumeDescriptor.Type);
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.Id);
+                    stream.Write(m_primaryVolumeDescriptor.Version);
+                    stream.Write(m_primaryVolumeDescriptor.Unused1);
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.SystemId, 32, " ");
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.VolumeId, 32, " ");
+                    stream.Write(m_primaryVolumeDescriptor.Unused2);
+
+                    stream.Write(m_primaryVolumeDescriptor.VolumeSpaceSize);
+                    stream.WriteUInt32BE(m_primaryVolumeDescriptor.VolumeSpaceSize);
+
+                    stream.Write(m_primaryVolumeDescriptor.Unused3);
+
+                    stream.Write(m_primaryVolumeDescriptor.VolumeSetSize);
+                    stream.WriteUInt16BE(m_primaryVolumeDescriptor.VolumeSetSize);
+
+                    stream.Write(m_primaryVolumeDescriptor.VolumeSequenceNumber);
+                    stream.WriteUInt16BE(m_primaryVolumeDescriptor.VolumeSequenceNumber);
+
+                    stream.Write(m_primaryVolumeDescriptor.LogicalBlockSize);
+                    stream.WriteUInt16BE(m_primaryVolumeDescriptor.LogicalBlockSize);
+
+                    stream.Write(m_primaryVolumeDescriptor.PathTableSize);
+                    stream.WriteUInt32BE(m_primaryVolumeDescriptor.PathTableSize);
+
+                    stream.Write(m_primaryVolumeDescriptor.TypeLPathTableLBA);
+                    stream.Write(m_primaryVolumeDescriptor.OptTypeLPathTableLBA);
+                    stream.WriteUInt32BE(m_primaryVolumeDescriptor.TypeMPathTableLBA);
+                    stream.WriteUInt32BE(m_primaryVolumeDescriptor.OptTypeMPathTableLBA);
+                    stream.Write(GetDirectoryEntryBuffer(m_primaryVolumeDescriptor.RootDirectoryEntry));
+
+                    // TODO : cas des fichiers
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.VolumeSetId, 128, " ");
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.PublisherId, 128, " ");
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.PreparerId, 128, " ");
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.ApplicationId, 128, " ");
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.CopyrightFileId, 38, " ");
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.AbstractFileId, 36, " ");
+                    stream.WriteAsciiString(m_primaryVolumeDescriptor.BibliographicFileId, 37, " ");
+                    //
+
+                    stream.Write(VolumeDescriptor.FromDateTime(m_primaryVolumeDescriptor.CreationDate));
+                    stream.Write(VolumeDescriptor.FromDateTime(m_primaryVolumeDescriptor.ModificationDate));
+                    stream.Write(VolumeDescriptor.FromDateTime(m_primaryVolumeDescriptor.ExpirationDate));
+                    stream.Write(VolumeDescriptor.FromDateTime(m_primaryVolumeDescriptor.EffectiveDate));
+                    stream.Write(m_primaryVolumeDescriptor.FileStructureVersion);
+                    stream.Write(m_primaryVolumeDescriptor.Unused4);
+
+                    if (m_isXa)
+                    {
+                        using (CBinaryWriter appDataStream = new CBinaryWriter(m_primaryVolumeDescriptor.ApplicationData))
+                        {
+                            appDataStream.Position = 0x8D;
+                            appDataStream.Write(VolumeDescriptor.VOLUME_XA);
+                        }
+                    }
+
+                    stream.Write(m_primaryVolumeDescriptor.ApplicationData);
+                    stream.Write(m_primaryVolumeDescriptor.Reserved);
+                }
+
+                return buffer;
+            }
+            catch (Exception)
+            {
+                throw new FrameworkException("Error while writing PrimaryVolumeDescriptor : unable to write the descriptor");
+            }
+        }
+
+        /// <summary>
+        /// Get a set terminator volume descriptor data
+        /// </summary>
+        private byte[] GetSetTerminatorVolumeDescriptorBuffer()
+        {
+            byte[] buffer = new byte[GetSectorDataSize(m_defaultSectorMode)];
+            try
+            {
+                using (CBinaryWriter stream = new CBinaryWriter(buffer))
+                {
+                    SetTerminatorVolumeDescriptor descriptor = new SetTerminatorVolumeDescriptor();
+                    stream.Write((byte)descriptor.Type);
+                    stream.WriteAsciiString(descriptor.Id);
+                    stream.Write(descriptor.Version);
+                }
+
+                return buffer;
+            }
+            catch (Exception)
+            {
+                throw new FrameworkException("Error while writing SetTerminatorVolumeDescriptor : unable to write the descriptor");
+            }
+        }
+
+        /// <summary>
+        /// Write a directory entry
+        /// </summary>
+        /// <param name="stream">The stream to read</param>
+        private byte[] GetDirectoryEntryBuffer(DirectoryEntry entry, bool selfRef = false, bool parentRef = false)
+        {
+            byte entryLength = entry.Length;
+
+            // If parent or self reference, name is replaced by 0x00 for self or 0x01 for parent
+            if(selfRef || parentRef)
+            {
+                entryLength -= (byte)(entry.Name.Length - 1);
+                entryLength -= (byte)(entry.Name.Length % 2 == 0 ? 1 : 0);
+            }
+
+            byte[] buffer = new byte[entryLength];
+            try
+            {
+                using (CBinaryWriter stream = new CBinaryWriter(buffer))
+                {
+                    stream.Write(entryLength);
+                    stream.Write(entry.ExtendedAttributeRecordlength);
+
+                    stream.Write(entry.ExtentLba);
+                    stream.WriteUInt32BE(entry.ExtentLba);
+
+                    stream.Write(entry.ExtentSize);
+                    stream.WriteUInt32BE(entry.ExtentSize);
+
+                    byte[] dateBuffer = new byte[7];
+                    dateBuffer[0] = (byte)(entry.Date.Year - 1900);
+                    dateBuffer[1] = (byte)(entry.Date.Month);
+                    dateBuffer[2] = (byte)(entry.Date.Day);
+                    dateBuffer[3] = (byte)(entry.Date.Hour);
+                    dateBuffer[4] = (byte)(entry.Date.Minute);
+                    dateBuffer[5] = (byte)(entry.Date.Second);
+                    stream.Write(dateBuffer);
+
+                    stream.Write(entry.Flags);
+                    stream.Write(entry.FileUnitSize);
+                    stream.Write(entry.Interleave);
+
+                    stream.Write(entry.VolumeSequenceNumber);
+                    stream.WriteUInt16BE(entry.VolumeSequenceNumber);
+
+                    if (!(selfRef || parentRef))
+                    {
+                        stream.Write((byte)entry.Name.Length);
+                        stream.WriteAsciiString(entry.Name);
+
+                        if (entry.Name.Length % 2 == 0)
+                            stream.Write((byte)0);
+                    }
+                    else
+                    {
+                        stream.Write((byte)1);
+                        stream.Write((byte)(selfRef ? 0 : 1));
+                    }
+
+                    if (entry.HasXa)
+                    {
+                        stream.WriteUInt16BE(entry.XaEntry.GroupId);
+                        stream.WriteUInt16BE(entry.XaEntry.UserId);
+                        stream.WriteUInt16BE(entry.XaEntry.Attributes);
+                        stream.WriteAsciiString(entry.XaEntry.Signature);
+                        stream.Write(entry.XaEntry.FileNumber);
+                        stream.Write(entry.XaEntry.Unused);
+                    }
+                }
+
+                return buffer;
+            }
+            catch (Exception)
+            {
+                throw new FrameworkException("Error while writing DirectoryEntry : unable to write the entry");
+            }
+        }
+
+        /// <summary>
+        /// Create a directory
+        /// </summary>
+        /// <param name="path">Full path of the directory to create</param>
+        /// <param name="size">Size of the directory in sectors (default 1)</param>
+        public void CreateDirectory(string path, int size = 1)
+        {
+            if (m_index.GetEntry(path) != null)
+                throw new FrameworkException("Error while creating directory \"{0}\" : entry already exists", path);
+
+            DiskIndexEntry parent = m_index.FindAParent(path);
+            if(parent == null)
+                throw new FrameworkException("Error while creating directory \"{0}\" : parent directory does not exists", path);
+
+            DirectoryEntry entry = new DirectoryEntry(m_isXa);
+            entry.IsDirectory    = true;
+            entry.Name           = m_regDirectoryName.Match(path).Groups[1].Value;
+            entry.Length        += (byte)(entry.Name.Length - 1);
+            entry.Length        += (byte)(entry.Name.Length % 2 == 0 ? 1 : 0);
+            entry.ExtentSize     = (uint)(size * GetSectorDataSize(m_defaultSectorMode));
+            entry.ExtentLba      = (uint)SectorCount;
+
+            DiskIndexEntry indexEntry = new DiskIndexEntry(parent, entry);
+
+            m_index.AddToIndex(indexEntry);
+
+            WriteEmptySectors(size);
+        }
+
+        /// <summary>
+        /// Write a file
+        /// </summary>
+        /// <param name="filePath">The full file path of the file (eg : /FOO/BAR/FILE.EXT)</param>
+        /// <param name="stream">The stream to write the data</param></param>
+        /// <param name="stream">The source stream of the file</param>
+        /// <param name="mode">The mode in wich the file has to be written</param>
+        public void WriteFile(string filePath, Stream stream, SectorMode mode)
+        {
+            if (m_index.GetEntry(filePath) != null)
+                throw new FrameworkException("Error while creating file \"{0}\" : entry already exists", filePath);
+
+            DiskIndexEntry parent = m_index.FindAParent(filePath);
+            if (parent == null)
+                throw new FrameworkException("Error while creating file \"{0}\" : parent directory does not exists", filePath);
+
+            DirectoryEntry entry = new DirectoryEntry(m_isXa);
+            entry.Name           = m_regFileName.Match(filePath).Groups[1].Value + (m_appendVersionToFileName ? ";1" : "");
+            entry.Length        += (byte)(entry.Name.Length - 1);
+            entry.Length        += (byte)(entry.Name.Length % 2 == 0 ? 1 : 0);
+            entry.ExtentSize     = (uint)stream.Length;
+            entry.ExtentLba      = (uint)SectorCount;
+
+            DiskIndexEntry indexEntry = new DiskIndexEntry(parent, entry);
+            m_index.AddToIndex(indexEntry);
+
+            bool hasSubHeader = (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2);
+
+            stream.Position = 0;
+            int dataSize = GetSectorDataSize(mode);
+            byte[] buffer = new byte[dataSize];
+            
+            while(stream.Position < stream.Length)
+            {
+                stream.Read(buffer, 0, dataSize);
+
+                if(!hasSubHeader)
+                    WriteSector(buffer, mode);
+                else
+                    WriteSector(buffer, mode, new XaSubHeader(0xEE, 0xEE, 0xEE, 0xEE));
+            }
+        }
+
+
+    // Accessors
+
+        /// <summary>
+        /// Entries
+        /// </summary>
+        public IEnumerable<DiskIndexEntry> Entries
+        {
+            get
+            {
+                if (!m_prepared)
+                    throw new FrameworkException("Error : You must prepare the iso first");
+                return m_index.GetEntries();
+            }
+        }
+
+        /// <summary>
+        /// Entries (directories only)
+        /// </summary>
+        public IEnumerable<DiskIndexEntry> DirectoryEntries
+        {
+            get
+            {
+                if (!m_prepared)
+                    throw new FrameworkException("Error : You must prepare the iso first");
+                return m_index.GetDirectories();
+            }
+        }
+
+
+        /// <summary>
+        /// Entries (files only)
+        /// </summary>
+        public IEnumerable<DiskIndexEntry> FileEntries
+        {
+            get
+            {
+                if (!m_prepared)
+                    throw new FrameworkException("Error : You must prepare the iso first");
+                return m_index.GetFiles();
+            }
+        }
+
+        /// <summary>
+        /// Append version to files name (;1)
+        /// </summary>
+        public bool AppendVersionToFileName
+        {
+            get { return m_appendVersionToFileName; }
+            set { m_appendVersionToFileName = value; }
         }
     }
 }

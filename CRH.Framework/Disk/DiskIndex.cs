@@ -19,11 +19,9 @@ namespace CRH.Framework.Disk
 
     // Constructors
 
-        internal DiskIndex(DirectoryEntry root, bool isXa)
+        internal DiskIndex(DirectoryEntry root)
         {
-            root.Length    += (byte)(isXa ? XaEntry.SIZE : 0);
             m_root          = new DiskIndexEntry(null, root);
-            m_root.FullPath = "/";
             m_entries       = new List<DiskIndexEntry>();
             m_mappedEntries = new Dictionary<string, DiskIndexEntry>();
         }
@@ -167,7 +165,7 @@ namespace CRH.Framework.Disk
             {
                 fullPath = fullPath.Substring(0, lIndex);
                 if (m_mappedEntries.ContainsKey(fullPath))
-                    return m_mappedEntries[fullPath].ParentEntry;
+                    return m_mappedEntries[fullPath];
                 else
                     return null;
             }
@@ -191,6 +189,7 @@ namespace CRH.Framework.Disk
         private List<DiskIndexEntry> m_subEntries = null;
 
         private string m_fullPath;
+        private uint   m_directoryEntryLength;
         private bool   m_isRoot;
         private uint   m_directoryAvailableSpace = 0;
         
@@ -210,6 +209,8 @@ namespace CRH.Framework.Disk
                 m_fullPath = parent.FullPath
                                 + (parent.FullPath != "/" ? "/" : "")
                                 + directoryEntry.Name;
+            else
+                m_fullPath = "/";
 
             if (IsDirectory)
             {
@@ -225,7 +226,11 @@ namespace CRH.Framework.Disk
                                                 - directoryEntry.Length
                                                 - directoryEntry.ExtendedAttributeRecordlength
                                                 - directoryEntry.Length;
+
             }
+
+            if (parent != null)
+                parent.Add(this);
         }
 
     // Methods
@@ -233,37 +238,17 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Add sub entry to this entry (add file / folder to folder)
         /// </summary>
-        /// <param name="child">The entry to add</param>
-        internal void Add(DiskIndexEntry child)
+        /// <param name="subEntry">The entry to add</param>
+        private void Add(DiskIndexEntry subEntry)
         {
             if(!IsDirectory)
                 throw new FrameworkException("Error while adding entry to directory : entry \"{0}\" is not a directory", m_fullPath);
 
-            if (child.DirectoryEntry.Length > m_directoryAvailableSpace)
+            if (subEntry.DirectoryEntry.Length > m_directoryAvailableSpace)
                 throw new FrameworkException("Error while adding entry to directory : directory \"{0}\" is too small", m_fullPath);
 
-            m_subEntries.Add(child);
-            m_directoryAvailableSpace -= child.DirectoryEntry.Length;
-        }
-
-        /// <summary>
-        /// Add sub entries to this entry (add files / folders to folder)
-        /// </summary>
-        /// <param name="children">The entries to add</param>
-        internal void AddRange(IEnumerable<DiskIndexEntry> children)
-        {
-            if (!IsDirectory)
-                throw new FrameworkException("Error while adding entries to directory : entry \"{0}\" is not a directory", m_fullPath);
-
-            uint totalSize = 0;
-            foreach (DiskIndexEntry child in children)
-                totalSize += child.DirectoryEntry.Length;
-
-            if (totalSize > m_directoryAvailableSpace)
-                throw new FrameworkException("Error while adding entries to directory : directory \"{0}\" is too small", m_fullPath);
-
-            m_subEntries.AddRange(children);
-            m_directoryAvailableSpace -= totalSize;
+            m_subEntries.Add(subEntry);
+            m_directoryAvailableSpace -= subEntry.DirectoryEntry.Length;
         }
 
     // Accessors
@@ -313,10 +298,10 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// The number of files contained in the directory
+        /// The number of files/directories contained in the directory
         /// Value : -1 if not directory
         /// </summary>
-        public int ChildrenCount
+        public int SubEntriesCount
         {
             get { return m_subEntries == null ? -1 : m_subEntries.Count; }
         }
@@ -332,15 +317,23 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Size of the entry
         /// </summary>
-        public long Size
+        public uint Size
         {
             get { return m_directoryEntry.ExtentSize; }
         }
 
         /// <summary>
+        /// Length of the DirectoryEntry
+        /// </summary>
+        internal uint Length
+        {
+            get { return m_directoryEntry.Length; }
+        }
+
+        /// <summary>
         /// Lba of the entry
         /// </summary>
-        public long Lba
+        public uint Lba
         {
             get { return m_directoryEntry.ExtentLba;  }
         }
