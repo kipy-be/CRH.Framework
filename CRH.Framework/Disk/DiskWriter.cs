@@ -120,14 +120,21 @@ namespace CRH.Framework.Disk
                 throw new FrameworkException("Error while finalizing ISO : ISO has not been prepared, it will be unreadable");
 
             m_primaryVolumeDescriptor.VolumeSpaceSize = (uint)SectorCount;
-            SeekSector(16);
+            m_primaryVolumeDescriptor.TypeLPathTableLBA = 16 + 2;
+            m_primaryVolumeDescriptor.TypeMPathTableLBA = 16 + 2 + (uint)(m_primaryVolumeDescriptor.PathTableSize / GetSectorDataSize(m_defaultSectorMode));
 
-            WriteSector(GetPrimaryVolumeDescriptorBuffer(), m_defaultSectorMode);
-            WriteSector(GetSetTerminatorVolumeDescriptorBuffer(), m_defaultSectorMode);
+            // Write directory entries
             WriteDirectoryEntry(m_index.Root);
-
             foreach (DiskIndexEntry entry in m_index.GetDirectories(DiskEntriesOrder.LBA))
                 WriteDirectoryEntry(entry);
+
+            // Write path tables
+            WritePathTables();
+
+            // Write descriptors
+            SeekSector(16);
+            WriteSector(GetPrimaryVolumeDescriptorBuffer(), m_defaultSectorMode);
+            WriteSector(GetSetTerminatorVolumeDescriptorBuffer(), m_defaultSectorMode);
 
             m_finalized = true;
         }
@@ -169,6 +176,48 @@ namespace CRH.Framework.Disk
 
             for (int i = 0; i < size; i += sectorSize)
                 WriteSector(CBuffer.Create(data, i, sectorSize), m_defaultSectorMode);
+        }
+
+        /// <summary>
+        /// Write out the path tables
+        /// </summary>
+        private void WritePathTables()
+        {
+            int sectorSize = GetSectorDataSize(m_defaultSectorMode);
+
+            byte[] lePathTableData = new byte[m_primaryVolumeDescriptor.PathTableSize];
+            byte[] bePathTableData = new byte[m_primaryVolumeDescriptor.PathTableSize];
+            Dictionary<string, ushort> dNums = new Dictionary<string, ushort>();
+            ushort dNum = 0, refNum;
+            int totalSize = 0;
+
+            using (CBinaryWriter lePathTableStream = new CBinaryWriter(lePathTableData))
+            using (CBinaryWriter bePathTableStream = new CBinaryWriter(bePathTableData))
+            {
+                lePathTableStream.Write(GetPathTableEntryBuffer(m_index.Root.DirectoryEntry, PathTableType.LE, 0));
+                bePathTableStream.Write(GetPathTableEntryBuffer(m_index.Root.DirectoryEntry, PathTableType.BE, 0));
+                dNums.Add(m_index.Root.FullPath, ++dNum);
+                totalSize += (8 + m_index.Root.DirectoryEntry.Name.Length + (m_index.Root.DirectoryEntry.Name.Length % 2 != 0 ? 1 : 0));
+
+                foreach (DiskIndexEntry entry in m_index.GetDirectories(DiskEntriesOrder.LBA))
+                {
+                    refNum = dNums[entry.ParentEntry.FullPath];
+                    lePathTableStream.Write(GetPathTableEntryBuffer(entry.DirectoryEntry, PathTableType.LE, refNum));
+                    bePathTableStream.Write(GetPathTableEntryBuffer(entry.DirectoryEntry, PathTableType.BE, refNum));
+                    dNums.Add(entry.FullPath, ++dNum);
+                    totalSize += (8 + entry.DirectoryEntry.Name.Length + (entry.DirectoryEntry.Name.Length % 2 != 0 ? 1 : 0));
+                }
+            }
+
+            SeekSector(m_primaryVolumeDescriptor.TypeLPathTableLBA);
+            for (int i = 0; i < lePathTableData.Length; i += sectorSize)
+                WriteSector(CBuffer.Create(lePathTableData, i, sectorSize), m_defaultSectorMode);
+
+            SeekSector(m_primaryVolumeDescriptor.TypeMPathTableLBA);
+            for (int i = 0; i < bePathTableData.Length; i += sectorSize)
+                WriteSector(CBuffer.Create(bePathTableData, i, sectorSize), m_defaultSectorMode);
+
+            m_primaryVolumeDescriptor.PathTableSize = (uint)totalSize;
         }
 
         /// <summary>
@@ -374,9 +423,11 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Write a directory entry
+        /// Get a directory entry's data
         /// </summary>
-        /// <param name="stream">The stream to read</param>
+        /// <param name="entry">The entry</param>
+        /// <param name="selfRef">Is a self reference</param>
+        /// <param name="parentRef">Is a parent reference</param>
         private byte[] GetDirectoryEntryBuffer(DirectoryEntry entry, bool selfRef = false, bool parentRef = false)
         {
             byte entryLength = entry.Length;
@@ -449,6 +500,36 @@ namespace CRH.Framework.Disk
             {
                 throw new FrameworkException("Error while writing DirectoryEntry : unable to write the entry");
             }
+        }
+
+        /// <summary>
+        /// Get a path table entry's data
+        /// </summary>
+        /// <param name="entry">The entry</param>
+        /// <param name="type">The type of the entry (little endian or big endian)</param>
+        private byte[] GetPathTableEntryBuffer(DirectoryEntry entry, PathTableType type, ushort parentNumber)
+        {
+            int entrySize = 8 + entry.Name.Length + (entry.Name.Length % 2 != 0 ? 1 : 0);
+            byte[] buffer = new byte[entrySize];
+
+            using (CBinaryWriter stream = new CBinaryWriter(buffer))
+            {
+                stream.Write((byte)entry.Name.Length);
+                stream.Write(entry.ExtendedAttributeRecordlength);
+
+                if (type == PathTableType.LE)
+                    stream.Write(entry.ExtentLba);
+                else
+                    stream.WriteUInt32BE(entry.ExtentLba);
+
+                stream.Write(parentNumber);
+                stream.WriteAsciiString(entry.Name);
+
+                if (entry.Name.Length % 2 != 0)
+                    stream.Write((byte)0);
+            }
+
+            return buffer;
         }
 
         /// <summary>

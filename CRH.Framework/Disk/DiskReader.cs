@@ -579,39 +579,6 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Read a path table entry
-        /// </summary>
-        /// <param name="stream">The stream to read</param>
-        /// <param name="type">Type of the path table (LE or BE)</param>
-        /// <returns></returns>
-        private PathTableEntry ReadPathTableEntry(CBinaryReader stream, PathTableType type)
-        {
-            PathTableEntry entry;
-
-            try
-            {
-                entry = new PathTableEntry(type);
-                entry.DirectoryIdLength = stream.ReadByte();
-                entry.ExtendedAttributeRecordlength = stream.ReadByte();
-
-                entry.ExtentLBA = type == PathTableType.L_PATH_TABLE ? stream.ReadUInt32() : stream.ReadUInt32BE();
-
-                entry.ParentDirectoryNumber = stream.ReadUInt16();
-                entry.DirectoryId = stream.ReadAsciiString(entry.DirectoryIdLength);
-            }
-            catch (FrameworkException ex)
-            {
-                throw ex;
-            }
-            catch (Exception)
-            {
-                throw new FrameworkException("Error while reading PathTableEntry : PathTableEntry is not valid");
-            }
-
-            return entry;
-        }
-
-        /// <summary>
         /// Fetch all directory entries to build the internal index
         /// </summary>
         public void BuildIndex()

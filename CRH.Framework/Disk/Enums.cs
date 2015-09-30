@@ -55,4 +55,13 @@ namespace CRH.Framework.Disk
         /// </summary
         XA_FORM2 = 22
     }
+
+    /// <summary>
+    /// Path table type (little or big endian)
+    /// </summary>
+    internal enum PathTableType
+    {
+        LE = 1,
+        BE = 2
+    }
 }

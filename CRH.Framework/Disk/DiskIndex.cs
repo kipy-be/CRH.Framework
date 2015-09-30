@@ -62,7 +62,7 @@ namespace CRH.Framework.Disk
             List<DiskIndexEntry> sortedEntries = new List<DiskIndexEntry>(m_entries);
             sortedEntries.Sort((DiskIndexEntry e1, DiskIndexEntry e2) =>
             {
-                return e1.FullPath.CompareTo(e2.FullPath);
+                return e1.DirectoryEntry.Name.CompareTo(e2.DirectoryEntry.Name);
             });
             return sortedEntries;
         }
