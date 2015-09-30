@@ -133,8 +133,8 @@ namespace CRH.Framework.Disk
 
             // Write descriptors
             SeekSector(16);
-            WriteSector(GetPrimaryVolumeDescriptorBuffer(), m_defaultSectorMode);
-            WriteSector(GetSetTerminatorVolumeDescriptorBuffer(), m_defaultSectorMode);
+            WriteSector(GetPrimaryVolumeDescriptorBuffer(), m_defaultSectorMode, XaSubHeader.EndOfRecord);
+            WriteSector(GetSetTerminatorVolumeDescriptorBuffer(), m_defaultSectorMode, XaSubHeader.EndOfFile);
 
             m_finalized = true;
         }
@@ -175,7 +175,12 @@ namespace CRH.Framework.Disk
             }
 
             for (int i = 0; i < size; i += sectorSize)
-                WriteSector(CBuffer.Create(data, i, sectorSize), m_defaultSectorMode);
+                WriteSector
+                (
+                    CBuffer.Create(data, i, sectorSize),
+                    m_defaultSectorMode,
+                    (i + sectorSize >= size) ? XaSubHeader.EndOfFile : XaSubHeader.Basic
+                );
         }
 
         /// <summary>
@@ -211,11 +216,21 @@ namespace CRH.Framework.Disk
 
             SeekSector(m_primaryVolumeDescriptor.TypeLPathTableLBA);
             for (int i = 0; i < lePathTableData.Length; i += sectorSize)
-                WriteSector(CBuffer.Create(lePathTableData, i, sectorSize), m_defaultSectorMode);
+                WriteSector
+                (
+                    CBuffer.Create(lePathTableData, i, sectorSize),
+                    m_defaultSectorMode,
+                    (i + sectorSize >= lePathTableData.Length) ? XaSubHeader.EndOfFile : XaSubHeader.Basic
+                );
 
             SeekSector(m_primaryVolumeDescriptor.TypeMPathTableLBA);
             for (int i = 0; i < bePathTableData.Length; i += sectorSize)
-                WriteSector(CBuffer.Create(bePathTableData, i, sectorSize), m_defaultSectorMode);
+                WriteSector
+                (
+                    CBuffer.Create(bePathTableData, i, sectorSize),
+                    m_defaultSectorMode,
+                    (i + sectorSize >= bePathTableData.Length) ? XaSubHeader.EndOfFile : XaSubHeader.Basic
+                 );
 
             m_primaryVolumeDescriptor.PathTableSize = (uint)totalSize;
         }
@@ -249,6 +264,8 @@ namespace CRH.Framework.Disk
                     {
                         if (subHeader == null)
                             subHeader = new XaSubHeader();
+                        subHeader.IsForm2 = (mode == SectorMode.XA_FORM2);
+
                         bufferStream.Write(subHeader.File);
                         bufferStream.Write(subHeader.Channel);
                         bufferStream.Write(subHeader.SubMode);
@@ -338,26 +355,26 @@ namespace CRH.Framework.Disk
                     stream.Write(m_primaryVolumeDescriptor.Unused2);
 
                     stream.Write(m_primaryVolumeDescriptor.VolumeSpaceSize);
-                    stream.WriteUInt32BE(m_primaryVolumeDescriptor.VolumeSpaceSize);
+                    stream.WriteBE(m_primaryVolumeDescriptor.VolumeSpaceSize);
 
                     stream.Write(m_primaryVolumeDescriptor.Unused3);
 
                     stream.Write(m_primaryVolumeDescriptor.VolumeSetSize);
-                    stream.WriteUInt16BE(m_primaryVolumeDescriptor.VolumeSetSize);
+                    stream.WriteBE(m_primaryVolumeDescriptor.VolumeSetSize);
 
                     stream.Write(m_primaryVolumeDescriptor.VolumeSequenceNumber);
-                    stream.WriteUInt16BE(m_primaryVolumeDescriptor.VolumeSequenceNumber);
+                    stream.WriteBE(m_primaryVolumeDescriptor.VolumeSequenceNumber);
 
                     stream.Write(m_primaryVolumeDescriptor.LogicalBlockSize);
-                    stream.WriteUInt16BE(m_primaryVolumeDescriptor.LogicalBlockSize);
+                    stream.WriteBE(m_primaryVolumeDescriptor.LogicalBlockSize);
 
                     stream.Write(m_primaryVolumeDescriptor.PathTableSize);
-                    stream.WriteUInt32BE(m_primaryVolumeDescriptor.PathTableSize);
+                    stream.WriteBE(m_primaryVolumeDescriptor.PathTableSize);
 
                     stream.Write(m_primaryVolumeDescriptor.TypeLPathTableLBA);
                     stream.Write(m_primaryVolumeDescriptor.OptTypeLPathTableLBA);
-                    stream.WriteUInt32BE(m_primaryVolumeDescriptor.TypeMPathTableLBA);
-                    stream.WriteUInt32BE(m_primaryVolumeDescriptor.OptTypeMPathTableLBA);
+                    stream.WriteBE(m_primaryVolumeDescriptor.TypeMPathTableLBA);
+                    stream.WriteBE(m_primaryVolumeDescriptor.OptTypeMPathTableLBA);
                     stream.Write(GetDirectoryEntryBuffer(m_primaryVolumeDescriptor.RootDirectoryEntry));
 
                     // TODO : cas des fichiers
@@ -448,10 +465,10 @@ namespace CRH.Framework.Disk
                     stream.Write(entry.ExtendedAttributeRecordlength);
 
                     stream.Write(entry.ExtentLba);
-                    stream.WriteUInt32BE(entry.ExtentLba);
+                    stream.WriteBE(entry.ExtentLba);
 
                     stream.Write(entry.ExtentSize);
-                    stream.WriteUInt32BE(entry.ExtentSize);
+                    stream.WriteBE(entry.ExtentSize);
 
                     byte[] dateBuffer = new byte[7];
                     dateBuffer[0] = (byte)(entry.Date.Year - 1900);
@@ -467,7 +484,7 @@ namespace CRH.Framework.Disk
                     stream.Write(entry.Interleave);
 
                     stream.Write(entry.VolumeSequenceNumber);
-                    stream.WriteUInt16BE(entry.VolumeSequenceNumber);
+                    stream.WriteBE(entry.VolumeSequenceNumber);
 
                     if (!(selfRef || parentRef))
                     {
@@ -485,9 +502,9 @@ namespace CRH.Framework.Disk
 
                     if (entry.HasXa)
                     {
-                        stream.WriteUInt16BE(entry.XaEntry.GroupId);
-                        stream.WriteUInt16BE(entry.XaEntry.UserId);
-                        stream.WriteUInt16BE(entry.XaEntry.Attributes);
+                        stream.WriteBE(entry.XaEntry.GroupId);
+                        stream.WriteBE(entry.XaEntry.UserId);
+                        stream.WriteBE(entry.XaEntry.Attributes);
                         stream.WriteAsciiString(entry.XaEntry.Signature);
                         stream.Write(entry.XaEntry.FileNumber);
                         stream.Write(entry.XaEntry.Unused);
@@ -520,7 +537,7 @@ namespace CRH.Framework.Disk
                 if (type == PathTableType.LE)
                     stream.Write(entry.ExtentLba);
                 else
-                    stream.WriteUInt32BE(entry.ExtentLba);
+                    stream.WriteBE(entry.ExtentLba);
 
                 stream.Write(parentNumber);
                 stream.WriteAsciiString(entry.Name);
@@ -554,6 +571,12 @@ namespace CRH.Framework.Disk
             entry.ExtentSize     = (uint)(size * GetSectorDataSize(m_defaultSectorMode));
             entry.ExtentLba      = (uint)SectorCount;
 
+            if (m_isXa)
+            {
+                entry.XaEntry.IsDirectory  = true;
+                entry.XaEntry.IsForm1 = true;
+            }
+
             DiskIndexEntry indexEntry = new DiskIndexEntry(parent, entry);
 
             m_index.AddToIndex(indexEntry);
@@ -584,10 +607,14 @@ namespace CRH.Framework.Disk
             entry.ExtentSize     = (uint)stream.Length;
             entry.ExtentLba      = (uint)SectorCount;
 
+            if(m_isXa)
+            {
+                entry.XaEntry.IsForm2 = (mode == SectorMode.XA_FORM2);
+                entry.XaEntry.IsForm1 = (mode != SectorMode.XA_FORM2);
+            }
+
             DiskIndexEntry indexEntry = new DiskIndexEntry(parent, entry);
             m_index.AddToIndex(indexEntry);
-
-            bool hasSubHeader = (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2);
 
             stream.Position = 0;
             int dataSize = GetSectorDataSize(mode);
@@ -596,11 +623,12 @@ namespace CRH.Framework.Disk
             while(stream.Position < stream.Length)
             {
                 stream.Read(buffer, 0, dataSize);
-
-                if(!hasSubHeader)
-                    WriteSector(buffer, mode);
-                else
-                    WriteSector(buffer, mode, new XaSubHeader(0xEE, 0xEE, 0xEE, 0xEE));
+                WriteSector
+                (
+                    buffer,
+                    mode,
+                    (stream.Position + dataSize >= stream.Length) ? XaSubHeader.EndOfFile : XaSubHeader.Basic
+                );
             }
         }
 

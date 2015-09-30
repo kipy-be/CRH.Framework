@@ -33,7 +33,7 @@ namespace CRH.Framework.IO
         /// <summary>
         /// Write int16 (BE)
         /// </summary>
-        public void WriteInt16BE(short value)
+        public void WriteBE(short value)
         {
             byte[] buffer = new byte[2];
             buffer[0] = (byte)(value >> 8);
@@ -44,7 +44,7 @@ namespace CRH.Framework.IO
         /// <summary>
         /// Write uint16 (BE)
         /// </summary>
-        public void WriteUInt16BE(ushort value)
+        public void WriteBE(ushort value)
         {
             byte[] buffer = new byte[2];
             buffer[0] = (byte)(value >> 8);
@@ -55,7 +55,7 @@ namespace CRH.Framework.IO
         /// <summary>
         /// Write int32 (BE)
         /// </summary>
-        public void WriteInt32BE(int value)
+        public void WriteBE(int value)
         {
             byte[] buffer = new byte[4];
             buffer[0] = (byte)(value >> 24);
@@ -68,7 +68,7 @@ namespace CRH.Framework.IO
         /// <summary>
         /// Write uint32 (BE)
         /// </summary>
-        public void WriteUInt32BE(uint value)
+        public void WriteBE(uint value)
         {
             byte[] buffer = new byte[4];
             buffer[0] = (byte)(value >> 24);

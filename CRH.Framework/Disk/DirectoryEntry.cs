@@ -33,7 +33,6 @@ namespace CRH.Framework.Disk
         private byte     m_fileUnitSize;
         private byte     m_interleave;
         private ushort   m_volumeSequenceNumber;
-        private byte     m_nameLength;
         private string   m_name;
         private XaEntry  m_xaEntry;
 
@@ -54,7 +53,6 @@ namespace CRH.Framework.Disk
             m_fileUnitSize                  = 0;
             m_interleave                    = 0;
             m_volumeSequenceNumber          = 1;
-            m_nameLength                    = 0;
             m_name                          = "\0";
 
             if (hasXa)

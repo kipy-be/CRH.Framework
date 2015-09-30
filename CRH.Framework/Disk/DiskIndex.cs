@@ -189,7 +189,6 @@ namespace CRH.Framework.Disk
         private List<DiskIndexEntry> m_subEntries = null;
 
         private string m_fullPath;
-        private uint   m_directoryEntryLength;
         private bool   m_isRoot;
         private uint   m_directoryAvailableSpace = 0;
         
@@ -312,6 +311,11 @@ namespace CRH.Framework.Disk
         public bool IsDirectory
         {
             get { return m_directoryEntry.IsDirectory; }
+        }
+
+        public bool IsStream
+        {
+            get { return m_directoryEntry.HasXa ? m_directoryEntry.XaEntry.IsForm2 : false; }
         }
 
         /// <summary>

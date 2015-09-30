@@ -270,7 +270,7 @@ namespace CRH.Framework.Disk
 
                 SectorMode mode = (m_mode != TrackMode.MODE2_XA)
                                     ? m_defaultSectorMode
-                                    : entry.DirectoryEntry.XaEntry.IsMode2Form1
+                                    : entry.DirectoryEntry.XaEntry.IsForm1
                                         ? SectorMode.XA_FORM1
                                         : SectorMode.XA_FORM2;
 
