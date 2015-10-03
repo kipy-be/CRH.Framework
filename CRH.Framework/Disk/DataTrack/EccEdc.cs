@@ -48,18 +48,18 @@ namespace CRH.Framework.Disk
             switch (mode)
             {
                 case SectorMode.MODE1:
-                    EdcBlockCompute(sector, 0, DiskBase.GetSectorDataSize(mode) + 16);
+                    EdcBlockCompute(sector, 0, DataTrack.GetSectorDataSize(mode) + 16);
                     EccCompute(sector);
                     break;
                 case SectorMode.XA_FORM1:
-                    EdcBlockCompute(sector, 16, DiskBase.SUBHEADER_SIZE + DiskBase.GetSectorDataSize(mode));
+                    EdcBlockCompute(sector, 16, DataTrack.SUBHEADER_SIZE + DataTrack.GetSectorDataSize(mode));
                     m_headerBackup[0] = sector[12]; m_headerBackup[1] = sector[13]; m_headerBackup[2] = sector[14]; m_headerBackup[3] = sector[15];
                     sector[12] = sector[13] = sector[14] = sector[15] = 0;
                     EccCompute(sector);
                     sector[12] = m_headerBackup[0]; sector[13] = m_headerBackup[1]; sector[14] = m_headerBackup[2]; sector[15] = m_headerBackup[3];
                     break;
                 case SectorMode.XA_FORM2:
-                    EdcBlockCompute(sector, 16, DiskBase.SUBHEADER_SIZE + DiskBase.GetSectorDataSize(mode));
+                    EdcBlockCompute(sector, 16, DataTrack.SUBHEADER_SIZE + DataTrack.GetSectorDataSize(mode));
                     break;
             }
         }

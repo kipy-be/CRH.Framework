@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using CRH.Framework.Common;
 
 namespace CRH.Framework.Disk
 {
-    public abstract class DiskBase
+    /// <summary>
+    /// DataTrack abstract base
+    /// </summary>
+    public abstract class DataTrack : Track
     {
         internal const int SYNC_SIZE         = 12;
         internal const int HEADER_SIZE       = 4;
@@ -18,52 +22,49 @@ namespace CRH.Framework.Disk
 
         internal static readonly byte[] SYNC = new byte[] { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 };
 
-        protected string     m_fileUrl;
-        protected FileInfo   m_file;
-        protected FileStream m_fileStream;
-        protected bool       m_fileOpen;
-
-        protected IsoType    m_type;
-        protected TrackMode  m_mode;
+        protected DataTrackSystem m_system;
+        protected DataTrackMode   m_mode;
         protected SectorMode m_defaultSectorMode;
         protected int        m_sectorSize;
         protected bool       m_isXa;
 
         protected PrimaryVolumeDescriptor m_primaryVolumeDescriptor;
+        protected DataTrackEntriesOrder   m_entriesOrder;
 
     // Constructors
 
-        internal DiskBase(string fileUrl, IsoType type, TrackMode mode)
+        /// <summary>
+        /// DataTrack (abstract)
+        /// </summary>
+        /// <param name="fileStream">The iso file stream</param>
+        /// <param name="system">File system used for this data track</param>
+        /// <param name="mode">The sector mode of the track</param>
+        internal DataTrack(FileStream fileStream, DataTrackSystem system, DataTrackMode mode)
+            : base(fileStream, TrackType.DATA)
         {
-            m_fileUrl    = fileUrl;
-            m_type       = type;
+            m_system     = system;
             m_mode       = mode;
-            m_sectorSize = mode == TrackMode.RAW ? 2048 : 2352;
-            m_fileOpen   = false;
+            m_sectorSize = mode == DataTrackMode.RAW ? 2048 : 2352;
             m_isXa       = false;
 
             switch (m_mode)
             {
-                case TrackMode.MODE1:
+                case DataTrackMode.MODE1:
                     m_defaultSectorMode = SectorMode.MODE1;
                     break;
-                case TrackMode.MODE2:
+                case DataTrackMode.MODE2:
                     m_defaultSectorMode = SectorMode.MODE2;
                     break;
-                case TrackMode.MODE2_XA:
+                case DataTrackMode.MODE2_XA:
                     m_defaultSectorMode = SectorMode.XA_FORM1;
                     m_isXa = true;
                     break;
-                case TrackMode.RAW:
+                case DataTrackMode.RAW:
                 default:
                     m_defaultSectorMode = SectorMode.RAW;
                     break;
             }
         }
-
-    // Abstract methods
-
-        public abstract void Close();
 
     // Méthods
 
@@ -113,7 +114,22 @@ namespace CRH.Framework.Disk
             }
         }
 
+    // Abstract accessors
+
+        public abstract IEnumerable<DataTrackIndexEntry> Entries { get; }
+        public abstract IEnumerable<DataTrackIndexEntry> DirectoryEntries { get; }
+        public abstract IEnumerable<DataTrackIndexEntry> FileEntries { get; }
+
     // Accessors
+
+        /// <summary>
+        /// Get or set the order in which entries are iterated
+        /// </summary>
+        public DataTrackEntriesOrder EntriesOrder
+        {
+            get { return m_entriesOrder; }
+            set { m_entriesOrder = value; }
+        }
 
         /// <summary>
         /// Is a CDROM/XA
@@ -127,15 +143,15 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// ISO's structure type (ISO9660, ISO9660_UDF)
         /// </summary>
-        public IsoType Type
+        public DataTrackSystem System
         {
-            get { return m_type; }
+            get { return m_system; }
         }
 
         /// <summary>
-        /// Disk's mode
+        /// DataTrack's sector mode
         /// </summary>
-        public TrackMode Mode
+        public DataTrackMode Mode
         {
             get { return m_mode; }
         }
