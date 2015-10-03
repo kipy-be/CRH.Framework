@@ -141,6 +141,14 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
+        /// Disk's defaut sector mode
+        /// </summary>
+        internal SectorMode DefautSectorMode
+        {
+            get { return m_defaultSectorMode; }
+        }
+
+        /// <summary>
         /// Size of the sector including metadata (FORM's fields)
         /// </summary>
         public int SectorSize

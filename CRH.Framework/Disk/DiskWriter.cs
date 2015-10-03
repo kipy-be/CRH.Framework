@@ -241,7 +241,7 @@ namespace CRH.Framework.Disk
         /// <param name="data">The sector's data to write</param>
         /// <param name="mode">Sector's mode</param>
         /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
-        public void WriteSector(byte[] data, SectorMode mode, XaSubHeader subHeader = null)
+        internal void WriteSector(byte[] data, SectorMode mode, XaSubHeader subHeader = null)
         {
             try
             {
@@ -296,12 +296,35 @@ namespace CRH.Framework.Disk
         /// Write a sector at the specified lba
         /// </summary>
         /// <param name="lba">Sector's LBA</param>
-        /// <param name="sector">The sector to write</param>
+        /// <param name="data">The sector to write</param>
         /// <param name="mode">Sector's mode</param>
-        public void WriteSector(long lba, byte[] sector, SectorMode mode)
+        /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
+        internal void WriteSector(long lba, byte[] data, SectorMode mode, XaSubHeader subHeader = null)
         {
             SeekSector(lba);
-            WriteSector(sector, mode);
+            WriteSector(data, mode, subHeader);
+        }
+
+        /// <summary>
+        /// Write a sector in default mode
+        /// </summary>
+        /// <param name="data">The sector to write</param>
+        /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
+        internal void WriteSector(byte[] data, XaSubHeader subHeader = null)
+        {
+            WriteSector(data, m_defaultSectorMode, subHeader);
+        }
+
+        /// <summary>
+        /// Write a sector at the specified lba
+        /// </summary>
+        /// <param name="lba">Sector's LBA</param>
+        /// <param name="sector">The sector to write</param>
+        /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
+        internal void WriteSector(long lba, byte[] data, XaSubHeader subHeader = null)
+        {
+            SeekSector(lba);
+            WriteSector(data, m_defaultSectorMode, subHeader);
         }
 
         /// <summary>
@@ -333,6 +356,40 @@ namespace CRH.Framework.Disk
                 for (int i = 0; i < count; i++)
                     WriteSector(data, SectorMode.MODE0);
             }
+        }
+
+        /// <summary>
+        /// Copy sectors from another disk
+        /// </summary>
+        /// <param name="diskIn">The disk to copy sectors from</param>
+        /// <param name="count">Number of sectors to copy</param>
+        internal void CopySectors(DiskReader diskIn, int count)
+        {
+            if (diskIn.IsXa)
+            {
+                XaSubHeader subHeader;
+                for (int i = 0; i < count; i++)
+                    WriteSector(diskIn.ReadSector(out subHeader), subHeader);
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                    WriteSector(diskIn.ReadSector());
+            }
+        }
+
+        /// <summary>
+        /// Copy sectors from another disk
+        /// </summary>
+        /// <param name="reader">The disk to copy sectors from</param>
+        /// <param name="readerLba">Starting LBA for reading</param>
+        /// <param name="writerLba">Starting LBA for writing</param>
+        /// <param name="count">Number of sectors to copy</param>
+        internal void CopySectors(DiskReader reader, long readerLba, long writerLba, int count)
+        {
+            SeekSector(writerLba);
+            reader.SeekSector(readerLba);
+            CopySectors(reader, count);
         }
 
         /// <summary>
@@ -588,10 +645,8 @@ namespace CRH.Framework.Disk
         /// Write a file
         /// </summary>
         /// <param name="filePath">The full file path of the file (eg : /FOO/BAR/FILE.EXT)</param>
-        /// <param name="stream">The stream to write the data</param></param>
         /// <param name="stream">The source stream of the file</param>
-        /// <param name="mode">The mode in wich the file has to be written</param>
-        public void WriteFile(string filePath, Stream stream, SectorMode mode)
+        public void WriteFile(string filePath, Stream stream)
         {
             if (m_index.GetEntry(filePath) != null)
                 throw new FrameworkException("Error while creating file \"{0}\" : entry already exists", filePath);
@@ -607,17 +662,14 @@ namespace CRH.Framework.Disk
             entry.ExtentSize     = (uint)stream.Length;
             entry.ExtentLba      = (uint)SectorCount;
 
-            if(m_isXa)
-            {
-                entry.XaEntry.IsForm2 = (mode == SectorMode.XA_FORM2);
-                entry.XaEntry.IsForm1 = (mode != SectorMode.XA_FORM2);
-            }
+            if (m_isXa)
+                entry.XaEntry.IsForm1 = true;
 
             DiskIndexEntry indexEntry = new DiskIndexEntry(parent, entry);
             m_index.AddToIndex(indexEntry);
 
             stream.Position = 0;
-            int dataSize = GetSectorDataSize(mode);
+            int dataSize = GetSectorDataSize(m_defaultSectorMode);
             byte[] buffer = new byte[dataSize];
             
             while(stream.Position < stream.Length)
@@ -626,12 +678,47 @@ namespace CRH.Framework.Disk
                 WriteSector
                 (
                     buffer,
-                    mode,
                     (stream.Position + dataSize >= stream.Length) ? XaSubHeader.EndOfFile : XaSubHeader.Basic
                 );
             }
         }
 
+        /// <summary>
+        /// Copy a stream (XA sound, str video, etc)
+        /// </summary>
+        /// <param name="filePath">The full file path of the file to write (eg : /FOO/BAR/FILE.EXT)</param>
+        /// <param name="diskIn">The disk to copy stream's sectors from</param>
+        /// <param name="entry">The entry of the reading disk</param>
+        public void CopyStream(string filePath, DiskReader diskIn, DiskIndexEntry inEntry)
+        {
+            if (m_index.GetEntry(filePath) != null)
+                throw new FrameworkException("Error while creating file \"{0}\" : entry already exists", filePath);
+
+            DiskIndexEntry parent = m_index.FindAParent(filePath);
+            if (parent == null)
+                throw new FrameworkException("Error while creating file \"{0}\" : parent directory does not exists", filePath);
+
+            DirectoryEntry entry = new DirectoryEntry(m_isXa);
+            entry.Name = m_regFileName.Match(filePath).Groups[1].Value + (m_appendVersionToFileName ? ";1" : "");
+            entry.Length += (byte)(entry.Name.Length - 1);
+            entry.Length += (byte)(entry.Name.Length % 2 == 0 ? 1 : 0);
+            entry.ExtentSize = (uint)inEntry.Size;
+            entry.ExtentLba = (uint)SectorCount;
+
+            DiskIndexEntry indexEntry = new DiskIndexEntry(parent, entry);
+            m_index.AddToIndex(indexEntry);
+
+            CopySectors(diskIn, entry.ExtentLba, inEntry.Lba, (int)(inEntry.Size / GetSectorDataSize(diskIn.DefautSectorMode)));
+        }
+
+        /// <summary>
+        /// Copy the system-reserved zone of the iso (16 first sectors)
+        /// </summary>
+        /// <param name="diskIn">The disk to copy sector's from</param>
+        public void CopySystemZone(DiskReader diskIn)
+        {
+            CopySectors(diskIn, 0, 0, 16);
+        }
 
     // Accessors
 
