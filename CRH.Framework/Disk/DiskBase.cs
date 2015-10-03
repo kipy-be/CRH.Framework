@@ -6,13 +6,25 @@ namespace CRH.Framework.Disk
 {
     public abstract class DiskBase
     {
+        internal const int SYNC_SIZE         = 12;
+        internal const int HEADER_SIZE       = 4;
+        internal const int SUBHEADER_SIZE    = 8;
+
+        internal const int EDC_SIZE          = 4;
+        internal const int INTERMEDIATE_SIZE = 8;
+        internal const int ECC_SIZE          = 276;
+        internal const int ECC_P_SIZE        = 172;
+        internal const int ECC_Q_SIZE        = 104;
+
+        internal static readonly byte[] SYNC = new byte[] { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 };
+
         protected string     m_fileUrl;
         protected FileInfo   m_file;
         protected FileStream m_fileStream;
         protected bool       m_fileOpen;
 
         protected IsoType    m_type;
-        protected DiskMode   m_mode;
+        protected TrackMode  m_mode;
         protected SectorMode m_defaultSectorMode;
         protected int        m_sectorSize;
         protected bool       m_isXa;
@@ -21,27 +33,28 @@ namespace CRH.Framework.Disk
 
     // Constructors
 
-        internal DiskBase(string fileUrl, IsoType type, DiskMode mode, int sectorSize = -1)
+        internal DiskBase(string fileUrl, IsoType type, TrackMode mode)
         {
-            m_fileUrl        = fileUrl;
-            m_type           = type;
-            m_mode           = mode;
-            m_sectorSize     = sectorSize == -1 ? (mode == DiskMode.RAW ? 2048 : 2352) : sectorSize;
-            m_fileOpen       = false;
-            m_isXa      = false;
+            m_fileUrl    = fileUrl;
+            m_type       = type;
+            m_mode       = mode;
+            m_sectorSize = mode == TrackMode.RAW ? 2048 : 2352;
+            m_fileOpen   = false;
+            m_isXa       = false;
 
             switch (m_mode)
             {
-                case DiskMode.MODE1:
+                case TrackMode.MODE1:
                     m_defaultSectorMode = SectorMode.MODE1;
                     break;
-                case DiskMode.MODE2:
+                case TrackMode.MODE2:
                     m_defaultSectorMode = SectorMode.MODE2;
                     break;
-                case DiskMode.MODE2_XA:
+                case TrackMode.MODE2_XA:
                     m_defaultSectorMode = SectorMode.XA_FORM1;
+                    m_isXa = true;
                     break;
-                case DiskMode.RAW:
+                case TrackMode.RAW:
                 default:
                     m_defaultSectorMode = SectorMode.RAW;
                     break;
@@ -55,9 +68,28 @@ namespace CRH.Framework.Disk
     // Méthods
 
         /// <summary>
+        /// Get the sector data size
+        /// </summary>
+        /// <param name="size"></param>
+        /// <param name="mode"></param>
+        /// <returns></returns>
+        internal static int GetSectorDataSize(SectorMode mode)
+        {
+            switch (mode)
+            {
+                case SectorMode.MODE2:
+                    return 2336;
+                case SectorMode.XA_FORM2:
+                    return 2324;
+                default:
+                    return 2048;
+            }
+        }
+
+        /// <summary>
         /// Get offset from LBA
         /// </summary>
-        protected long LBAToOffset(long lba)
+        private long LBAToOffset(long lba)
         {
             return m_sectorSize * lba;
         }
@@ -65,7 +97,7 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Move to a specific sector's LBA
         /// </summary>
-        public void SeekSector(long lba)
+        internal void SeekSector(long lba)
         {
             try
             {
@@ -103,9 +135,17 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Disk's mode
         /// </summary>
-        public DiskMode Mode
+        public TrackMode Mode
         {
             get { return m_mode; }
+        }
+
+        /// <summary>
+        /// Disk's defaut sector mode
+        /// </summary>
+        internal SectorMode DefautSectorMode
+        {
+            get { return m_defaultSectorMode; }
         }
 
         /// <summary>

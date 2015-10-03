@@ -77,6 +77,36 @@ namespace CRH.Framework.Disk
                 return DateTime.MinValue;
         }
 
+        private static string DatePartToString(int value, int size)
+        {
+            string strValue = value.ToString();
+            while(strValue.Length < size)
+                strValue = "0" + strValue;
+            return strValue;
+        }
+
+        /// <summary>
+        /// Convert the DateTime to specific datetime format of descriptor
+        /// </summary>
+        /// <param name="date">The date to convert</param>
+        internal static byte[] FromDateTime(DateTime date)
+        {
+            string value  = "";
+            byte[] buffer = new byte[17];
+
+            value += DatePartToString(date.Year, 4);
+            value += DatePartToString(date.Month, 2);
+            value += DatePartToString(date.Day, 2);
+            value += DatePartToString(date.Hour, 2);
+            value += DatePartToString(date.Minute, 2);
+            value += DatePartToString(date.Second, 2);
+            value += DatePartToString(date.Millisecond / 10, 2);
+
+            CBuffer.Copy(Encoding.ASCII.GetBytes(value), buffer);
+
+            return buffer;
+        }
+
     // Accessors
 
         /// <summary>

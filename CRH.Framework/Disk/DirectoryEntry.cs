@@ -8,7 +8,7 @@ namespace CRH.Framework.Disk
     /// <summary>
     /// Directory entry flag mask
     /// </summary>
-    internal enum DirectoryEntryFlag : byte
+    internal enum DirectoryEntryFlag
     {
         HIDDEN        = 1,
         DIRECTORY     = 1 << 1,
@@ -33,7 +33,6 @@ namespace CRH.Framework.Disk
         private byte     m_fileUnitSize;
         private byte     m_interleave;
         private ushort   m_volumeSequenceNumber;
-        private byte     m_nameLength;
         private string   m_name;
         private XaEntry  m_xaEntry;
 
@@ -54,8 +53,13 @@ namespace CRH.Framework.Disk
             m_fileUnitSize                  = 0;
             m_interleave                    = 0;
             m_volumeSequenceNumber          = 1;
-            m_nameLength                    = 0;
-            m_name                          = "";
+            m_name                          = "\0";
+
+            if (hasXa)
+            {
+                m_xaEntry = new XaEntry();
+                m_length += XaEntry.SIZE;
+            }
         }
 
     // Methods
@@ -84,10 +88,13 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Got a XA entry
         /// </summary>
-        public bool HasXa
+        internal bool HasXa
         {
             get { return m_hasXa; }
-            set { m_hasXa = value; }
+            set
+            {
+                m_hasXa = value;
+            }
         }
 
         /// <summary>
@@ -96,7 +103,7 @@ namespace CRH.Framework.Disk
         public byte Length
         {
             get { return m_length; }
-            set { m_length = value; }
+            internal set { m_length = value; }
         }
 
         /// <summary>
@@ -105,7 +112,7 @@ namespace CRH.Framework.Disk
         public byte ExtendedAttributeRecordlength
         {
             get { return m_extendedAttributeRecordlength; }
-            set { m_extendedAttributeRecordlength = value; }
+            internal set { m_extendedAttributeRecordlength = value; }
         }
 
         /// <summary>
@@ -114,7 +121,7 @@ namespace CRH.Framework.Disk
         public uint ExtentLba
         {
             get { return m_extentLba; }
-            set { m_extentLba = value; }
+            internal set { m_extentLba = value; }
         }
 
         /// <summary>
@@ -123,7 +130,7 @@ namespace CRH.Framework.Disk
         public uint ExtentSize
         {
             get { return m_extentSize; }
-            set { m_extentSize = value; }
+            internal set { m_extentSize = value; }
         }
 
         /// <summary>
@@ -132,7 +139,7 @@ namespace CRH.Framework.Disk
         public DateTime Date
         {
             get { return m_date; }
-            set { m_date = value; }
+            internal set { m_date = value; }
         }
 
         /// <summary>
@@ -141,7 +148,7 @@ namespace CRH.Framework.Disk
         public byte Flags
         {
             get { return m_flags; }
-            set { m_flags = value; }
+            internal set { m_flags = value; }
         }
 
         /// <summary>
@@ -150,7 +157,7 @@ namespace CRH.Framework.Disk
         public bool IsHidden
         {
             get { return GetFlag(DirectoryEntryFlag.HIDDEN); }
-            set { SetFlag(DirectoryEntryFlag.HIDDEN, value); }
+            internal set { SetFlag(DirectoryEntryFlag.HIDDEN, value); }
         }
 
         /// <summary>
@@ -159,7 +166,7 @@ namespace CRH.Framework.Disk
         public bool IsDirectory
         {
             get { return GetFlag(DirectoryEntryFlag.DIRECTORY); }
-            set { SetFlag(DirectoryEntryFlag.DIRECTORY, value); }
+            internal set { SetFlag(DirectoryEntryFlag.DIRECTORY, value); }
         }
 
         /// <summary>
@@ -168,7 +175,7 @@ namespace CRH.Framework.Disk
         public bool IsAssociatedFile
         {
             get { return GetFlag(DirectoryEntryFlag.ASSOCIATED); }
-            set { SetFlag(DirectoryEntryFlag.ASSOCIATED, value); }
+            internal set { SetFlag(DirectoryEntryFlag.ASSOCIATED, value); }
         }
 
         /// <summary>
@@ -177,7 +184,7 @@ namespace CRH.Framework.Disk
         public bool HasFormatInfosInExtended
         {
             get { return GetFlag(DirectoryEntryFlag.FORMAT_IN_EXT); }
-            set { SetFlag(DirectoryEntryFlag.FORMAT_IN_EXT, value); }
+            internal set { SetFlag(DirectoryEntryFlag.FORMAT_IN_EXT, value); }
         }
 
         /// <summary>
@@ -186,13 +193,13 @@ namespace CRH.Framework.Disk
         public bool HasPermissionsInfosInExtended
         {
             get { return GetFlag(DirectoryEntryFlag.PERMS_IN_EXT); }
-            set { SetFlag(DirectoryEntryFlag.PERMS_IN_EXT, value); }
+            internal set { SetFlag(DirectoryEntryFlag.PERMS_IN_EXT, value); }
         }
 
         /// <summary>
         /// Is final entry
         /// </summary>
-        public bool IsFinal
+        internal bool IsFinal
         {
             get { return !GetFlag(DirectoryEntryFlag.NOT_FINAL); }
             set { SetFlag(DirectoryEntryFlag.NOT_FINAL, !value); }
@@ -202,7 +209,7 @@ namespace CRH.Framework.Disk
         /// File unit size for files written in interleaved mode
         /// Value : 0x00 if not interleave
         /// </summary>
-        public byte FileUnitSize
+        internal byte FileUnitSize
         {
             get { return m_fileUnitSize; }
             set { m_fileUnitSize = value; }
@@ -212,7 +219,7 @@ namespace CRH.Framework.Disk
         /// Interleave gap size for files written in interleaved mode
         /// Value : 0x00 if not interleave
         /// </summary>
-        public byte Interleave
+        internal byte Interleave
         {
             get { return m_interleave; }
             set { m_interleave = value; }
@@ -221,19 +228,10 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Disk number
         /// </summary>
-        public ushort VolumeSequenceNumber
+        internal ushort VolumeSequenceNumber
         {
             get { return m_volumeSequenceNumber; }
             set { m_volumeSequenceNumber = value; }
-        }
-
-        /// <summary>
-        /// Name's length
-        /// </summary>
-        public byte NameLength
-        {
-            get { return m_nameLength; }
-            set { m_nameLength = value; }
         }
 
         /// <summary>
@@ -242,13 +240,22 @@ namespace CRH.Framework.Disk
         public string Name
         {
             get { return m_name; }
-            set { m_name = value; }
+            internal set
+            {
+                if (value.Length < 1)
+                    throw new FrameworkException("Entry name is empty");
+
+                if (value.Length > 0xFF)
+                    throw new FrameworkException("Entry name is too long");
+
+                m_name = value;
+            }
         }
 
         /// <summary>
         /// XA entry
         /// </summary>
-        public XaEntry XaEntry
+        internal XaEntry XaEntry
         {
             get { return m_xaEntry; }
             set

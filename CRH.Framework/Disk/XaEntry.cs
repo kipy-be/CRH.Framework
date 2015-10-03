@@ -13,8 +13,8 @@ namespace CRH.Framework.Disk
         PERM_GROUP_X  = 1 << 6,
         PERM_OTHERS_R = 1 << 8,
         PERM_OTHERS_X = 1 << 10,
-        MODE2_FORM1   = 1 << 11,
-        MODE2_FORM2   = 1 << 12,
+        FORM1         = 1 << 11,
+        FORM2         = 1 << 12,
         INTERLEAVED   = 1 << 13,
         CDDA          = 1 << 14,
         DIRECTORY     = 1 << 15
@@ -27,6 +27,7 @@ namespace CRH.Framework.Disk
     /// </summary>
     public sealed class XaEntry
     {
+        public const int SIZE = 14;
         public const string XA_SIGNATURE = "XA";
 
         private ushort m_groupId;
@@ -45,6 +46,7 @@ namespace CRH.Framework.Disk
             m_attributes = (ushort)XaEntryFlag.PERM_USER_R
                             | (ushort)XaEntryFlag.PERM_USER_X
                             | (ushort)XaEntryFlag.PERM_GROUP_R
+                            | (ushort)XaEntryFlag.PERM_GROUP_X
                             | (ushort)XaEntryFlag.PERM_OTHERS_R
                             | (ushort)XaEntryFlag.PERM_OTHERS_X;
             m_signature  = XA_SIGNATURE;
@@ -57,8 +59,7 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Get specific attribute state from Attributes field
         /// </summary>
-        /// <param name="mask">Le mask de l'attribut à lire</param>
-        /// <returns></returns>
+        /// <param name="mask">Attribute's bitmask to read</param>
         private bool GetAttribute(XaEntryFlag mask)
         {
             return (m_attributes & (ushort)mask) > 0;
@@ -67,8 +68,8 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Set attribute state into Attributes field
         /// </summary>
-        /// <param name="mask">Le mask du l'attribut à écrire</param>
-        /// <param name="value">La valeur</param>
+        /// <param name="mask">Attribute's bitmask to write</param>
+        /// <param name="value">Value</param>
         private void SetAttribute(XaEntryFlag mask, bool value)
         {
             if (value)
@@ -164,14 +165,14 @@ namespace CRH.Framework.Disk
         /// Is MODE2_FORM1 sector
         /// When set, opposed flag 'IsMode2Form2' is unset
         /// </summary>
-        internal bool IsMode2Form1
+        internal bool IsForm1
         {
-            get { return GetAttribute(XaEntryFlag.MODE2_FORM1); }
+            get { return GetAttribute(XaEntryFlag.FORM1); }
             set
             { 
-                SetAttribute(XaEntryFlag.MODE2_FORM1, value);
+                SetAttribute(XaEntryFlag.FORM1, value);
                 if(value)
-                    SetAttribute(XaEntryFlag.MODE2_FORM2, false);
+                    SetAttribute(XaEntryFlag.FORM2, false);
             }
         }
 
@@ -179,14 +180,14 @@ namespace CRH.Framework.Disk
         /// Is MODE2_FORM2 sector
         /// When set, opposed flag 'IsMode2Form1' is unset
         /// </summary>
-        internal bool IsMode2Form2
+        internal bool IsForm2
         {
-            get { return GetAttribute(XaEntryFlag.MODE2_FORM2); }
+            get { return GetAttribute(XaEntryFlag.FORM2); }
             set
             { 
-                SetAttribute(XaEntryFlag.MODE2_FORM2, value);
+                SetAttribute(XaEntryFlag.FORM2, value);
                 if(value)
-                    SetAttribute(XaEntryFlag.MODE2_FORM1, false);
+                    SetAttribute(XaEntryFlag.FORM1, false);
             }
         }
 

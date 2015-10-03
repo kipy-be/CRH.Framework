@@ -1,20 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
+using CRH.Framework.Common;
 
 namespace CRH.Framework.Disk
 {
+    public enum DiskEntriesOrder
+    {
+        DEFAULT = 0,
+        NAME    = 2,
+        LBA     = 1
+    }
+
     public class DiskIndex
     {
         private DiskIndexEntry       m_root;
         private List<DiskIndexEntry> m_entries;
+        private Dictionary<string, DiskIndexEntry> m_mappedEntries;
 
     // Constructors
 
-        internal DiskIndex(DiskIndexEntry root)
+        internal DiskIndex(DirectoryEntry root)
         {
-            root.FullPath = "/";
-            m_root    = root;
-            m_entries = new List<DiskIndexEntry>();
+            m_root          = new DiskIndexEntry(null, root);
+            m_entries       = new List<DiskIndexEntry>();
+            m_mappedEntries = new Dictionary<string, DiskIndexEntry>();
         }
 
     // Methods
@@ -25,18 +34,76 @@ namespace CRH.Framework.Disk
         /// <param name="entry"></param>
         internal void AddToIndex(DiskIndexEntry entry)
         {
+            if (m_mappedEntries.ContainsKey(entry.FullPath))
+                throw new FrameworkException("Error while adding entry to index : entry \"{0}\" already exists", entry.FullPath);
+
             m_entries.Add(entry);
+            m_mappedEntries.Add(entry.FullPath, entry);
+        }
+
+        /// <summary>
+        /// Sort the index by entries's LBA
+        /// </summary>
+        private List<DiskIndexEntry> EntriesByLba()
+        {
+            List<DiskIndexEntry> sortedEntries = new List<DiskIndexEntry>(m_entries);
+            sortedEntries.Sort((DiskIndexEntry e1, DiskIndexEntry e2) =>
+            {
+                return e1.Lba.CompareTo(e2.Lba);
+            });
+            return sortedEntries;
+        }
+
+        /// <summary>
+        /// Sort the index by entries's Name
+        /// </summary>
+        private List<DiskIndexEntry> EntriesByName()
+        {
+            List<DiskIndexEntry> sortedEntries = new List<DiskIndexEntry>(m_entries);
+            sortedEntries.Sort((DiskIndexEntry e1, DiskIndexEntry e2) =>
+            {
+                return e1.DirectoryEntry.Name.CompareTo(e2.DirectoryEntry.Name);
+            });
+            return sortedEntries;
+        }
+
+        /// <summary>
+        /// Get entries
+        /// </summary>
+        /// <param name="sorting">sorting mode</param>
+        /// <returns></returns>
+        private List<DiskIndexEntry> GetEntriesList(DiskEntriesOrder order)
+        {
+            switch (order)
+            {
+                case DiskEntriesOrder.LBA:
+                    return EntriesByLba();
+                case DiskEntriesOrder.NAME:
+                    return EntriesByName();
+                default:
+                    return m_entries;
+            }
+        }
+
+        /// <summary>
+        /// Get entries (iterator)
+        /// </summary>
+        /// <returns></returns>
+        internal IEnumerable<DiskIndexEntry> GetEntries(DiskEntriesOrder order = DiskEntriesOrder.DEFAULT)
+        {
+            foreach (DiskIndexEntry entry in GetEntriesList(order))
+                yield return entry;
         }
 
         /// <summary>
         /// Get directory entries only (iterator)
         /// </summary>
         /// <returns></returns>
-        internal IEnumerable<DiskIndexEntry> GetDirectories()
+        internal IEnumerable<DiskIndexEntry> GetDirectories(DiskEntriesOrder order = DiskEntriesOrder.DEFAULT)
         {
-            foreach(DiskIndexEntry entry in m_entries)
+            foreach (DiskIndexEntry entry in GetEntriesList(order))
             {
-                if(entry.IsDIrectory)
+                if(entry.IsDirectory)
                     yield return entry;
             }
         }
@@ -45,29 +112,63 @@ namespace CRH.Framework.Disk
         /// Get file entries only (iterator)
         /// </summary>
         /// <returns></returns>
-        internal IEnumerable<DiskIndexEntry> GetFiles()
+        internal IEnumerable<DiskIndexEntry> GetFiles(DiskEntriesOrder order = DiskEntriesOrder.DEFAULT)
         {
-            foreach (DiskIndexEntry entry in m_entries)
+            foreach (DiskIndexEntry entry in GetEntriesList(order))
             {
-                if (!entry.IsDIrectory)
+                if (!entry.IsDirectory)
                     yield return entry;
             }
         }
 
         /// <summary>
-        /// Get specific entry based on path
+        /// Get specific entry based on its path
         /// </summary>
         /// <param name="fullPath">The full path of the entry (eg : /FOLDER/SUB/FILE.EXT)</param>
         /// <returns></returns>
         internal DiskIndexEntry GetEntry(string fullPath)
         {
-            foreach (DiskIndexEntry entry in m_entries)
-            {
-                if (entry.FullPath == fullPath)
-                    return entry;
-            }
+            if (m_mappedEntries.ContainsKey(fullPath))
+                return m_mappedEntries[fullPath];
+            else
+                return null;
+        }
 
-            return null;
+        /// <summary>
+        /// Get parent of specific entry based on its path
+        /// </summary>
+        /// <param name="fullPath">The full path of the entry (eg : /FOLDER/SUB/FILE.EXT)</param>
+        /// <returns></returns>
+        internal DiskIndexEntry GetParent(string fullPath)
+        {
+            if (m_mappedEntries.ContainsKey(fullPath))
+                return m_mappedEntries[fullPath].ParentEntry;
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// Get the potential parent of a an entry based on its potential path
+        /// </summary>
+        /// <param name="fullPath">The full path of the potential entry (eg : /FOLDER/SUB/FILE.EXT)</param>
+        /// <returns></returns>
+        internal DiskIndexEntry FindAParent(string fullPath)
+        {
+            int lIndex = fullPath.LastIndexOf('/');
+
+            if (lIndex == fullPath.Length - 1)
+                lIndex = fullPath.LastIndexOf('/', lIndex - 1);
+
+            if (lIndex == 0)
+                return m_root;
+            else
+            {
+                fullPath = fullPath.Substring(0, lIndex);
+                if (m_mappedEntries.ContainsKey(fullPath))
+                    return m_mappedEntries[fullPath];
+                else
+                    return null;
+            }
         }
         
     // Accessors
@@ -79,15 +180,6 @@ namespace CRH.Framework.Disk
         {
             get { return m_root; }
         }
-
-        /// <summary>
-        /// Entries
-        /// </summary>
-        internal IEnumerable<DiskIndexEntry> Entries
-        {
-            get { return m_entries; }
-        }
-       
     }
 
     public class DiskIndexEntry
@@ -97,6 +189,8 @@ namespace CRH.Framework.Disk
         private List<DiskIndexEntry> m_subEntries = null;
 
         private string m_fullPath;
+        private bool   m_isRoot;
+        private uint   m_directoryAvailableSpace = 0;
         
     // Constructors
 
@@ -107,27 +201,53 @@ namespace CRH.Framework.Disk
         internal DiskIndexEntry(DiskIndexEntry parent, DirectoryEntry directoryEntry)
         {
             m_parentEntry    = parent;
+            m_isRoot         = (parent == null);
             m_directoryEntry = directoryEntry;
 
-            if (m_parentEntry != null)
+            if (!m_isRoot)
                 m_fullPath = parent.FullPath
                                 + (parent.FullPath != "/" ? "/" : "")
                                 + directoryEntry.Name;
+            else
+                m_fullPath = "/";
 
-            if (IsDIrectory)
+            if (IsDirectory)
+            {
                 m_subEntries = new List<DiskIndexEntry>();
+
+                if (!m_isRoot)
+                    m_directoryAvailableSpace = directoryEntry.ExtentSize
+                                                - parent.DirectoryEntry.Length
+                                                - parent.DirectoryEntry.ExtendedAttributeRecordlength
+                                                - directoryEntry.Length;
+                else
+                    m_directoryAvailableSpace = directoryEntry.ExtentSize
+                                                - directoryEntry.Length
+                                                - directoryEntry.ExtendedAttributeRecordlength
+                                                - directoryEntry.Length;
+
+            }
+
+            if (parent != null)
+                parent.Add(this);
         }
 
     // Methods
 
-        internal void Add(DiskIndexEntry child)
+        /// <summary>
+        /// Add sub entry to this entry (add file / folder to folder)
+        /// </summary>
+        /// <param name="subEntry">The entry to add</param>
+        private void Add(DiskIndexEntry subEntry)
         {
-            m_subEntries.Add(child);
-        }
+            if(!IsDirectory)
+                throw new FrameworkException("Error while adding entry to directory : entry \"{0}\" is not a directory", m_fullPath);
 
-        internal void AddRange(IEnumerable<DiskIndexEntry> children)
-        {
-            m_subEntries.AddRange(children);
+            if (subEntry.DirectoryEntry.Length > m_directoryAvailableSpace)
+                throw new FrameworkException("Error while adding entry to directory : directory \"{0}\" is too small", m_fullPath);
+
+            m_subEntries.Add(subEntry);
+            m_directoryAvailableSpace -= subEntry.DirectoryEntry.Length;
         }
 
     // Accessors
@@ -139,6 +259,14 @@ namespace CRH.Framework.Disk
         {
             get { return m_directoryEntry; }
             set { m_directoryEntry = value; }
+        }
+
+        /// <summary>
+        /// Is this entry root
+        /// </summary>
+        internal bool IsRoot
+        {
+            get { return m_isRoot; }
         }
 
         /// <summary>
@@ -160,10 +288,19 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// The number of files contained in the directory
+        /// The directory available space (used only in writing mode)
+        /// </summary>
+        internal uint DirectoryAvailableSpace
+        {
+            get { return m_directoryAvailableSpace; }
+            set { m_directoryAvailableSpace = value; }
+        }
+
+        /// <summary>
+        /// The number of files/directories contained in the directory
         /// Value : -1 if not directory
         /// </summary>
-        public int ChildrenCount
+        public int SubEntriesCount
         {
             get { return m_subEntries == null ? -1 : m_subEntries.Count; }
         }
@@ -171,23 +308,36 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// is Directory
         /// </summary>
-        public bool IsDIrectory
+        public bool IsDirectory
         {
             get { return m_directoryEntry.IsDirectory; }
+        }
+
+        public bool IsStream
+        {
+            get { return m_directoryEntry.HasXa ? m_directoryEntry.XaEntry.IsForm2 : false; }
         }
 
         /// <summary>
         /// Size of the entry
         /// </summary>
-        public long Size
+        public uint Size
         {
             get { return m_directoryEntry.ExtentSize; }
         }
 
         /// <summary>
+        /// Length of the DirectoryEntry
+        /// </summary>
+        internal uint Length
+        {
+            get { return m_directoryEntry.Length; }
+        }
+
+        /// <summary>
         /// Lba of the entry
         /// </summary>
-        public long Lba
+        public uint Lba
         {
             get { return m_directoryEntry.ExtentLba;  }
         }

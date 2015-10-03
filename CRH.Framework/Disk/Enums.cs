@@ -24,7 +24,10 @@ namespace CRH.Framework.Disk
         PS2
     }
 
-    public enum DiskMode
+    /// <summary>
+    /// Track's mode
+    /// </summary>
+    public enum TrackMode
     {
         RAW      = 0,
         MODE1    = 1,
@@ -37,18 +40,28 @@ namespace CRH.Framework.Disk
     /// </summary>
     public enum SectorMode
     {
-        RAW      = 0,
+        RAW      = -1,
+        MODE0    = 0,
         MODE1    = 1,
         MODE2    = 2,
 
         /// <summary>
         /// Aka MODE2_FORM1
         /// </summary>
-        XA_FORM1 = 3,
+        XA_FORM1 = 21,
 
         /// <summary>
         /// Aka MODE2_FORM2
         /// </summary
-        XA_FORM2 = 4
+        XA_FORM2 = 22
+    }
+
+    /// <summary>
+    /// Path table type (little or big endian)
+    /// </summary>
+    internal enum PathTableType
+    {
+        LE = 1,
+        BE = 2
     }
 }

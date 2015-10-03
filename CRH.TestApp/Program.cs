@@ -27,8 +27,8 @@ namespace CRH.TestApp
 
             // Testing stuffs
 
-            ExtractFiles();
-            //TestBcd();
+            //ExtractFiles();
+            CreateIso();
 
             // --------------
 
@@ -39,19 +39,26 @@ namespace CRH.TestApp
             m_logs.Dispose();
         }
 
+        /// <summary>
+        /// Extract all files from ISO
+        /// </summary>
         static void ExtractFiles()
         {
             try
             {
                 // Hardcoded paths, yes, it's a test.
 
-                DiskReader diskIn = new DiskReader(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", IsoType.ISO9660, DiskMode.MODE2_XA);
+                DiskReader diskIn = new DiskReader(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", IsoType.ISO9660, TrackMode.MODE2_XA);
                 //DiskReader diskIn = new DiskReader(@"D:\Work\Traductions\Suikoden PSP\CD\Suikoden_PSP_JAP.iso", IsoType.ISO9660, DiskMode.RAW);
 
                 string outPath = @"C:\Users\Kipy\Desktop\TestOut";
 
-                foreach(DiskIndexEntry entry in diskIn.FileEntries)
+                diskIn.EntriesOrder = DiskEntriesOrder.LBA;
+                foreach (DiskIndexEntry entry in diskIn.FileEntries)
+                {
+                    Console.WriteLine("Extracting {0}...", entry.FullPath);
                     diskIn.ExtractFile(entry.FullPath, outPath + entry.FullPath);
+                }
 
                 diskIn.Close();
             }
@@ -61,20 +68,48 @@ namespace CRH.TestApp
             }
         }
 
-        static void TestBcd()
+        static void CreateIso()
         {
-            byte dec = 0;
-            do
+            try
             {
-                string hex = Converter.DecToHex(dec, 2);
-                byte bcd = Converter.DecToBcd(dec);
-                string bcdHex = Converter.DecToHex(bcd, 2);
-                byte decFromBcd = Converter.BcdToDec(bcd);
-                string decFromBcdHex = Converter.DecToHex(bcd, 2);
-                Console.WriteLine("dec = {0} ({1})\tbcd = {2} ({3})\tback = {4} ({5})", dec, hex, bcd, bcdHex, decFromBcd, decFromBcdHex);
-                dec++;
+                DiskReader diskIn = new DiskReader(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", IsoType.ISO9660, TrackMode.MODE2_XA);
+                DiskWriter diskOut = new DiskWriter(@"C:\Users\Kipy\Desktop\test.iso", IsoType.ISO9660, TrackMode.MODE2_XA);
+         
+                diskOut.Prepare
+                (
+                    "SUIKODEN-TEST",
+                    ((int)diskIn.PrimaryVolumeDescriptor.PathTableSize / 2048) + 1,
+                    (int)diskIn.PrimaryVolumeDescriptor.RootDirectoryEntry.ExtentSize / 2048
+                );
+
+                diskOut.CopySystemZone(diskIn);
+                
+                Stream ms;
+                diskIn.EntriesOrder = DiskEntriesOrder.LBA;
+                foreach (DiskIndexEntry entry in diskIn.Entries)
+                {
+                    Console.WriteLine("{0} {1}", entry.FullPath, (entry.IsDirectory ? "D" : "F") + (entry.IsStream ? "M" : ""));
+
+                    if (entry.IsDirectory)
+                        diskOut.CreateDirectory(entry.FullPath, (int)entry.Size / 2048);
+                    else if (entry.IsStream)
+                        diskOut.CopyStream(entry.FullPath, diskIn, entry);
+                    else
+                    {
+                        ms = diskIn.ReadFile(entry.FullPath);
+                        diskOut.WriteFile(entry.FullPath, ms);
+                    }
+                }
+
+                diskOut.Finalize();
+                diskOut.Close();
+
+                diskIn.Close();
             }
-            while (dec < 128);
+            catch (Exception ex)
+            {
+                Log("Error : {0}", ex.Message);
+            }
         }
 
     // Logs

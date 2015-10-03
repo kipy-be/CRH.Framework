@@ -32,7 +32,7 @@ namespace CRH.Framework.IO
         /// <param name="index">Start offset</param>
         /// <param name="count">Number of bytes to read (if not set, all bytes from source will be read)</param>
         /// <returns></returns>
-        public static byte[] Create(byte[] data, int index, int count = -1)
+        public static byte[] Create(byte[] data, int index = 0, int count = -1)
         {
             if (count == -1)
                 count = data.Length;
@@ -63,6 +63,26 @@ namespace CRH.Framework.IO
                 buffer[indexBuffer + i] = data[indexData + i];
 
             return buffer;
+        }
+
+        /// <summary>
+        /// Check if two buffer are equals
+        /// </summary>
+        /// <param name="buffer1">The first buffer</param>
+        /// <param name="buffer2">The second buffer</param>
+        /// <returns></returns>
+        public static bool IsEquals(byte[] buffer1, byte[] buffer2)
+        {
+            if (buffer1.Length != buffer2.Length)
+                return false;
+
+            for(int i = 0, max = buffer1.Length; i < max; i++)
+            {
+                if (buffer1[i] != buffer2[i])
+                    return false;
+            }
+
+            return true;
         }
     }
 }
