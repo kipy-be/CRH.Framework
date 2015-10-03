@@ -80,7 +80,7 @@ namespace CRH.Framework.Disk
         /// Read a sector's data
         /// </summary>
         /// <param name="mode">Sector's mode</param>
-        public byte[] ReadSector(SectorMode mode)
+        internal byte[] ReadSector(SectorMode mode)
         {
             try
             {
@@ -130,7 +130,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         /// <param name="mode">Sector's mode</param>
         /// <param name="subHeader">Sub header container to write sub header to</param>
-        public byte[] ReadSector(SectorMode mode, out XaSubHeader subHeader)
+        internal byte[] ReadSector(SectorMode mode, out XaSubHeader subHeader)
         {
             try
             {
@@ -183,18 +183,58 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Read a sector
+        /// Read a sector's data
         /// </summary>
         /// <param name="lba">Sector's LBA to read</param>
         /// <param name="mode">Sector's mode</param>
-        public byte[] ReadSector(long lba, SectorMode mode)
+        internal byte[] ReadSector(long lba, SectorMode mode)
         {
             SeekSector(lba);
             return ReadSector(mode);
         }
 
         /// <summary>
-        /// Read several consecutives sectors
+        /// Read a sector's data, including sub header
+        /// </summary>
+        /// <param name="lba">Sector's LBA to read</param>
+        /// <param name="mode">Sector's mode</param>
+        /// <param name="subHeader">Sub header container to write sub header to</param>
+        internal byte[] ReadSector(long lba, SectorMode mode, out XaSubHeader subHeader)
+        {
+            SeekSector(lba);
+            return ReadSector(mode, out subHeader);
+        }
+
+        /// <summary>
+        /// Read a sector's data in defaut sector mode
+        /// </summary>
+        internal byte[] ReadSector()
+        {
+            return ReadSector(m_defaultSectorMode);
+        }
+
+        /// <summary>
+        /// Read a sector's data in defaut sector mode, including sub header
+        /// </summary>
+        /// <param name="subHeader">Sub header container to write sub header to</param>
+        internal byte[] ReadSector(out XaSubHeader subHeader)
+        {
+            return ReadSector(m_defaultSectorMode, out subHeader);
+        }
+
+        /// <summary>
+        /// Read a sector
+        /// </summary>
+        /// <param name="lba">Sector's LBA to read</param>
+        /// <param name="subHeader">Sub header container to write sub header to</param>
+        internal byte[] ReadSector(long lba, out XaSubHeader subHeader)
+        {
+            SeekSector(lba);
+            return ReadSector(m_defaultSectorMode, out subHeader);
+        }
+
+        /// <summary>
+        /// Read several consecutives sectors's data
         /// </summary>
         /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>

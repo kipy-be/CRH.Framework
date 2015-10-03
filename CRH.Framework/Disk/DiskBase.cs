@@ -89,7 +89,7 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Get offset from LBA
         /// </summary>
-        protected long LBAToOffset(long lba)
+        private long LBAToOffset(long lba)
         {
             return m_sectorSize * lba;
         }
@@ -97,7 +97,7 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Move to a specific sector's LBA
         /// </summary>
-        protected void SeekSector(long lba)
+        internal void SeekSector(long lba)
         {
             try
             {
