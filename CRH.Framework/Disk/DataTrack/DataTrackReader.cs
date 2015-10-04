@@ -495,6 +495,10 @@ namespace CRH.Framework.Disk.DataTrack
                 descriptor.OptTypeLPathTableLBA = stream.ReadUInt32();
                 descriptor.TypeMPathTableLBA = stream.ReadUInt32BE();
                 descriptor.OptTypeMPathTableLBA = stream.ReadUInt32BE();
+
+                if (descriptor.OptTypeLPathTableLBA != 0 || descriptor.OptTypeMPathTableLBA != 0)
+                    m_hasOptionalPathTable = true;
+
                 descriptor.RootDirectoryEntry = ReadDirectoryEntry(stream);
 
                 // TODO : cas des fichiers

@@ -26,6 +26,7 @@ namespace CRH.Framework.Disk.DataTrack
         protected DataTrackMode   m_mode;
         protected SectorMode m_defaultSectorMode;
         protected bool       m_isXa;
+        protected bool       m_hasOptionalPathTable;
 
         protected PrimaryVolumeDescriptor m_primaryVolumeDescriptor;
         protected DataTrackEntriesOrder   m_entriesOrder;
@@ -160,6 +161,15 @@ namespace CRH.Framework.Disk.DataTrack
         public long SectorCount
         {
             get { return m_fileStream.Length / m_sectorSize; }
+        }
+
+        /// <summary>
+        /// Has optional path table
+        /// </summary>
+        public bool HasOptionalPathTable
+        {
+            get { return m_hasOptionalPathTable; }
+            set { m_hasOptionalPathTable = value; }
         }
     }
 }
