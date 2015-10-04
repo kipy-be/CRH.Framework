@@ -5,7 +5,7 @@ using System.Text;
 using CRH.Framework.Common;
 using CRH.Framework.IO;
 
-namespace CRH.Framework.Disk
+namespace CRH.Framework.Disk.DataTrack
 {
     /// <summary>
     /// Volume descriptor type

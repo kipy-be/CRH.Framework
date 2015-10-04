@@ -4,7 +4,10 @@ using System.Text;
 using System.Diagnostics;
 using CRH.Framework.Common;
 using CRH.Framework.Disk;
+using CRH.Framework.Disk.AudioTrack;
+using CRH.Framework.Disk.DataTrack;
 using CRH.Framework.Utils;
+
 
 namespace CRH.TestApp
 {
@@ -28,6 +31,7 @@ namespace CRH.TestApp
             // Testing stuffs
 
             //ExtractFiles();
+            //ExtractMultiTracks();
             CreateIso();
 
             // --------------
@@ -46,23 +50,59 @@ namespace CRH.TestApp
         {
             try
             {
-                // Hardcoded paths, yes, it's a test.
-
-                DiskReader diskIn = new DiskReader(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", IsoType.ISO9660, TrackMode.MODE2_XA);
-                //DiskReader diskIn = new DiskReader(@"D:\Work\Traductions\Suikoden PSP\CD\Suikoden_PSP_JAP.iso", IsoType.ISO9660, DiskMode.RAW);
-
+                DiskReader diskIn = DiskReader.InitSingleTrack(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", DiskFileSystem.ISO9660, DataTrackMode.MODE2_XA, false, false);
                 string outPath = @"C:\Users\Kipy\Desktop\TestOut";
-
-                diskIn.EntriesOrder = DiskEntriesOrder.LBA;
-                foreach (DiskIndexEntry entry in diskIn.FileEntries)
+                
+                DataTrackReader trackIn = (DataTrackReader)diskIn.Track;
+                trackIn.ReadVolumeDescriptors();
+                trackIn.BuildIndex();
+                foreach (DataTrackIndexEntry entry in trackIn.FileEntries)
                 {
                     Console.WriteLine("Extracting {0}...", entry.FullPath);
-                    diskIn.ExtractFile(entry.FullPath, outPath + entry.FullPath);
+                    trackIn.ExtractFile(entry.FullPath, outPath + entry.FullPath);
                 }
 
                 diskIn.Close();
             }
-            catch(Exception ex)
+            catch (Exception ex)
+            {
+                Log("Error : {0}", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Extract all files from ISO multi tracks
+        /// </summary>
+        static void ExtractMultiTracks()
+        {
+            try
+            {
+                DiskReader diskIn = DiskReader.InitMultiTracks(@"C:\Users\Kipy\Desktop\Tests\207 GENSO SUIKODEN (J).cue", DiskFileSystem.ISO9660);
+                string outPath = @"C:\Users\Kipy\Desktop\TestOut";
+
+                foreach (Track trackIn in diskIn.Tracks)
+                {
+                    if (trackIn.IsData)
+                    {
+                        DataTrackReader dataTrackIn = (DataTrackReader)trackIn;
+                        dataTrackIn.ReadVolumeDescriptors();
+                        dataTrackIn.BuildIndex();
+                        foreach (DataTrackIndexEntry entry in dataTrackIn.FileEntries)
+                        {
+                            Console.WriteLine("Extracting {0}...", entry.FullPath);
+                            dataTrackIn.ExtractFile(entry.FullPath, outPath + @"\DATA\" + entry.FullPath);
+                        }
+                    }
+                    else if(trackIn.IsAudio)
+                    {
+                        AudioTrackReader audioTrackIn = (AudioTrackReader)trackIn;
+                        audioTrackIn.Extract(outPath + @"\AUDIO\AUDIO_" + trackIn.TrackNumber + ".WAV", AudioFileContainer.WAVE);
+                    }
+                }
+
+                diskIn.Close();
+            }
+            catch (Exception ex)
             {
                 Log("Error : {0}", ex.Message);
             }
@@ -72,36 +112,39 @@ namespace CRH.TestApp
         {
             try
             {
-                DiskReader diskIn = new DiskReader(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", IsoType.ISO9660, TrackMode.MODE2_XA);
-                DiskWriter diskOut = new DiskWriter(@"C:\Users\Kipy\Desktop\test.iso", IsoType.ISO9660, TrackMode.MODE2_XA);
-         
-                diskOut.Prepare
+                DiskReader diskIn = DiskReader.InitSingleTrack(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", DiskFileSystem.ISO9660, DataTrackMode.MODE2_XA);
+                DiskWriter diskOut = DiskWriter.InitSingleTrack(@"C:\Users\Kipy\Desktop\test.iso", DiskFileSystem.ISO9660, DataTrackMode.MODE2_XA);
+
+                DataTrackReader trackIn  = (DataTrackReader)diskIn.Track;
+                DataTrackWriter trackOut = (DataTrackWriter)diskOut.Track;
+
+                trackOut.Prepare
                 (
                     "SUIKODEN-TEST",
-                    ((int)diskIn.PrimaryVolumeDescriptor.PathTableSize / 2048) + 1,
-                    (int)diskIn.PrimaryVolumeDescriptor.RootDirectoryEntry.ExtentSize / 2048
+                    ((int)trackIn.PrimaryVolumeDescriptor.PathTableSize / 2048) + 1,
+                    (int)trackIn.PrimaryVolumeDescriptor.RootDirectoryEntry.ExtentSize / 2048
                 );
 
-                diskOut.CopySystemZone(diskIn);
-                
+                trackOut.CopySystemZone(trackIn);
+
                 Stream ms;
-                diskIn.EntriesOrder = DiskEntriesOrder.LBA;
-                foreach (DiskIndexEntry entry in diskIn.Entries)
+                trackIn.EntriesOrder = DataTrackEntriesOrder.LBA;
+                foreach (DataTrackIndexEntry entry in trackIn.Entries)
                 {
                     Console.WriteLine("{0} {1}", entry.FullPath, (entry.IsDirectory ? "D" : "F") + (entry.IsStream ? "M" : ""));
 
                     if (entry.IsDirectory)
-                        diskOut.CreateDirectory(entry.FullPath, (int)entry.Size / 2048);
+                        trackOut.CreateDirectory(entry.FullPath, (int)entry.Size / 2048);
                     else if (entry.IsStream)
-                        diskOut.CopyStream(entry.FullPath, diskIn, entry);
+                        trackOut.CopyStream(entry.FullPath, trackIn, entry);
                     else
                     {
-                        ms = diskIn.ReadFile(entry.FullPath);
-                        diskOut.WriteFile(entry.FullPath, ms);
+                        ms = trackIn.ReadFile(entry.FullPath);
+                        trackOut.WriteFile(entry.FullPath, ms);
                     }
                 }
 
-                diskOut.Finalize();
+                trackOut.Finalize();
                 diskOut.Close();
 
                 diskIn.Close();

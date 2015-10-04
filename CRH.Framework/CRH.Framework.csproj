@@ -42,23 +42,32 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Disk\DiskWriter.cs">
+    <Compile Include="Disk\AudioTrack\AudioTrack.cs" />
+    <Compile Include="Disk\AudioTrack\AudioTrackReader.cs" />
+    <Compile Include="Disk\AudioTrack\Enums.cs" />
+    <Compile Include="Disk\DataTrack\DataTrackIndexEntry.cs" />
+    <Compile Include="Disk\DataTrack\DataTrackWriter.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Disk\EccEdc.cs">
+    <Compile Include="Disk\DataTrack\Enums.cs" />
+    <Compile Include="Disk\Disk.cs" />
+    <Compile Include="Disk\DiskReader.cs" />
+    <Compile Include="Disk\DiskWriter.cs" />
+    <Compile Include="Disk\DataTrack\EccEdc.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Disk\XaSubHeader.cs" />
+    <Compile Include="Disk\DataTrack\XaSubHeader.cs" />
+    <Compile Include="Disk\Track.cs" />
     <Compile Include="IO\CBinaryWriter.cs" />
     <Compile Include="IO\ExtensionMethods.cs" />
     <Compile Include="Common\Infos.cs" />
-    <Compile Include="Disk\DiskBase.cs" />
-    <Compile Include="Disk\DiskReader.cs" />
+    <Compile Include="Disk\DataTrack\DataTrack.cs" />
+    <Compile Include="Disk\DataTrack\DataTrackReader.cs" />
     <Compile Include="Disk\Enums.cs" />
-    <Compile Include="Disk\DirectoryEntry.cs" />
-    <Compile Include="Disk\DiskIndex.cs" />
-    <Compile Include="Disk\VolumeDescriptors.cs" />
-    <Compile Include="Disk\XaEntry.cs" />
+    <Compile Include="Disk\DataTrack\DirectoryEntry.cs" />
+    <Compile Include="Disk\DataTrack\DataTrackIndex.cs" />
+    <Compile Include="Disk\DataTrack\VolumeDescriptors.cs" />
+    <Compile Include="Disk\DataTrack\XaEntry.cs" />
     <Compile Include="IO\CBinaryReader.cs" />
     <Compile Include="Common\Exceptions.cs" />
     <Compile Include="IO\CBuffer.cs" />
