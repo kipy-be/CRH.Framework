@@ -6,9 +6,9 @@ namespace CRH.Framework.Disk.DataTrack
 {
     public enum DataTrackEntriesOrder
     {
-        DEFAULT = 0,
-        NAME    = 2,
-        LBA     = 1
+        DEFAULT   = 0,
+        LBA       = 1,
+        NAME      = 2
     }
 
     public class DataTrackIndex
