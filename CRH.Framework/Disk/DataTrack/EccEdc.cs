@@ -5,7 +5,7 @@
 using System;
 using CRH.Framework.IO;
 
-namespace CRH.Framework.Disk
+namespace CRH.Framework.Disk.DataTrack
 {
     internal static class EccEdc
     {

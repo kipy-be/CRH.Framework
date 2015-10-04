@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using CRH.Framework.Common;
 using CRH.Framework.IO;
 using CRH.Framework.Utils;
+using CRH.Framework.Disk.DataTrack;
 
 namespace CRH.Framework.Disk
 {
@@ -18,9 +19,10 @@ namespace CRH.Framework.Disk
         /// DiskWriter (multi tracks)
         /// </summary>
         /// <param name="fileUrl">Path to the ISO file to create</param>
+        /// <param name="system">File system used for data track</param>
         /// <param name="overwriteIfExists">Overwite file if exists</param>
-        private DiskWriter(string fileUrl, bool overwriteIfExists = true)
-            : base(fileUrl)
+        private DiskWriter(string fileUrl, DiskFileSystem system, bool overwriteIfExists = true)
+            : base(fileUrl, system)
         {
             try
             {
@@ -46,10 +48,10 @@ namespace CRH.Framework.Disk
         /// <param name="system">File system used for the track</param>
         /// <param name="mode">The sector mode of the track</param>
         /// <param name="overwriteIfExists">Overwite file if exists</param>
-        private DiskWriter(string fileUrl, DataTrackSystem system, DataTrackMode mode, bool overwriteIfExists = true)
-            : this(fileUrl, overwriteIfExists)
+        private DiskWriter(string fileUrl, DiskFileSystem system, DataTrackMode mode, bool overwriteIfExists = true)
+            : this(fileUrl, system, overwriteIfExists)
         {
-            m_tracks.Add(new DataTrackWriter(m_stream, system, mode));
+            m_tracks.Add(new DataTrackWriter(m_stream, 1, system, mode));
         }
 
     // Methods
@@ -58,10 +60,11 @@ namespace CRH.Framework.Disk
         /// Initialize a new multi tracks DiskWriter
         /// </summary>
         /// <param name="fileUrl">Path to the ISO file to create</param>
+        /// <param name="system">File system used for the track</param>
         /// <param name="overwriteIfExists">Overwite file if exists</param>
-        public static DiskWriter InitMultiTracks(string fileUrl, bool overwriteIfExists = true)
+        public static DiskWriter InitMultiTracks(string fileUrl, DiskFileSystem system, bool overwriteIfExists = true)
         {
-            return new DiskWriter(fileUrl, overwriteIfExists);
+            return new DiskWriter(fileUrl, system, overwriteIfExists);
         }
 
         /// <summary>
@@ -71,7 +74,7 @@ namespace CRH.Framework.Disk
         /// <param name="system">File system used for the track</param>
         /// <param name="mode">The sector mode of the track</param>
         /// <param name="overwriteIfExists">Overwite file if exists</param>
-        public static DiskWriter InitSingleTrack(string fileUrl, DataTrackSystem system, DataTrackMode mode, bool overwriteIfExists = true)
+        public static DiskWriter InitSingleTrack(string fileUrl, DiskFileSystem system, DataTrackMode mode, bool overwriteIfExists = true)
         {
             return new DiskWriter(fileUrl, system, mode, overwriteIfExists);
         }

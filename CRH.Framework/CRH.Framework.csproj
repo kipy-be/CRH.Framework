@@ -42,6 +42,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Disk\AudioTrack\AudioTrack.cs" />
+    <Compile Include="Disk\AudioTrack\AudioTrackReader.cs" />
+    <Compile Include="Disk\AudioTrack\Enums.cs" />
     <Compile Include="Disk\DataTrack\DataTrackIndexEntry.cs" />
     <Compile Include="Disk\DataTrack\DataTrackWriter.cs">
       <SubType>Code</SubType>
@@ -72,9 +75,7 @@
     <Compile Include="Utils\Converter.cs" />
     <Compile Include="Utils\ExtensionMethods.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Disk\AudioTrack\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

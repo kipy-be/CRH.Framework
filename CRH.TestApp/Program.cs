@@ -4,7 +4,10 @@ using System.Text;
 using System.Diagnostics;
 using CRH.Framework.Common;
 using CRH.Framework.Disk;
+using CRH.Framework.Disk.AudioTrack;
+using CRH.Framework.Disk.DataTrack;
 using CRH.Framework.Utils;
+
 
 namespace CRH.TestApp
 {
@@ -28,6 +31,7 @@ namespace CRH.TestApp
             // Testing stuffs
 
             //ExtractFiles();
+            //ExtractMultiTracks();
             CreateIso();
 
             // --------------
@@ -46,10 +50,12 @@ namespace CRH.TestApp
         {
             try
             {
-                DiskReader diskIn = DiskReader.InitSingleTrack(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", DataTrackSystem.ISO9660, DataTrackMode.MODE2_XA);
+                DiskReader diskIn = DiskReader.InitSingleTrack(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", DiskFileSystem.ISO9660, DataTrackMode.MODE2_XA, false, false);
                 string outPath = @"C:\Users\Kipy\Desktop\TestOut";
                 
                 DataTrackReader trackIn = (DataTrackReader)diskIn.Track;
+                trackIn.ReadVolumeDescriptors();
+                trackIn.BuildIndex();
                 foreach (DataTrackIndexEntry entry in trackIn.FileEntries)
                 {
                     Console.WriteLine("Extracting {0}...", entry.FullPath);
@@ -64,12 +70,50 @@ namespace CRH.TestApp
             }
         }
 
+        /// <summary>
+        /// Extract all files from ISO multi tracks
+        /// </summary>
+        static void ExtractMultiTracks()
+        {
+            try
+            {
+                DiskReader diskIn = DiskReader.InitMultiTracks(@"C:\Users\Kipy\Desktop\Tests\207 GENSO SUIKODEN (J).cue", DiskFileSystem.ISO9660);
+                string outPath = @"C:\Users\Kipy\Desktop\TestOut";
+
+                foreach (Track trackIn in diskIn.Tracks)
+                {
+                    if (trackIn.IsData)
+                    {
+                        DataTrackReader dataTrackIn = (DataTrackReader)trackIn;
+                        dataTrackIn.ReadVolumeDescriptors();
+                        dataTrackIn.BuildIndex();
+                        foreach (DataTrackIndexEntry entry in dataTrackIn.FileEntries)
+                        {
+                            Console.WriteLine("Extracting {0}...", entry.FullPath);
+                            dataTrackIn.ExtractFile(entry.FullPath, outPath + @"\DATA\" + entry.FullPath);
+                        }
+                    }
+                    else if(trackIn.IsAudio)
+                    {
+                        AudioTrackReader audioTrackIn = (AudioTrackReader)trackIn;
+                        audioTrackIn.Extract(outPath + @"\AUDIO\AUDIO_" + trackIn.TrackNumber + ".WAV", AudioFileContainer.WAVE);
+                    }
+                }
+
+                diskIn.Close();
+            }
+            catch (Exception ex)
+            {
+                Log("Error : {0}", ex.Message);
+            }
+        }
+
         static void CreateIso()
         {
             try
             {
-                DiskReader diskIn = DiskReader.InitSingleTrack(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", DataTrackSystem.ISO9660, DataTrackMode.MODE2_XA);
-                DiskWriter diskOut = DiskWriter.InitSingleTrack(@"C:\Users\Kipy\Desktop\test.iso", DataTrackSystem.ISO9660, DataTrackMode.MODE2_XA);
+                DiskReader diskIn = DiskReader.InitSingleTrack(@"D:\Work\Traductions\Suikoden\CD\Suikoden_ORIGINAL.bin", DiskFileSystem.ISO9660, DataTrackMode.MODE2_XA);
+                DiskWriter diskOut = DiskWriter.InitSingleTrack(@"C:\Users\Kipy\Desktop\test.iso", DiskFileSystem.ISO9660, DataTrackMode.MODE2_XA);
 
                 DataTrackReader trackIn  = (DataTrackReader)diskIn.Track;
                 DataTrackWriter trackOut = (DataTrackWriter)diskOut.Track;

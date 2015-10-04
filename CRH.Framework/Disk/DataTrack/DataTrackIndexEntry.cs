@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using CRH.Framework.Common;
 
-namespace CRH.Framework.Disk
+namespace CRH.Framework.Disk.DataTrack
 {
     public class DataTrackIndexEntry
     {

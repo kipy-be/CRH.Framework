@@ -6,7 +6,7 @@ using CRH.Framework.Common;
 using CRH.Framework.IO;
 using CRH.Framework.Utils;
 
-namespace CRH.Framework.Disk
+namespace CRH.Framework.Disk.DataTrack
 {
     public sealed class DataTrackWriter : DataTrack
     {
@@ -26,10 +26,11 @@ namespace CRH.Framework.Disk
         /// DataTrackWriter
         /// </summary>
         /// <param name="stream">The stream of iso</param>
+        /// <param name="trackNumber">The track number</param>
         /// <param name="system">File system used for this data track</param>
         /// <param name="mode">The sector mode of the track</param>
-        internal DataTrackWriter(CBinaryWriter stream, DataTrackSystem type, DataTrackMode mode)
-            : base((FileStream)stream.BaseStream, type, mode)
+        internal DataTrackWriter(CBinaryWriter stream, int trackNumber, DiskFileSystem system, DataTrackMode mode)
+            : base((FileStream)stream.BaseStream, trackNumber,system, mode)
         {
             m_stream    = stream;
             m_prepared  = false;

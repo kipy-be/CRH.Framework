@@ -3,17 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CRH.Framework.Disk
+namespace CRH.Framework.Disk.DataTrack
 {
-    /// <summary>
-    /// DataTrack's file system
-    /// </summary>
-    public enum DataTrackSystem
-    {
-        ISO9660,
-        ISO9660_UDF
-    }
-
     /// <summary>
     /// DataTrack's mode
     /// </summary>

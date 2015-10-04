@@ -6,7 +6,7 @@ using CRH.Framework.Common;
 using CRH.Framework.IO;
 using CRH.Framework.Utils;
 
-namespace CRH.Framework.Disk
+namespace CRH.Framework.Disk.DataTrack
 {
     public sealed class DataTrackReader : DataTrack
     {
@@ -24,12 +24,13 @@ namespace CRH.Framework.Disk
         /// DataTrackReader
         /// </summary>
         /// <param name="stream">The stream of iso</param>
+        /// <param name="trackNumber">The track number</param>
         /// <param name="system">File system used for this data track</param>
         /// <param name="mode">The sector mode of the track</param>
         /// <param name="readDescriptors">Read descriptors immediately</param>
         /// <param name="buildIndex">Build the index cache immediately</param>
-        internal DataTrackReader(CBinaryReader stream, DataTrackSystem system, DataTrackMode mode, bool readDescriptors = true, bool buildIndex = true)
-            : base((FileStream)stream.BaseStream, system, mode)
+        internal DataTrackReader(CBinaryReader stream, int trackNumber, DiskFileSystem system, DataTrackMode mode, bool readDescriptors = true, bool buildIndex = true)
+            : base((FileStream)stream.BaseStream, trackNumber, system, mode)
         {
             m_stream          = stream;
             m_descriptorsRead = false;
@@ -44,7 +45,7 @@ namespace CRH.Framework.Disk
                 if (buildIndex)
                     BuildIndex();
 
-                m_stream.Position = 0;
+                SeekSector(0);
             }
             catch (FrameworkException ex)
             {
@@ -220,7 +221,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
-        public byte[] ReadSectors(int count, SectorMode mode)
+        internal byte[] ReadSectors(int count, SectorMode mode)
         {
             int dataSize = GetSectorDataSize(mode);
             byte[] data = new byte[count * dataSize];
@@ -237,7 +238,7 @@ namespace CRH.Framework.Disk
         /// <param name="lba">Starting sector's LBA</param>
         /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
-        public byte[] ReadSectors(long lba, int count, SectorMode mode)
+        internal byte[] ReadSectors(long lba, int count, SectorMode mode)
         {
             SeekSector(lba);
             return ReadSectors(count, mode);

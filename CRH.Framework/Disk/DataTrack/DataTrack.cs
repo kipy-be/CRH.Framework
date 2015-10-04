@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using CRH.Framework.Common;
 
-namespace CRH.Framework.Disk
+namespace CRH.Framework.Disk.DataTrack
 {
     /// <summary>
     /// DataTrack abstract base
@@ -22,10 +22,9 @@ namespace CRH.Framework.Disk
 
         internal static readonly byte[] SYNC = new byte[] { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 };
 
-        protected DataTrackSystem m_system;
+        protected DiskFileSystem m_system;
         protected DataTrackMode   m_mode;
         protected SectorMode m_defaultSectorMode;
-        protected int        m_sectorSize;
         protected bool       m_isXa;
 
         protected PrimaryVolumeDescriptor m_primaryVolumeDescriptor;
@@ -37,15 +36,17 @@ namespace CRH.Framework.Disk
         /// DataTrack (abstract)
         /// </summary>
         /// <param name="fileStream">The iso file stream</param>
+        /// <param name="trackNumber">The track number</param>
         /// <param name="system">File system used for this data track</param>
         /// <param name="mode">The sector mode of the track</param>
-        internal DataTrack(FileStream fileStream, DataTrackSystem system, DataTrackMode mode)
-            : base(fileStream, TrackType.DATA)
+        internal DataTrack(FileStream fileStream, int trackNumber, DiskFileSystem system, DataTrackMode mode)
+            : base(fileStream, trackNumber, TrackType.DATA)
         {
-            m_system     = system;
-            m_mode       = mode;
-            m_sectorSize = mode == DataTrackMode.RAW ? 2048 : 2352;
-            m_isXa       = false;
+            m_system         = system;
+            m_mode           = mode;
+            m_sectorSize     = mode == DataTrackMode.RAW ? 2048 : 2352;
+            m_isXa           = false;
+            m_pregapSize     = 150;
 
             switch (m_mode)
             {
@@ -87,33 +88,6 @@ namespace CRH.Framework.Disk
             }
         }
 
-        /// <summary>
-        /// Get offset from LBA
-        /// </summary>
-        private long LBAToOffset(long lba)
-        {
-            return m_sectorSize * lba;
-        }
-
-        /// <summary>
-        /// Move to a specific sector's LBA
-        /// </summary>
-        internal void SeekSector(long lba)
-        {
-            try
-            {
-                m_fileStream.Position = LBAToOffset(lba);
-            }
-            catch (EndOfStreamException)
-            {
-                throw new FrameworkException("Errow while seeking sector : end of file occured");
-            }
-            catch (Exception)
-            {
-                throw new FrameworkException("Errow while seeking sector : unable to seek sector");
-            }
-        }
-
     // Abstract accessors
 
         public abstract IEnumerable<DataTrackIndexEntry> Entries { get; }
@@ -143,7 +117,7 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// ISO's structure type (ISO9660, ISO9660_UDF)
         /// </summary>
-        public DataTrackSystem System
+        public DiskFileSystem System
         {
             get { return m_system; }
         }
@@ -162,14 +136,6 @@ namespace CRH.Framework.Disk
         internal SectorMode DefautSectorMode
         {
             get { return m_defaultSectorMode; }
-        }
-
-        /// <summary>
-        /// Size of the sector including metadata (FORM's fields)
-        /// </summary>
-        public int SectorSize
-        {
-            get { return m_sectorSize; }
         }
 
         /// <summary>
