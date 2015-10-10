@@ -33,20 +33,31 @@ namespace CRH.Framework.Disk.AudioTrack
         /// </summary>
         public void Prepare()
         {
-            if (m_prepared)
-                return;
-
-            m_fileStream.Position = m_fileStream.Length;
-
-            if (m_pauseSize > 0)
+            try
             {
-                m_pauseOffset = m_fileStream.Length;
-                WriteEmptySectors((int)m_pauseSize);
+                if (m_prepared)
+                    return;
+
+                m_fileStream.Position = m_fileStream.Length;
+
+                if (m_pauseSize > 0)
+                {
+                    m_pauseOffset = m_fileStream.Length;
+                    WriteEmptySectors((int)m_pauseSize);
+                }
+
+                m_offset = m_fileStream.Length;
+
+                m_prepared = true;
             }
-
-            m_offset = m_fileStream.Length;
-
-            m_prepared = true;
+            catch (FrameworkException ex)
+            {
+                throw ex;
+            }
+            catch (Exception)
+            {
+                throw new FrameworkException("Errow while preparing track : unable to prepare audio track");
+            }
         }
 
         /// <summary>
@@ -54,18 +65,29 @@ namespace CRH.Framework.Disk.AudioTrack
         /// </summary>
         public void Finalize()
         {
-            if (m_finalized)
-                return;
+            try
+            {
+                if (m_finalized)
+                    return;
 
-            if (!m_prepared)
-                throw new FrameworkException("Error while finalizing ISO : AudioTrack has not been prepared");
+                if (!m_prepared)
+                    throw new FrameworkException("Error while finalizing ISO : AudioTrack has not been prepared");
 
-            m_fileStream.Position = m_fileStream.Length;
+                m_fileStream.Position = m_fileStream.Length;
 
-            if (m_postgapSize > 0)
-                WriteEmptySectors((int)m_postgapSize);
+                if (m_postgapSize > 0)
+                    WriteEmptySectors((int)m_postgapSize);
 
-            m_finalized = true;
+                m_finalized = true;
+            }
+            catch (FrameworkException ex)
+            {
+                throw ex;
+            }
+            catch (Exception)
+            {
+                throw new FrameworkException("Errow while finalizing track : unable to finalize audio track");
+            }
         }
 
         /// <summary>
@@ -122,11 +144,21 @@ namespace CRH.Framework.Disk.AudioTrack
             try
             {
                 byte[] buffer = new byte[m_sectorSize];
+                int dataRead;
+
                 stream.Position = (container == AudioFileContainer.WAVE) ? 44 : 0;
                 m_size = ((stream.Length - stream.Position) / m_sectorSize) + 1;
+
                 for (int sectorsDone = 0; sectorsDone < m_size; sectorsDone++)
                 {
-                    stream.Read(buffer, 0, m_sectorSize);
+                    dataRead = stream.Read(buffer, 0, m_sectorSize);
+
+                    if (dataRead < m_sectorSize)
+                    {
+                        for (int i = dataRead; i < m_sectorSize; i++)
+                            buffer[i] = 0;
+                    }
+
                     WriteSector(buffer);
                 }
             }

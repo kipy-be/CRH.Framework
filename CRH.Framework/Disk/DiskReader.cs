@@ -262,6 +262,19 @@ namespace CRH.Framework.Disk
             m_fileOpen = false;
         }
 
+        /// <summary>
+        /// Get audio tracks only
+        /// </summary>
+        /// <returns></returns>
+        internal IEnumerable<Track> GetAudioTracks()
+        {
+            foreach (Track track in m_tracks)
+            {
+                if (track.IsAudio)
+                    yield return track;
+            }
+        }
+
     // Accessors
 
         /// <summary>
@@ -273,9 +286,17 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Single or first track of the disk
+        /// Audio tracks of the disk
         /// </summary>
-        public Track Track
+        public IEnumerable<Track> AudioTracks
+        {
+            get { return GetAudioTracks(); }
+        }
+
+        /// <summary>
+        /// Single or first data track of the disk
+        /// </summary>
+        public Track DataTrack
         {
             get
             {

@@ -10,7 +10,6 @@ namespace CRH.Framework.Disk.DataTrack
     public sealed class DataTrackReader : DataTrack, ITrackReader
     {
         private CBinaryReader m_stream;
-        private DataTrackIndex m_index;
 
         private bool m_descriptorsRead;
         private bool m_indexBuilt;

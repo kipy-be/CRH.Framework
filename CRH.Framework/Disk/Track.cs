@@ -67,6 +67,22 @@ namespace CRH.Framework.Disk
             }
         }
 
+        /// <summary>
+        /// Position (current LBA)
+        /// </summary>
+        public long SectorPosition
+        {
+            get { return m_fileStream.Position / m_sectorSize; }
+        }
+
+        /// <summary>
+        /// Number of sectors
+        /// </summary>
+        public long SectorCount
+        {
+            get { return m_fileStream.Length / m_sectorSize; }
+        }
+
     // Accessors
 
         /// <summary>

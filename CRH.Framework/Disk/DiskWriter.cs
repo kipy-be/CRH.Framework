@@ -31,10 +31,6 @@ namespace CRH.Framework.Disk
                 m_stream     = new CBinaryWriter(m_fileStream);
                 m_fileOpen   = true;
             }
-            catch (FrameworkException ex)
-            {
-                throw ex;
-            }
             catch (Exception)
             {
                 throw new FrameworkException("Error while while writing ISO : Unable to create the ISO File");
@@ -59,21 +55,31 @@ namespace CRH.Framework.Disk
         /// </summary>
         public override void Close()
         {
-            if (!m_fileOpen)
-                return;
-
-            foreach(Track track in m_tracks)
+            try
             {
-                if(track.IsData && !((DataTrackWriter)track).IsFinalized)
-                    throw new FrameworkException("Error while closing ISO : data track is not finalized, it will be unreadable");
-            }
+                if (!m_fileOpen)
+                    return;
 
-            // If several tracks, create CUE sheet
-            if (TracksCount > 1)
+                foreach (Track track in m_tracks)
+                {
+                    if (track.IsData && !((DataTrackWriter)track).IsFinalized)
+                        throw new FrameworkException("Error while closing ISO : data track is not finalized, it will be unreadable");
+                }
+
+                // Create CUE sheet
                 CreateCue();
 
-            m_stream.CloseAndDispose();
-            m_fileOpen = false;
+                m_stream.CloseAndDispose();
+                m_fileOpen = false;
+            }
+            catch (FrameworkException ex)
+            {
+                throw ex;
+            }
+            catch (Exception)
+            {
+                throw new FrameworkException("Error while closing ISO : unable to close the ISO");
+            }
         }
 
         /// <summary>
