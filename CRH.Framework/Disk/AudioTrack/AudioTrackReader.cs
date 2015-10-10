@@ -120,19 +120,19 @@ namespace CRH.Framework.Disk.AudioTrack
                         {
                             // WAVE Header
                             uint dataSize = (uint)(m_size * m_sectorSize);
-                            stream.WriteAsciiString("RIFF");         // RIFF sign
-                            stream.Write((uint)(dataSize + 44 - 8)); // File size - 8, wave header is 44 bytes long
-                            stream.WriteAsciiString("WAVE");         // Format ID
-                            stream.WriteAsciiString("fmt", 4);       // Format bloc ID
-                            stream.Write((uint)16);                  // Bloc size
-                            stream.Write((ushort)0x01);              // PCM
-                            stream.Write((ushort)2);                 // Channels
-                            stream.Write((uint)44100);               // Frequency
-                            stream.Write((uint)44100 * 16);          // Bytes per sec (frequency * bloc size)
-                            stream.Write((ushort)(2 * 16 / 8));      // Bytes per bloc (channels * bits per sample / 8)
-                            stream.Write((ushort)16);                // Bits per sample
-                            stream.WriteAsciiString("data");         // data bloc sign
-                            stream.Write((uint)dataSize);            // data size
+                            stream.WriteAsciiString("RIFF");          // RIFF sign
+                            stream.Write((uint)(dataSize + 44 - 8));  // File size - 8, wave header is 44 bytes long
+                            stream.WriteAsciiString("WAVE");          // Format ID
+                            stream.WriteAsciiString("fmt", 4);        // Format bloc ID
+                            stream.Write((uint)16);                   // Bloc size
+                            stream.Write((ushort)0x01);               // PCM
+                            stream.Write((ushort)2);                  // Channels
+                            stream.Write((uint)44100);                // Frequency
+                            stream.Write((uint)(44100 * 2 * 16 / 8)); // Bytes per sec (frequency * bytes per bloc)
+                            stream.Write((ushort)(2 * 16 / 8));       // Bytes per bloc (channels * bits per sample / 8)
+                            stream.Write((ushort)16);                 // Bits per sample
+                            stream.WriteAsciiString("data");          // data bloc sign
+                            stream.Write((uint)dataSize);             // data size
                             Read(fs);
                          }
                     }
