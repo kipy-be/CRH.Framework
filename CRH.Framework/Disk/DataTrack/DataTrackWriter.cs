@@ -4,11 +4,10 @@ using System.IO;
 using System.Text.RegularExpressions;
 using CRH.Framework.Common;
 using CRH.Framework.IO;
-using CRH.Framework.Utils;
 
 namespace CRH.Framework.Disk.DataTrack
 {
-    public sealed class DataTrackWriter : DataTrack
+    public sealed class DataTrackWriter : DataTrack, ITrackWriter
     {
         private CBinaryWriter m_stream;
         private DataTrackIndex m_index;
@@ -91,7 +90,7 @@ namespace CRH.Framework.Disk.DataTrack
         }
 
         /// <summary>
-        /// Finalise the disk (dump descriptors, path table, directory entries, etc.)
+        /// Finalise the track (dump descriptors, path table, directory entries, etc.)
         /// </summary>
         public void Finalize()
         {
@@ -99,7 +98,7 @@ namespace CRH.Framework.Disk.DataTrack
                 return;
 
             if(!m_prepared)
-                throw new FrameworkException("Error while finalizing ISO : ISO has not been prepared, it will be unreadable");
+                throw new FrameworkException("Error while finalizing ISO : DataTrack has not been prepared, it will be unreadable");
 
             uint pathTableSectorSize = (uint)(m_primaryVolumeDescriptor.PathTableSize / GetSectorDataSize(m_defaultSectorMode));
             m_primaryVolumeDescriptor.VolumeSpaceSize = (uint)SectorCount;
@@ -243,7 +242,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="data">The sector's data to write</param>
         /// <param name="mode">Sector's mode</param>
         /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
-        internal void WriteSector(byte[] data, SectorMode mode, XaSubHeader subHeader = null)
+        public void WriteSector(byte[] data, SectorMode mode, XaSubHeader subHeader = null)
         {
             try
             {
@@ -301,7 +300,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="data">The sector to write</param>
         /// <param name="mode">Sector's mode</param>
         /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
-        internal void WriteSector(long lba, byte[] data, SectorMode mode, XaSubHeader subHeader = null)
+        public void WriteSector(long lba, byte[] data, SectorMode mode, XaSubHeader subHeader = null)
         {
             SeekSector(lba);
             WriteSector(data, mode, subHeader);
@@ -312,7 +311,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         /// <param name="data">The sector to write</param>
         /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
-        internal void WriteSector(byte[] data, XaSubHeader subHeader = null)
+        public void WriteSector(byte[] data, XaSubHeader subHeader = null)
         {
             WriteSector(data, m_defaultSectorMode, subHeader);
         }
@@ -323,7 +322,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="lba">Sector's LBA</param>
         /// <param name="sector">The sector to write</param>
         /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
-        internal void WriteSector(long lba, byte[] data, XaSubHeader subHeader = null)
+        public void WriteSector(long lba, byte[] data, XaSubHeader subHeader = null)
         {
             SeekSector(lba);
             WriteSector(data, m_defaultSectorMode, subHeader);
@@ -332,7 +331,6 @@ namespace CRH.Framework.Disk.DataTrack
         /// <summary>
         /// Write an empty sector
         /// </summary>
-        /// <param name="mode">Sector's mode</param>
         public void WriteEmptySector()
         {
             if(m_mode == DataTrackMode.RAW)
@@ -365,7 +363,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         /// <param name="diskIn">The disk to copy sectors from</param>
         /// <param name="count">Number of sectors to copy</param>
-        internal void CopySectors(DataTrackReader diskIn, int count)
+        public void CopySectors(DataTrackReader diskIn, int count)
         {
             if (diskIn.IsXa)
             {
@@ -387,7 +385,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="readerLba">Starting LBA for reading</param>
         /// <param name="writerLba">Starting LBA for writing</param>
         /// <param name="count">Number of sectors to copy</param>
-        internal void CopySectors(DataTrackReader reader, long readerLba, long writerLba, int count)
+        public void CopySectors(DataTrackReader reader, long readerLba, long writerLba, int count)
         {
             SeekSector(writerLba);
             reader.SeekSector(readerLba);

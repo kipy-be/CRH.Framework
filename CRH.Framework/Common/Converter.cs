@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CRH.Framework.Utils
+namespace CRH.Framework.Common
 {
     public static class Converter
     {
@@ -15,10 +15,7 @@ namespace CRH.Framework.Utils
         /// <param name="prefix">Prefix result with "0x"</param>
         private static string DecToHex<T>(T value, int minSize = 2, bool prefix = false)
         {
-            string hexValue = String.Format("{0:X}", value);
-
-            while (hexValue.Length < minSize)
-                hexValue = '0' + hexValue;
+            string hexValue = Utils.PrePaddStr(String.Format("{0:X}", value), minSize, '0');
 
             return (prefix ? "0x" : "") + hexValue;
         }

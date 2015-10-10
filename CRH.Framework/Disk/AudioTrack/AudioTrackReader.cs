@@ -2,11 +2,10 @@
 using System.IO;
 using CRH.Framework.Common;
 using CRH.Framework.IO;
-using CRH.Framework.Utils;
 
 namespace CRH.Framework.Disk.AudioTrack
 {
-    public sealed class AudioTrackReader : AudioTrack
+    public sealed class AudioTrackReader : AudioTrack, ITrackReader
     {
         private CBinaryReader m_stream;
 
@@ -15,12 +14,12 @@ namespace CRH.Framework.Disk.AudioTrack
         /// <summary>
         /// AudioTrackReader
         /// </summary>
-        /// <param name="stream">The stream of iso</param>
         /// <param name="trackNumber">The track number</param>
         internal AudioTrackReader(CBinaryReader stream, int trackNumber)
             : base((FileStream)stream.BaseStream, trackNumber)
         {
-            m_stream = stream;
+            m_stream    = stream;
+
             SeekSector(0);
         }
 
@@ -29,8 +28,7 @@ namespace CRH.Framework.Disk.AudioTrack
         /// <summary>
         /// Read a sector's data
         /// </summary>
-        /// <param name="mode">Sector's mode</param>
-        internal byte[] ReadSector()
+        public byte[] ReadSector()
         {
             try
             {
@@ -54,7 +52,7 @@ namespace CRH.Framework.Disk.AudioTrack
         /// Read a sector's data
         /// </summary>
         /// <param name="lba">Sector's LBA to read</param>
-        internal byte[] ReadSector(long lba)
+        public byte[] ReadSector(long lba)
         {
             SeekSector(lba);
             return ReadSector();
@@ -91,6 +89,17 @@ namespace CRH.Framework.Disk.AudioTrack
                 stream.Write(ReadSector(), 0, m_sectorSize);
 
             stream.Flush();
+        }
+
+        /// <summary>
+        /// Read the audio track
+        /// </summary>
+        public Stream Read()
+        {
+            MemoryStream ms = new MemoryStream();
+            Read(ms);
+
+            return ms;
         }
 
         /// <summary>

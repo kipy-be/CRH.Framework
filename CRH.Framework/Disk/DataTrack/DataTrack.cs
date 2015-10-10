@@ -43,11 +43,11 @@ namespace CRH.Framework.Disk.DataTrack
         internal DataTrack(FileStream fileStream, int trackNumber, DiskFileSystem system, DataTrackMode mode)
             : base(fileStream, trackNumber, TrackType.DATA)
         {
-            m_system         = system;
-            m_mode           = mode;
-            m_sectorSize     = mode == DataTrackMode.RAW ? 2048 : 2352;
-            m_isXa           = false;
-            m_pregapSize     = 150;
+            m_system     = system;
+            m_mode       = mode;
+            m_sectorSize = mode == DataTrackMode.RAW ? 2048 : 2352;
+            m_isXa       = false;
+            m_pregapSize = 150;
 
             switch (m_mode)
             {
