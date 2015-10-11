@@ -100,7 +100,7 @@ namespace CRH.Framework.Disk.DataTrack
         }
 
         /// <summary>
-        /// Finalise the track (dump descriptors, path table, directory entries, etc.)
+        /// Finalise the track
         /// </summary>
         public void Finalize()
         {
@@ -111,30 +111,6 @@ namespace CRH.Framework.Disk.DataTrack
 
                 if (!m_prepared)
                     throw new FrameworkException("Error while finalizing ISO : DataTrack has not been prepared, it will be unreadable");
-
-                uint pathTableSectorSize = (uint)(m_primaryVolumeDescriptor.PathTableSize / GetSectorDataSize(m_defaultSectorMode));
-                m_primaryVolumeDescriptor.VolumeSpaceSize = (uint)SectorCount;
-                m_primaryVolumeDescriptor.TypeLPathTableLBA = 16 + 2;
-                m_primaryVolumeDescriptor.TypeMPathTableLBA = 16 + 2 + pathTableSectorSize * 2;
-                if (m_hasOptionalPathTable)
-                {
-                    m_primaryVolumeDescriptor.OptTypeLPathTableLBA = 16 + 2 + pathTableSectorSize;
-                    m_primaryVolumeDescriptor.OptTypeMPathTableLBA = 16 + 2 + pathTableSectorSize * 3;
-                }
-
-
-                // Write directory entries
-                WriteDirectoryEntry(m_index.Root);
-                foreach (DataTrackIndexEntry entry in m_index.GetDirectories(DataTrackEntriesOrder.DEFAULT))
-                    WriteDirectoryEntry(entry);
-
-                // Write path tables
-                WritePathTables();
-
-                // Write descriptors
-                SeekSector(16);
-                WriteSector(GetPrimaryVolumeDescriptorBuffer(), m_defaultSectorMode, XaSubHeader.EndOfRecord);
-                WriteSector(GetSetTerminatorVolumeDescriptorBuffer(), m_defaultSectorMode, XaSubHeader.EndOfFile);
 
                 // Write 2 minutes of empty sectors at the end of the track
                 SeekSector(SectorCount);
@@ -150,6 +126,35 @@ namespace CRH.Framework.Disk.DataTrack
             {
                 throw new FrameworkException("Errow while finalizing track : unable to finalize data track");
             }
+        }
+
+        /// <summary>
+        /// Dump descriptors, path table, directory entries, etc.
+        /// </summary>
+        public void FinaliseFileSystem()
+        {
+            uint pathTableSectorSize = (uint)(m_primaryVolumeDescriptor.PathTableSize / GetSectorDataSize(m_defaultSectorMode));
+            m_primaryVolumeDescriptor.VolumeSpaceSize = (uint)SectorCount;
+            m_primaryVolumeDescriptor.TypeLPathTableLBA = 16 + 2;
+            m_primaryVolumeDescriptor.TypeMPathTableLBA = 16 + 2 + pathTableSectorSize * 2;
+            if (m_hasOptionalPathTable)
+            {
+                m_primaryVolumeDescriptor.OptTypeLPathTableLBA = 16 + 2 + pathTableSectorSize;
+                m_primaryVolumeDescriptor.OptTypeMPathTableLBA = 16 + 2 + pathTableSectorSize * 3;
+            }
+
+            // Write directory entries
+            WriteDirectoryEntry(m_index.Root);
+            foreach (DataTrackIndexEntry entry in m_index.GetDirectories(DataTrackEntriesOrder.DEFAULT))
+                WriteDirectoryEntry(entry);
+
+            // Write path tables
+            WritePathTables();
+
+            // Write descriptors
+            SeekSector(16);
+            WriteSector(GetPrimaryVolumeDescriptorBuffer(), m_defaultSectorMode, XaSubHeader.EndOfRecord);
+            WriteSector(GetSetTerminatorVolumeDescriptorBuffer(), m_defaultSectorMode, XaSubHeader.EndOfFile);
         }
 
         /// <summary>
@@ -723,6 +728,23 @@ namespace CRH.Framework.Disk.DataTrack
 
             DataTrackIndexEntry indexEntry = new DataTrackIndexEntry(parent, entry);
             m_index.AddToIndex(indexEntry);
+        }
+
+        /// <summary>
+        /// Set the file content for a file entry
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="lba"></param>
+        /// <param name="size"></param>
+        public void SetFileContent(string filePath, uint lba, uint size)
+        {
+            DataTrackIndexEntry entry = m_index.GetEntry(filePath);
+
+            if (entry == null)
+                throw new FrameworkException("Error while setting file content of \"{0}\" : entry does not exists", filePath);
+
+            entry.DirectoryEntry.ExtentLba  = lba;
+            entry.DirectoryEntry.ExtentSize = size;
         }
 
         /// <summary>

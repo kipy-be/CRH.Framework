@@ -184,4 +184,13 @@ namespace CRH.Framework.Disk
             get { return m_sectorSize; }
         }
     }
+
+    interface ITrackReader
+    { }
+
+    interface ITrackWriter
+    {
+        void Finalize();
+        bool IsFinalized { get; }
+    }
 }

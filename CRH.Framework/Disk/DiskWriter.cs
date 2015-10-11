@@ -26,7 +26,11 @@ namespace CRH.Framework.Disk
         {
             try
             {
-                m_file       = new FileInfo(m_fileUrl);
+                m_file = new FileInfo(m_fileUrl);
+
+                if(m_file.Extension != ".bin")
+                    m_file = new FileInfo(Path.Combine(m_file.DirectoryName, Path.GetFileNameWithoutExtension(m_file.FullName) + ".bin"));
+
                 m_fileStream = new FileStream(m_file.FullName, overwriteIfExists ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, FileShare.Read);
                 m_stream     = new CBinaryWriter(m_fileStream);
                 m_fileOpen   = true;
@@ -141,7 +145,7 @@ namespace CRH.Framework.Disk
                     int m, s, b, dv;
                     int sectorPos;
 
-                    cueStream.WriteLine(String.Format("FILE \"{0}\" BINARY", cueFile.Name.ToUpper()));
+                    cueStream.WriteLine(String.Format("FILE \"{0}\" BINARY", m_file.Name.ToUpper()));
                     foreach(Track track in m_tracks)
                     {
                         if(track.IsData)

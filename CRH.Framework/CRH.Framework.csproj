@@ -58,7 +58,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Disk\DataTrack\XaSubHeader.cs" />
-    <Compile Include="Disk\Interfaces.cs" />
     <Compile Include="Disk\Track.cs" />
     <Compile Include="IO\CBinaryWriter.cs" />
     <Compile Include="IO\ExtensionMethods.cs" />
