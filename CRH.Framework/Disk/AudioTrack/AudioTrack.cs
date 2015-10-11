@@ -16,7 +16,7 @@ namespace CRH.Framework.Disk.AudioTrack
         /// <summary>
         /// AudioTrack (abstract)
         /// </summary>
-        /// <param name="fileStream">The iso file stream</param>
+        /// <param name="fileStream">The ISO stream</param>
         /// <param name="trackNumber">The track number</param>
         internal AudioTrack(FileStream fileStream, int trackNumber)
             : base(fileStream, trackNumber, TrackType.AUDIO)

@@ -23,13 +23,16 @@ namespace CRH.Framework.Disk.DataTrack
         internal static readonly byte[] SYNC = new byte[] { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 };
 
         protected DiskFileSystem m_system;
-        protected DataTrackMode   m_mode;
-        protected SectorMode m_defaultSectorMode;
-        protected bool       m_isXa;
-        protected bool       m_hasOptionalPathTable;
+        protected DataTrackMode  m_mode;
+        protected SectorMode     m_defaultSectorMode;
+
+        protected bool m_isXa;
+        protected bool m_hasOptionalPathTable;
 
         protected PrimaryVolumeDescriptor m_primaryVolumeDescriptor;
-        protected DataTrackEntriesOrder   m_entriesOrder;
+
+        protected DataTrackEntriesOrder m_entriesOrder;
+        protected DataTrackIndex        m_index;
 
     // Constructors
 
@@ -43,11 +46,11 @@ namespace CRH.Framework.Disk.DataTrack
         internal DataTrack(FileStream fileStream, int trackNumber, DiskFileSystem system, DataTrackMode mode)
             : base(fileStream, trackNumber, TrackType.DATA)
         {
-            m_system         = system;
-            m_mode           = mode;
-            m_sectorSize     = mode == DataTrackMode.RAW ? 2048 : 2352;
-            m_isXa           = false;
-            m_pregapSize     = 150;
+            m_system     = system;
+            m_mode       = mode;
+            m_sectorSize = mode == DataTrackMode.RAW ? 2048 : 2352;
+            m_isXa       = false;
+            m_pregapSize = 150;
 
             switch (m_mode)
             {
@@ -145,22 +148,6 @@ namespace CRH.Framework.Disk.DataTrack
         public PrimaryVolumeDescriptor PrimaryVolumeDescriptor
         {
             get { return m_primaryVolumeDescriptor; }
-        }
-
-        /// <summary>
-        /// Position (current LBA)
-        /// </summary>
-        public long SectorPosition
-        {
-            get { return m_fileStream.Position / m_sectorSize; }
-        }
-
-        /// <summary>
-        /// Number of sectors
-        /// </summary>
-        public long SectorCount
-        {
-            get { return m_fileStream.Length / m_sectorSize; }
         }
 
         /// <summary>

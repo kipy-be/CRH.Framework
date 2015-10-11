@@ -2,7 +2,7 @@
 using System.IO;
 using CRH.Framework.IO;
 
-namespace CRH.Framework.Utils
+namespace CRH.Framework.Common
 {
     internal static class ExtensionMethods
     {

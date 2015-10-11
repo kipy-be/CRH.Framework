@@ -13,32 +13,29 @@ namespace CRH.Framework.Disk
         protected int  m_sectorSize;
         protected long m_offset;
         protected long m_size;
-        protected long m_pregapOffset;
         protected uint m_pregapSize;
-        protected bool m_pregapStored;
-        protected long m_postgapOffset;
         protected uint m_postgapSize;
-        protected bool m_postgapStored;
+        protected long m_pauseOffset;
+        protected uint m_pauseSize;
+        protected bool m_hasPause;
 
     // Constructors
 
         /// <summary>
         /// Track (abstract)
         /// </summary>
-        /// <param name="fileStream">The iso stream</param>
+        /// <param name="fileStream">The ISO stream</param>
         /// <param name="trackNumber">The track number</param>
         /// <param name="type">The type of the track (data, audio)</param>
         public Track(FileStream fileStream, int trackNumber, TrackType type)
         {
-            m_fileStream    = fileStream;
-            m_trackNumber   = trackNumber;
-            m_type          = type;
-            m_pregapOffset  = 0;
-            m_pregapSize    = 0;
-            m_pregapStored  = false;
-            m_postgapOffset = 0;
-            m_postgapSize   = 0;
-            m_postgapStored = false;
+            m_fileStream  = fileStream;
+            m_trackNumber = trackNumber;
+            m_type        = type;
+            m_pregapSize  = 0;
+            m_postgapSize = 0;
+            m_pauseSize   = 0;
+            m_hasPause    = false;
         }
 
     // Methods
@@ -70,6 +67,22 @@ namespace CRH.Framework.Disk
             }
         }
 
+        /// <summary>
+        /// Position (current LBA)
+        /// </summary>
+        public long SectorPosition
+        {
+            get { return m_fileStream.Position / m_sectorSize; }
+        }
+
+        /// <summary>
+        /// Number of sectors
+        /// </summary>
+        public long SectorCount
+        {
+            get { return m_fileStream.Length / m_sectorSize; }
+        }
+
     // Accessors
 
         /// <summary>
@@ -99,40 +112,12 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Offset of the pregap
-        /// </summary>
-        public long PregapOffset
-        {
-            get { return m_pregapOffset; }
-            internal set { m_pregapOffset = value; }
-        }
-
-
-        /// <summary>
         /// Size of the pregap in sectors
         /// </summary>
         public uint PregapSize
         {
             get { return m_pregapSize; }
             internal set { m_pregapSize = value; }
-        }
-
-        /// <summary>
-        /// Is pregrap stored on the ISO or only refered in CUE
-        /// </summary>
-        public bool IsPregapStored
-        {
-            get { return m_pregapStored; }
-            internal set { m_pregapStored = value; }
-        }
-
-        /// <summary>
-        /// Offset of the postgap
-        /// </summary>
-        public long PostgapOffset
-        {
-            get { return m_postgapOffset; }
-            internal set { m_postgapOffset = value; }
         }
 
         /// <summary>
@@ -145,12 +130,34 @@ namespace CRH.Framework.Disk
         }
 
         /// <summary>
-        /// Is postgap stored on the ISO or only refered in CUE
+        /// Offset of the pause
         /// </summary>
-        public bool IsPostgapStored
+        public long PauseOffset
         {
-            get { return m_postgapStored; }
-            internal set { m_postgapStored = value; }
+            get { return m_pauseOffset; }
+            internal set { m_pauseOffset = value; }
+        }
+
+        /// <summary>
+        /// Size of pause in sectors
+        /// </summary>
+        public uint PauseSize
+        {
+            get { return m_pauseSize; }
+            internal set
+            {
+                m_pauseSize = value;
+                m_hasPause  = value > 0;
+            }
+        }
+
+        /// <summary>
+        /// Has pause
+        /// </summary>
+        internal bool HasPause
+        {
+            get { return m_hasPause; }
+            set { m_hasPause = value; }
         }
 
         /// <summary>
@@ -176,5 +183,14 @@ namespace CRH.Framework.Disk
         {
             get { return m_sectorSize; }
         }
+    }
+
+    interface ITrackReader
+    { }
+
+    interface ITrackWriter
+    {
+        void Finalize();
+        bool IsFinalized { get; }
     }
 }

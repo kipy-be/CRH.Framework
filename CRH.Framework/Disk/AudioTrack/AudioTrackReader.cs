@@ -2,11 +2,10 @@
 using System.IO;
 using CRH.Framework.Common;
 using CRH.Framework.IO;
-using CRH.Framework.Utils;
 
 namespace CRH.Framework.Disk.AudioTrack
 {
-    public sealed class AudioTrackReader : AudioTrack
+    public sealed class AudioTrackReader : AudioTrack, ITrackReader
     {
         private CBinaryReader m_stream;
 
@@ -15,12 +14,12 @@ namespace CRH.Framework.Disk.AudioTrack
         /// <summary>
         /// AudioTrackReader
         /// </summary>
-        /// <param name="stream">The stream of iso</param>
         /// <param name="trackNumber">The track number</param>
         internal AudioTrackReader(CBinaryReader stream, int trackNumber)
             : base((FileStream)stream.BaseStream, trackNumber)
         {
-            m_stream = stream;
+            m_stream    = stream;
+
             SeekSector(0);
         }
 
@@ -29,8 +28,7 @@ namespace CRH.Framework.Disk.AudioTrack
         /// <summary>
         /// Read a sector's data
         /// </summary>
-        /// <param name="mode">Sector's mode</param>
-        internal byte[] ReadSector()
+        public byte[] ReadSector()
         {
             try
             {
@@ -54,7 +52,7 @@ namespace CRH.Framework.Disk.AudioTrack
         /// Read a sector's data
         /// </summary>
         /// <param name="lba">Sector's LBA to read</param>
-        internal byte[] ReadSector(long lba)
+        public byte[] ReadSector(long lba)
         {
             SeekSector(lba);
             return ReadSector();
@@ -94,6 +92,17 @@ namespace CRH.Framework.Disk.AudioTrack
         }
 
         /// <summary>
+        /// Read the audio track
+        /// </summary>
+        public Stream Read()
+        {
+            MemoryStream ms = new MemoryStream();
+            Read(ms);
+
+            return ms;
+        }
+
+        /// <summary>
         /// Extract the audio track
         /// </summary>
         /// <param name="outFilePath">The full path of the disk's file (eg : /FOO/BAR/FILE.EXT)</param>
@@ -111,19 +120,19 @@ namespace CRH.Framework.Disk.AudioTrack
                         {
                             // WAVE Header
                             uint dataSize = (uint)(m_size * m_sectorSize);
-                            stream.WriteAsciiString("RIFF");         // RIFF sign
-                            stream.Write((uint)(dataSize + 44 - 8)); // File size - 8, wave header is 44 bytes long
-                            stream.WriteAsciiString("WAVE");         // Format ID
-                            stream.WriteAsciiString("fmt", 4);       // Format bloc ID
-                            stream.Write((uint)16);                  // Bloc size
-                            stream.Write((ushort)0x01);              // PCM
-                            stream.Write((ushort)2);                 // Channels
-                            stream.Write((uint)44100);               // Frequency
-                            stream.Write((uint)44100 * 16);          // Bytes per sec (frequency * bloc size)
-                            stream.Write((ushort)(2 * 16 / 8));      // Bytes per bloc (channels * bits per sample / 8)
-                            stream.Write((ushort)16);                // Bits per sample
-                            stream.WriteAsciiString("data");         // data bloc sign
-                            stream.Write((uint)dataSize);            // data size
+                            stream.WriteAsciiString("RIFF");          // RIFF sign
+                            stream.Write((uint)(dataSize + 44 - 8));  // File size - 8, wave header is 44 bytes long
+                            stream.WriteAsciiString("WAVE");          // Format ID
+                            stream.WriteAsciiString("fmt", 4);        // Format bloc ID
+                            stream.Write((uint)16);                   // Bloc size
+                            stream.Write((ushort)0x01);               // PCM
+                            stream.Write((ushort)2);                  // Channels
+                            stream.Write((uint)44100);                // Frequency
+                            stream.Write((uint)(44100 * 2 * 16 / 8)); // Bytes per sec (frequency * bytes per bloc)
+                            stream.Write((ushort)(2 * 16 / 8));       // Bytes per bloc (channels * bits per sample / 8)
+                            stream.Write((ushort)16);                 // Bits per sample
+                            stream.WriteAsciiString("data");          // data bloc sign
+                            stream.Write((uint)dataSize);             // data size
                             Read(fs);
                          }
                     }

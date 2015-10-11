@@ -4,14 +4,12 @@ using System.IO;
 using System.Text.RegularExpressions;
 using CRH.Framework.Common;
 using CRH.Framework.IO;
-using CRH.Framework.Utils;
 
 namespace CRH.Framework.Disk.DataTrack
 {
-    public sealed class DataTrackReader : DataTrack
+    public sealed class DataTrackReader : DataTrack, ITrackReader
     {
         private CBinaryReader m_stream;
-        private DataTrackIndex m_index;
 
         private bool m_descriptorsRead;
         private bool m_indexBuilt;
@@ -63,7 +61,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// Read a sector's data
         /// </summary>
         /// <param name="mode">Sector's mode</param>
-        internal byte[] ReadSector(SectorMode mode)
+        public byte[] ReadSector(SectorMode mode)
         {
             try
             {
@@ -113,7 +111,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         /// <param name="mode">Sector's mode</param>
         /// <param name="subHeader">Sub header container to write sub header to</param>
-        internal byte[] ReadSector(SectorMode mode, out XaSubHeader subHeader)
+        public byte[] ReadSector(SectorMode mode, out XaSubHeader subHeader)
         {
             try
             {
@@ -170,7 +168,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         /// <param name="lba">Sector's LBA to read</param>
         /// <param name="mode">Sector's mode</param>
-        internal byte[] ReadSector(long lba, SectorMode mode)
+        public byte[] ReadSector(long lba, SectorMode mode)
         {
             SeekSector(lba);
             return ReadSector(mode);
@@ -182,7 +180,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="lba">Sector's LBA to read</param>
         /// <param name="mode">Sector's mode</param>
         /// <param name="subHeader">Sub header container to write sub header to</param>
-        internal byte[] ReadSector(long lba, SectorMode mode, out XaSubHeader subHeader)
+        public byte[] ReadSector(long lba, SectorMode mode, out XaSubHeader subHeader)
         {
             SeekSector(lba);
             return ReadSector(mode, out subHeader);
@@ -191,7 +189,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <summary>
         /// Read a sector's data in defaut sector mode
         /// </summary>
-        internal byte[] ReadSector()
+        public byte[] ReadSector()
         {
             return ReadSector(m_defaultSectorMode);
         }
@@ -200,7 +198,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// Read a sector's data in defaut sector mode, including sub header
         /// </summary>
         /// <param name="subHeader">Sub header container to write sub header to</param>
-        internal byte[] ReadSector(out XaSubHeader subHeader)
+        public byte[] ReadSector(out XaSubHeader subHeader)
         {
             return ReadSector(m_defaultSectorMode, out subHeader);
         }
@@ -210,7 +208,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         /// <param name="lba">Sector's LBA to read</param>
         /// <param name="subHeader">Sub header container to write sub header to</param>
-        internal byte[] ReadSector(long lba, out XaSubHeader subHeader)
+        public byte[] ReadSector(long lba, out XaSubHeader subHeader)
         {
             SeekSector(lba);
             return ReadSector(m_defaultSectorMode, out subHeader);
@@ -221,7 +219,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
-        internal byte[] ReadSectors(int count, SectorMode mode)
+        public byte[] ReadSectors(int count, SectorMode mode)
         {
             int dataSize = GetSectorDataSize(mode);
             byte[] data = new byte[count * dataSize];
@@ -238,7 +236,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="lba">Starting sector's LBA</param>
         /// <param name="count">Number of sectors to read</param>
         /// <param name="mode">Sector's mode</param>
-        internal byte[] ReadSectors(long lba, int count, SectorMode mode)
+        public byte[] ReadSectors(long lba, int count, SectorMode mode)
         {
             SeekSector(lba);
             return ReadSectors(count, mode);
@@ -251,7 +249,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="size">The size of the file</param>
         /// <param name="mode">Sector's mode</param>
         /// <param name="stream">The stream to write the data</param>
-        private void ReadFile(long lba, long size, SectorMode mode, Stream stream)
+        public void ReadFile(long lba, long size, SectorMode mode, Stream stream)
         {
             int sectorDataSize = GetSectorDataSize(mode);
             long bytesRead = 0;
