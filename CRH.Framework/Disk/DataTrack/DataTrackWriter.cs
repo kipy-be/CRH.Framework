@@ -388,14 +388,15 @@ namespace CRH.Framework.Disk.DataTrack
         /// Copy sectors from another disk
         /// </summary>
         /// <param name="diskIn">The disk to copy sectors from</param>
+        /// <param name="mode">Sector's mode</param>
         /// <param name="count">Number of sectors to copy</param>
-        public void CopySectors(DataTrackReader diskIn, int count)
+        public void CopySectors(DataTrackReader diskIn, SectorMode mode, int count)
         {
             if (diskIn.IsXa)
             {
                 XaSubHeader subHeader;
                 for (int i = 0; i < count; i++)
-                    WriteSector(diskIn.ReadSector(out subHeader), subHeader);
+                    WriteSector(diskIn.ReadSector(mode, out subHeader), mode, subHeader);
             }
             else
             {
@@ -408,14 +409,15 @@ namespace CRH.Framework.Disk.DataTrack
         /// Copy sectors from another disk
         /// </summary>
         /// <param name="reader">The disk to copy sectors from</param>
+        /// <param name="mode">Sector's mode</param>
         /// <param name="readerLba">Starting LBA for reading</param>
         /// <param name="writerLba">Starting LBA for writing</param>
         /// <param name="count">Number of sectors to copy</param>
-        public void CopySectors(DataTrackReader reader, long readerLba, long writerLba, int count)
+        public void CopySectors(DataTrackReader reader, SectorMode mode, long readerLba, long writerLba, int count)
         {
             SeekSector(writerLba);
             reader.SeekSector(readerLba);
-            CopySectors(reader, count);
+            CopySectors(reader, mode, count);
         }
 
         /// <summary>
@@ -772,7 +774,15 @@ namespace CRH.Framework.Disk.DataTrack
             DataTrackIndexEntry indexEntry = new DataTrackIndexEntry(parent, entry);
             m_index.AddToIndex(indexEntry);
 
-            CopySectors(diskIn, entry.ExtentLba, inEntry.Lba, (int)(inEntry.Size / GetSectorDataSize(diskIn.DefautSectorMode)));
+            CopySectors
+            (
+                diskIn,
+                m_defaultSectorMode == SectorMode.XA_FORM1
+                        ? SectorMode.XA_FORM2
+                        : m_defaultSectorMode,
+                entry.ExtentLba, inEntry.Lba,
+                (int)(inEntry.Size / GetSectorDataSize(diskIn.DefautSectorMode))
+            );
         }
 
         /// <summary>
@@ -781,7 +791,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="diskIn">The disk to copy sector's from</param>
         public void CopySystemZone(DataTrackReader diskIn)
         {
-            CopySectors(diskIn, 0, 0, 16);
+            CopySectors(diskIn, m_defaultSectorMode, 0, 0, 16);
         }
 
         /// <summary>

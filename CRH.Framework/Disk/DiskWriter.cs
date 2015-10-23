@@ -28,9 +28,6 @@ namespace CRH.Framework.Disk
             {
                 m_file = new FileInfo(m_fileUrl);
 
-                if(m_file.Extension != ".bin")
-                    m_file = new FileInfo(Path.Combine(m_file.DirectoryName, Path.GetFileNameWithoutExtension(m_file.FullName) + ".bin"));
-
                 m_fileStream = new FileStream(m_file.FullName, overwriteIfExists ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, FileShare.Read);
                 m_stream     = new CBinaryWriter(m_fileStream);
                 m_fileOpen   = true;
