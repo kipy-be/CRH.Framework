@@ -97,6 +97,9 @@ namespace CRH.Framework.Disk.DataTrack
         public abstract IEnumerable<DataTrackIndexEntry> Entries { get; }
         public abstract IEnumerable<DataTrackIndexEntry> DirectoryEntries { get; }
         public abstract IEnumerable<DataTrackIndexEntry> FileEntries { get; }
+        public abstract int EntriesCount { get; }
+        public abstract int DirectoryEntriesCount { get; }
+        public abstract int FileEntriesCount { get; }
 
     // Accessors
 

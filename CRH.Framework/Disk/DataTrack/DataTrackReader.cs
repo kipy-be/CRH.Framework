@@ -724,5 +724,44 @@ namespace CRH.Framework.Disk.DataTrack
                 return m_index.GetFiles(m_entriesOrder);
             }
         }
+
+        /// <summary>
+        /// Number of entries
+        /// </summary>
+        public override int EntriesCount
+        {
+            get
+            {
+                if (!m_indexBuilt)
+                    throw new FrameworkException("Error : You must build the index cache first");
+                return m_index.EntriesCounts;
+            }
+        }
+
+        /// <summary>
+        /// Number of Directory entries
+        /// </summary>
+        public override int DirectoryEntriesCount
+        {
+            get
+            {
+                if (!m_indexBuilt)
+                    throw new FrameworkException("Error : You must build the index cache first");
+                return m_index.EntriesCounts;
+            }
+        }
+
+        /// <summary>
+        /// Number of file entries
+        /// </summary>
+        public override int FileEntriesCount
+        {
+            get
+            {
+                if (!m_indexBuilt)
+                    throw new FrameworkException("Error : You must build the index cache first");
+                return m_index.FileEntriesCount;
+            }
+        }
     }
 }

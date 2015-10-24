@@ -854,6 +854,45 @@ namespace CRH.Framework.Disk.DataTrack
         }
 
         /// <summary>
+        /// Number of entries
+        /// </summary>
+        public override int EntriesCount
+        {
+            get
+            {
+                if (!m_prepared)
+                    throw new FrameworkException("Error : You must prepare the iso first");
+                return m_index.EntriesCounts;
+            }
+        }
+
+        /// <summary>
+        /// Number of Directory entries
+        /// </summary>
+        public override int DirectoryEntriesCount
+        {
+            get
+            {
+                if (!m_prepared)
+                    throw new FrameworkException("Error : You must prepare the iso first");
+                return m_index.EntriesCounts;
+            }
+        }
+
+        /// <summary>
+        /// Number of file entries
+        /// </summary>
+        public override int FileEntriesCount
+        {
+            get
+            {
+                if (!m_prepared)
+                    throw new FrameworkException("Error : You must prepare the iso first");
+                return m_index.FileEntriesCount;
+            }
+        }
+
+        /// <summary>
         /// Append version to files name (;1)
         /// </summary>
         public bool AppendVersionToFileName

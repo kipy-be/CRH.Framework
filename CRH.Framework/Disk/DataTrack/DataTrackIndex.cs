@@ -16,6 +16,10 @@ namespace CRH.Framework.Disk.DataTrack
         private DataTrackIndexEntry       m_root;
         private List<DataTrackIndexEntry> m_entries;
         private Dictionary<string, DataTrackIndexEntry> m_mappedEntries;
+        
+        private int m_entriesCounts;
+        private int m_directoryEntriesCount;
+        private int m_fileEntriesCount;
 
     // Constructors
 
@@ -24,6 +28,10 @@ namespace CRH.Framework.Disk.DataTrack
             m_root          = new DataTrackIndexEntry(null, root);
             m_entries       = new List<DataTrackIndexEntry>();
             m_mappedEntries = new Dictionary<string, DataTrackIndexEntry>();
+
+            m_entriesCounts         = 0;
+            m_directoryEntriesCount = 0;
+            m_fileEntriesCount      = 0;
         }
 
     // Methods
@@ -36,6 +44,12 @@ namespace CRH.Framework.Disk.DataTrack
         {
             if (m_mappedEntries.ContainsKey(entry.FullPath))
                 throw new FrameworkException("Error while adding entry to index : entry \"{0}\" already exists", entry.FullPath);
+
+            m_entriesCounts++;
+            if (entry.IsDirectory)
+                m_directoryEntriesCount++;
+            else
+                m_fileEntriesCount++;
 
             m_entries.Add(entry);
             m_mappedEntries.Add(entry.FullPath, entry);
@@ -179,6 +193,33 @@ namespace CRH.Framework.Disk.DataTrack
         internal DataTrackIndexEntry Root
         {
             get { return m_root; }
+        }
+
+        /// <summary>
+        /// Number of entries
+        /// </summary>
+        internal int EntriesCounts
+        {
+            get { return m_entriesCounts; }
+            set { m_entriesCounts = value; }
+        }
+
+        /// <summary>
+        /// Number of directory entries
+        /// </summary>
+        internal int DirectoryEntriesCount
+        {
+            get { return m_directoryEntriesCount; }
+            set { m_directoryEntriesCount = value; }
+        }
+
+        /// <summary>
+        /// Number of file entries
+        /// </summary>
+        internal int FileEntriesCount
+        {
+            get { return m_fileEntriesCount; }
+            set { m_fileEntriesCount = value; }
         }
     }
 }
