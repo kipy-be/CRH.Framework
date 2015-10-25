@@ -242,9 +242,6 @@ namespace CRH.Framework.Disk.DataTrack
             get { return m_name; }
             internal set
             {
-                if (value.Length < 1)
-                    throw new FrameworkException("Entry name is empty");
-
                 if (value.Length > 0xFF)
                     throw new FrameworkException("Entry name is too long");
 

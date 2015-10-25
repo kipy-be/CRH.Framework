@@ -17,7 +17,7 @@ namespace CRH.Framework.Disk.DataTrack
         private List<DataTrackIndexEntry> m_entries;
         private Dictionary<string, DataTrackIndexEntry> m_mappedEntries;
         
-        private int m_entriesCounts;
+        private int m_entriesCount;
         private int m_directoryEntriesCount;
         private int m_fileEntriesCount;
 
@@ -29,7 +29,7 @@ namespace CRH.Framework.Disk.DataTrack
             m_entries       = new List<DataTrackIndexEntry>();
             m_mappedEntries = new Dictionary<string, DataTrackIndexEntry>();
 
-            m_entriesCounts         = 0;
+            m_entriesCount          = 0;
             m_directoryEntriesCount = 0;
             m_fileEntriesCount      = 0;
         }
@@ -45,7 +45,7 @@ namespace CRH.Framework.Disk.DataTrack
             if (m_mappedEntries.ContainsKey(entry.FullPath))
                 throw new FrameworkException("Error while adding entry to index : entry \"{0}\" already exists", entry.FullPath);
 
-            m_entriesCounts++;
+            m_entriesCount++;
             if (entry.IsDirectory)
                 m_directoryEntriesCount++;
             else
@@ -198,10 +198,10 @@ namespace CRH.Framework.Disk.DataTrack
         /// <summary>
         /// Number of entries
         /// </summary>
-        internal int EntriesCounts
+        internal int EntriesCount
         {
-            get { return m_entriesCounts; }
-            set { m_entriesCounts = value; }
+            get { return m_entriesCount; }
+            set { m_entriesCount = value; }
         }
 
         /// <summary>

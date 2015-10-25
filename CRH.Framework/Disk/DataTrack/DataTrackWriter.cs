@@ -862,7 +862,7 @@ namespace CRH.Framework.Disk.DataTrack
             {
                 if (!m_prepared)
                     throw new FrameworkException("Error : You must prepare the iso first");
-                return m_index.EntriesCounts;
+                return m_index.EntriesCount;
             }
         }
 
@@ -875,7 +875,7 @@ namespace CRH.Framework.Disk.DataTrack
             {
                 if (!m_prepared)
                     throw new FrameworkException("Error : You must prepare the iso first");
-                return m_index.EntriesCounts;
+                return m_index.EntriesCount;
             }
         }
 

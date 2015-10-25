@@ -734,7 +734,7 @@ namespace CRH.Framework.Disk.DataTrack
             {
                 if (!m_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.EntriesCounts;
+                return m_index.EntriesCount;
             }
         }
 
@@ -747,7 +747,7 @@ namespace CRH.Framework.Disk.DataTrack
             {
                 if (!m_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.EntriesCounts;
+                return m_index.EntriesCount;
             }
         }
 

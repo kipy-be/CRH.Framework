@@ -11,7 +11,7 @@ namespace CRH.Framework.Disk.DataTrack
     {
         static private byte[] m_eccFLookupTable;
         static private byte[] m_eccBLookupTable;
-        static private uint[]  m_edcLookupTable;
+        static private uint[] m_edcLookupTable;
 
         private static byte[] m_headerBackup;
 
