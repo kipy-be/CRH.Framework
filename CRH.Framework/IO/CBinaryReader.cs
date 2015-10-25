@@ -94,7 +94,7 @@ namespace CRH.Framework.IO
             {
                 byte b;
                 int bytesRead = 0;
-                while ((b = this.ReadByte()) != 0 && bytesRead < maxSize)
+                while (bytesRead < maxSize && (b = this.ReadByte()) != 0)
                 {
                     ms.WriteByte(b);
                     bytesRead++;
