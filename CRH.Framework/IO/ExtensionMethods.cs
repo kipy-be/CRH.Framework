@@ -4,7 +4,7 @@ using CRH.Framework.IO;
 
 namespace CRH.Framework.IO
 {
-    internal static class ExtensionMethods
+    public static class ExtensionMethods
     {
         /// <summary>
         /// Close and dispose the stream
@@ -48,7 +48,7 @@ namespace CRH.Framework.IO
         /// <summary>
         /// Close and dispose the stream
         /// </summary>
-        internal static void CloseAndDispose(this CBinaryReader stream)
+        public static void CloseAndDispose(this CBinaryReader stream)
         {
             if (stream != null)
             {
@@ -61,7 +61,7 @@ namespace CRH.Framework.IO
         /// <summary>
         /// Close and dispose the stream
         /// </summary>
-        internal static void CloseAndDispose(this CBinaryWriter stream)
+        public static void CloseAndDispose(this CBinaryWriter stream)
         {
             if (stream != null)
             {

@@ -324,7 +324,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// Extract a file
         /// </summary>
         /// <param name="filePath">The full path of the disk's file (eg : /FOO/BAR/FILE.EXT)</param>
-        /// <param name="stream">The full path of the</param>
+        /// <param name="outFilePath">The full path of the output file</param>
         public void ExtractFile(string filePath, string outFilePath)
         {
             if (!m_indexBuilt)

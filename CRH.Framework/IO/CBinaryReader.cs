@@ -83,17 +83,28 @@ namespace CRH.Framework.IO
         }
 
         /// <summary>
-        /// Read a ASCII string
+        /// Read a ASCII string until maxSize is reached or 0x00 is read
         /// </summary>
-        /// <param name="size">Size of the string to read</param>
+        /// <param name="maxSize">Max size of the string to read</param>
         /// <param name="trim">Trim the string</param>
         /// <returns></returns>
-        public string ReadAsciiString(int size, bool trim = true)
+        public string ReadAsciiString(int maxSize, bool trim = true)
         {
-            if(trim)
-                return Encoding.ASCII.GetString(this.ReadBytes(size)).TrimEnd();
-            else
-                return Encoding.ASCII.GetString(this.ReadBytes(size));
+            using (MemoryStream ms = new MemoryStream())
+            {
+                byte b;
+                int bytesRead = 0;
+                while ((b = this.ReadByte()) != 0 && bytesRead < maxSize)
+                {
+                    ms.WriteByte(b);
+                    bytesRead++;
+                }
+
+                if (trim)
+                    return Encoding.ASCII.GetString(ms.ToArray()).TrimEnd();
+                else
+                    return Encoding.ASCII.GetString(ms.ToArray());
+            }
         }
 
         /// <summary>
