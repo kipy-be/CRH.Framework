@@ -113,5 +113,13 @@ namespace CRH.Framework.IO
             get { return this.BaseStream.Position; }
             set { this.BaseStream.Position = value; }
         }
+
+        /// <summary>
+        /// Length of the base stream
+        /// </summary>
+        public long Length
+        {
+            get { return this.BaseStream.Length; }
+        }
     }
 }

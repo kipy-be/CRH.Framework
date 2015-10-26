@@ -88,16 +88,28 @@ namespace CRH.Framework.IO
         /// <param name="maxSize">Max size of the string to read</param>
         /// <param name="trim">Trim the string</param>
         /// <returns></returns>
-        public string ReadAsciiString(int maxSize, bool trim = true)
+        public string ReadAsciiString(int maxSize = -1, bool trim = true)
         {
             using (MemoryStream ms = new MemoryStream())
             {
                 byte b;
                 int bytesRead = 0;
-                while (bytesRead < maxSize && (b = this.ReadByte()) != 0)
+
+                if (maxSize > -1)
                 {
-                    ms.WriteByte(b);
-                    bytesRead++;
+                    while (bytesRead < maxSize && (b = this.ReadByte()) != 0)
+                    {
+                        ms.WriteByte(b);
+                        bytesRead++;
+                    }
+                }
+                else
+                {
+                    while ((b = this.ReadByte()) != 0)
+                    {
+                        ms.WriteByte(b);
+                        bytesRead++;
+                    }
                 }
 
                 if (trim)
@@ -137,6 +149,14 @@ namespace CRH.Framework.IO
         {
             get { return this.BaseStream.Position; }
             set { this.BaseStream.Position = value; }
+        }
+
+        /// <summary>
+        /// Length of the base stream
+        /// </summary>
+        public long Length
+        {
+            get { return this.BaseStream.Length; }
         }
     }
 }
