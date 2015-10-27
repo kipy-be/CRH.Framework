@@ -2,7 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 using CRH.Framework.Common;
-using CRH.Framework.IO.Checksum;
+using CRH.Framework.IO.Hash;
 
 namespace CRH.Framework.IO.Compression
 {
