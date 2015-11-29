@@ -217,8 +217,8 @@ namespace CRH.Framework.Disk.DataTrack
             using (CBinaryWriter lePathTableStream = new CBinaryWriter(lePathTableData))
             using (CBinaryWriter bePathTableStream = new CBinaryWriter(bePathTableData))
             {
-                lePathTableStream.Write(GetPathTableEntryBuffer(m_index.Root.DirectoryEntry, PathTableType.LE, 0));
-                bePathTableStream.Write(GetPathTableEntryBuffer(m_index.Root.DirectoryEntry, PathTableType.BE, 0));
+                lePathTableStream.Write(GetPathTableEntryBuffer(m_index.Root.DirectoryEntry, PathTableType.LE, 1));
+                bePathTableStream.Write(GetPathTableEntryBuffer(m_index.Root.DirectoryEntry, PathTableType.BE, 1));
                 dNums.Add(m_index.Root.FullPath, ++dNum);
                 totalSize += (8 + m_index.Root.DirectoryEntry.Name.Length + (m_index.Root.DirectoryEntry.Name.Length % 2 != 0 ? 1 : 0));
 
@@ -620,11 +620,16 @@ namespace CRH.Framework.Disk.DataTrack
                 stream.Write(entry.ExtendedAttributeRecordlength);
 
                 if (type == PathTableType.LE)
+                {
                     stream.Write(entry.ExtentLba);
+                    stream.Write(parentNumber);
+                }
                 else
+                {
                     stream.WriteBE(entry.ExtentLba);
-
-                stream.Write(parentNumber);
+                    stream.WriteBE(parentNumber);
+                }
+                
                 stream.WriteAsciiString(entry.Name);
 
                 if (entry.Name.Length % 2 != 0)
