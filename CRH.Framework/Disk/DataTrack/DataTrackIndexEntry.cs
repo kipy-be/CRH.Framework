@@ -137,7 +137,12 @@ namespace CRH.Framework.Disk.DataTrack
 
         public bool IsStream
         {
-            get { return m_directoryEntry.HasXa ? m_directoryEntry.XaEntry.IsForm2 : false; }
+            get
+            {
+                return m_directoryEntry.HasXa
+                    ? m_directoryEntry.XaEntry.IsForm2 || m_directoryEntry.XaEntry.IsInterleaved
+                    : false;
+            }
         }
 
         /// <summary>
