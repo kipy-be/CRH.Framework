@@ -7,7 +7,6 @@ namespace CRH.Framework.Disk
 {
     public abstract class Disk
     {
-        protected string     m_fileUrl;
         protected FileInfo   m_file;
         protected FileStream m_fileStream;
         protected bool       m_fileOpen;
@@ -24,9 +23,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         /// <param name="fileUrl">Path to the ISO file</param>
         /// <param name="system">File system used for data track</param>
-        internal Disk(string fileUrl, DiskFileSystem system)
+        internal Disk(DiskFileSystem system)
         {
-            m_fileUrl      = fileUrl;
             m_fileOpen     = false;
             m_system       = system;
             m_hasDataTrack = false;

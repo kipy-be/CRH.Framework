@@ -22,11 +22,11 @@ namespace CRH.Framework.Disk
         /// <param name="system">File system used for data track</param>
         /// <param name="overwriteIfExists">Overwite file if exists</param>
         private DiskWriter(string fileUrl, DiskFileSystem system, bool overwriteIfExists = true)
-            : base(fileUrl, system)
+            : base(system)
         {
             try
             {
-                m_file = new FileInfo(m_fileUrl);
+                m_file = new FileInfo(fileUrl);
 
                 m_fileStream = new FileStream(m_file.FullName, overwriteIfExists ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, FileShare.Read);
                 m_stream     = new CBinaryWriter(m_fileStream);

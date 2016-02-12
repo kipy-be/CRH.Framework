@@ -27,7 +27,7 @@ namespace CRH.Framework.Disk
         /// <param name="fileUrl">Path to the CUE file to read</param>
         /// <param name="system">File system used for data track</param>
         private DiskReader(string fileUrl, DiskFileSystem system)
-            : base(fileUrl, system)
+            : base(system)
         {
             try
             {
@@ -55,19 +55,19 @@ namespace CRH.Framework.Disk
                                 if (m_fileOpen)
                                     throw new FrameworkException("Error while parsing cue sheet : framework does not support multi files per cue but only one file with multi tracks");
 
-                                m_fileUrl = m_regCueFile.Match(line).Groups[1].Value;
+                                fileUrl = m_regCueFile.Match(line).Groups[1].Value;
 
-                                if (!(m_fileUrl.StartsWith("/") || m_fileUrl.StartsWith("\\") || m_fileUrl.Contains(":/") || m_fileUrl.Contains(":\\")))
-                                    m_fileUrl = cueFile.DirectoryName + "/" + m_fileUrl;
+                                if (!(fileUrl.StartsWith("/") || fileUrl.StartsWith("\\") || fileUrl.Contains(":/") || fileUrl.Contains(":\\")))
+                                    fileUrl = cueFile.DirectoryName + "/" + fileUrl;
 
-                                m_file = new FileInfo(m_fileUrl);
+                                m_file = new FileInfo(fileUrl);
 
                                 if (!m_file.Exists)
-                                    throw new FrameworkException("Error while parsing cue sheet : targeted file \"{0}\" not found", m_fileUrl);
+                                    throw new FrameworkException("Error while parsing cue sheet : targeted file \"{0}\" not found", fileUrl);
 
                                 string extension = m_file.Extension.ToUpper();
                                 if (!(extension == ".BIN" || extension == ".IMG" || extension == ".ISO"))
-                                    throw new FrameworkException("Error while parsing cue sheet : targeted file \"{0}\" is not a BIN/IMG/ISO file", m_fileUrl);
+                                    throw new FrameworkException("Error while parsing cue sheet : targeted file \"{0}\" is not a BIN/IMG/ISO file", fileUrl);
 
 
                                 m_fileStream = new FileStream(m_file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -202,11 +202,11 @@ namespace CRH.Framework.Disk
         /// <param name="readDescriptors">Read descriptors immediately</param>
         /// <param name="buildIndex">Build the index cache immediately</param>
         private DiskReader(string fileUrl, DiskFileSystem system, DataTrackMode mode, bool readDescriptors = true, bool buildIndex = true)
-            : base(fileUrl, system)
+            : base(system)
         {
             try
             {
-                m_file = new FileInfo(m_fileUrl);
+                m_file = new FileInfo(fileUrl);
                 m_fileStream = new FileStream(m_file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
                 m_stream = new CBinaryReader(m_fileStream);
                 m_fileOpen = true;

@@ -93,6 +93,16 @@ namespace CRH.Framework.IO
         }
 
         /// <summary>
+        /// Write a string with the specified encoding
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="encoding"></param>
+        public void WriteString(string str, Encoding encoding)
+        {
+            this.Write(encoding.GetBytes(str));
+        }
+
+        /// <summary>
         /// Write padding
         /// </summary>
         /// <param name="length">Length of padding</param>

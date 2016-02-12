@@ -120,6 +120,18 @@ namespace CRH.Framework.IO
         }
 
         /// <summary>
+        /// Read hexadecimal
+        /// </summary>
+        /// <param name="size">bytes to read</param>
+        /// <returns></returns>
+        public string ReadHexa(int size)
+        {
+            byte[] buffer = new byte[size];
+            this.Read(buffer, 0, size);
+            return BitConverter.ToString(buffer).Replace("-", string.Empty);
+        }
+
+        /// <summary>
         /// Read byte without consuming it
         /// </summary>
         /// <returns></returns>
