@@ -142,6 +142,9 @@ namespace CRH.Framework.Disk
                     int m, s, b, dv;
                     int sectorPos;
 
+                    if (maxTrackNumberLength < 2)
+                        maxTrackNumberLength = 2;
+
                     cueStream.WriteLine(String.Format("FILE \"{0}\" BINARY", m_file.Name.ToUpper()));
                     foreach(Track track in m_tracks)
                     {

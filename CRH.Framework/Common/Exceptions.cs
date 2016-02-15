@@ -48,7 +48,7 @@ namespace CRH.Framework.Common
     }
 
     /// <summary>
-    /// Exception features that are not supported and will never be (who said 'never say never ?')
+    /// Exception for features that are not supported and will never be (who said 'never say never ?')
     /// </summary>
     internal class FrameworkNotSupportedException : FrameworkException
     {
