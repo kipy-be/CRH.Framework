@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("CRHack")]
 [assembly: AssemblyProduct("CRHack Framework")]
-[assembly: AssemblyCopyright("©2015 by CRHack Crew")]
+[assembly: AssemblyCopyright("©2016 by CRHack Crew")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -15,4 +15,5 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("0f85ec0e-8380-4a59-8abd-32a63cef32dc")]
 
-[assembly: AssemblyVersion("0.1.*")]
+[assembly: AssemblyVersion("0.8.0")]
+
