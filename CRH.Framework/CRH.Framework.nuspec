@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>CRH.Framework</id>
+    <version>0.8.0</version>
+    <title>$title$</title>
+    <authors>kipy</authors>
+    <owners>CRHack</owners>
+    <licenseUrl>https://code.termina.org/kipy/CRH.Framework/src/master/LICENSE</licenseUrl>
+    <projectUrl>https://code.termina.org/kipy/CRH.Framework</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>First release</releaseNotes>
+    <copyright>©2016 by CRHack Crew</copyright>
+    <tags>ISO Framework Translation Hacking CRHack</tags>
+  </metadata>
+</package>
