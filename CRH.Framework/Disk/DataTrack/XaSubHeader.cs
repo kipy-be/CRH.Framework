@@ -19,14 +19,14 @@ namespace CRH.Framework.Disk.DataTrack
 
     public sealed class XaSubHeader
     {
-        private byte m_file;
-        private byte m_channel;
-        private byte m_subMode;
-        private byte m_dataType;
+        private byte _file;
+        private byte _channel;
+        private byte _subMode;
+        private byte _dataType;
 
-        private static XaSubHeader m_basicSubHeader;
-        private static XaSubHeader m_endOfRecordSubHeader;
-        private static XaSubHeader m_endOfFileSubHeader;
+        private static XaSubHeader _basicSubHeader;
+        private static XaSubHeader _endOfRecordSubHeader;
+        private static XaSubHeader _endOfFileSubHeader;
 
     // Constructors
 
@@ -41,10 +41,10 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public XaSubHeader(byte file, byte channel, byte subMode, byte dataType)
         {
-            m_file     = file;
-            m_channel  = channel;
-            m_subMode  = subMode;
-            m_dataType = dataType;
+            _file     = file;
+            _channel  = channel;
+            _subMode  = subMode;
+            _dataType = dataType;
         }
 
     // Methods
@@ -56,7 +56,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <returns></returns>
         private bool GetSubModeFlag(XaSubModeFlag mask)
         {
-            return (m_subMode & (byte)mask) > 0;
+            return (_subMode & (byte)mask) > 0;
         }
 
         /// <summary>
@@ -67,9 +67,9 @@ namespace CRH.Framework.Disk.DataTrack
         private void SetSubModeFlag(XaSubModeFlag mask, bool value)
         {
             if (value)
-                m_subMode |= (byte)mask;
+                _subMode |= (byte)mask;
             else
-                m_subMode &= (byte)(0xFF ^ (byte)mask);
+                _subMode &= (byte)(0xFF ^ (byte)mask);
         }
 
     // Accessors
@@ -81,12 +81,12 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (m_basicSubHeader == null)
+                if (_basicSubHeader == null)
                 {
-                    m_basicSubHeader = new XaSubHeader();
-                    m_basicSubHeader.IsData = true;
+                    _basicSubHeader = new XaSubHeader();
+                    _basicSubHeader.IsData = true;
                 }
-                return m_basicSubHeader;
+                return _basicSubHeader;
             }
         }
 
@@ -97,13 +97,13 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (m_endOfRecordSubHeader == null)
+                if (_endOfRecordSubHeader == null)
                 {
-                    m_endOfRecordSubHeader = new XaSubHeader();
-                    m_endOfRecordSubHeader.IsData = true;
-                    m_endOfRecordSubHeader.IsEOR = true;
+                    _endOfRecordSubHeader = new XaSubHeader();
+                    _endOfRecordSubHeader.IsData = true;
+                    _endOfRecordSubHeader.IsEOR = true;
                 }
-                return m_endOfRecordSubHeader;
+                return _endOfRecordSubHeader;
             }
         }
 
@@ -114,14 +114,14 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (m_endOfFileSubHeader == null)
+                if (_endOfFileSubHeader == null)
                 {
-                    m_endOfFileSubHeader = new XaSubHeader();
-                    m_endOfFileSubHeader.IsData = true;
-                    m_endOfFileSubHeader.IsEOF = true;
-                    m_endOfFileSubHeader.IsEOR = true;
+                    _endOfFileSubHeader = new XaSubHeader();
+                    _endOfFileSubHeader.IsData = true;
+                    _endOfFileSubHeader.IsEOF = true;
+                    _endOfFileSubHeader.IsEOR = true;
                 }
-                return m_endOfFileSubHeader;
+                return _endOfFileSubHeader;
             }
         }
 
@@ -130,8 +130,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte File
         {
-            get { return m_file; }
-            internal set { m_file = value; }
+            get { return _file; }
+            internal set { _file = value; }
         }
 
         /// <summary>
@@ -139,8 +139,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte Channel
         {
-            get { return m_channel; }
-            internal set { m_channel = value; }
+            get { return _channel; }
+            internal set { _channel = value; }
         }
 
         /// <summary>
@@ -148,8 +148,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte SubMode
         {
-            get { return m_subMode; }
-            internal set { m_subMode = value; }
+            get { return _subMode; }
+            internal set { _subMode = value; }
         }
 
         /// <summary>
@@ -229,8 +229,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte DataType
         {
-            get { return m_dataType; }
-            internal set { m_dataType = value; }
+            get { return _dataType; }
+            internal set { _dataType = value; }
         }
     }
 }

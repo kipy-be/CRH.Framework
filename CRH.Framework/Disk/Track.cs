@@ -6,18 +6,18 @@ namespace CRH.Framework.Disk
 {
     public abstract class Track
     {
-        protected TrackType  m_type;
-        protected FileStream m_fileStream;
+        protected TrackType  _type;
+        protected FileStream _fileStream;
 
-        protected int  m_trackNumber;
-        protected int  m_sectorSize;
-        protected long m_offset;
-        protected long m_size;
-        protected uint m_pregapSize;
-        protected uint m_postgapSize;
-        protected long m_pauseOffset;
-        protected uint m_pauseSize;
-        protected bool m_hasPause;
+        protected int  _trackNumber;
+        protected int  _sectorSize;
+        protected long _offset;
+        protected long _size;
+        protected uint _pregapSize;
+        protected uint _postgapSize;
+        protected long _pauseOffset;
+        protected uint _pauseSize;
+        protected bool _hasPause;
 
     // Constructors
 
@@ -29,13 +29,13 @@ namespace CRH.Framework.Disk
         /// <param name="type">The type of the track (data, audio)</param>
         public Track(FileStream fileStream, int trackNumber, TrackType type)
         {
-            m_fileStream  = fileStream;
-            m_trackNumber = trackNumber;
-            m_type        = type;
-            m_pregapSize  = 0;
-            m_postgapSize = 0;
-            m_pauseSize   = 0;
-            m_hasPause    = false;
+            _fileStream  = fileStream;
+            _trackNumber = trackNumber;
+            _type        = type;
+            _pregapSize  = 0;
+            _postgapSize = 0;
+            _pauseSize   = 0;
+            _hasPause    = false;
         }
 
     // Methods
@@ -45,7 +45,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         protected long LBAToOffset(long lba)
         {
-            return m_sectorSize * lba;
+            return _sectorSize * lba;
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace CRH.Framework.Disk
         {
             try
             {
-                m_fileStream.Position = m_offset + LBAToOffset(lba);
+                _fileStream.Position = _offset + LBAToOffset(lba);
             }
             catch (EndOfStreamException)
             {
@@ -72,7 +72,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         public long SectorPosition
         {
-            get { return m_fileStream.Position / m_sectorSize; }
+            get { return _fileStream.Position / _sectorSize; }
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         public long SectorCount
         {
-            get { return m_fileStream.Length / m_sectorSize; }
+            get { return _fileStream.Length / _sectorSize; }
         }
 
     // Accessors
@@ -90,7 +90,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         public int TrackNumber
         {
-            get { return m_trackNumber; }
+            get { return _trackNumber; }
         }
 
         /// <summary>
@@ -98,8 +98,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         public long Offset
         {
-            get { return m_offset; }
-            internal set { m_offset = value; }
+            get { return _offset; }
+            internal set { _offset = value; }
         }
 
         /// <summary>
@@ -107,8 +107,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         public long Size
         {
-            get { return m_size; }
-            internal set { m_size = value; }
+            get { return _size; }
+            internal set { _size = value; }
         }
 
         /// <summary>
@@ -116,8 +116,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         public uint PregapSize
         {
-            get { return m_pregapSize; }
-            internal set { m_pregapSize = value; }
+            get { return _pregapSize; }
+            internal set { _pregapSize = value; }
         }
 
         /// <summary>
@@ -125,8 +125,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         public uint PostgapSize
         {
-            get { return m_postgapSize; }
-            internal set { m_postgapSize = value; }
+            get { return _postgapSize; }
+            internal set { _postgapSize = value; }
         }
 
         /// <summary>
@@ -134,8 +134,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         public long PauseOffset
         {
-            get { return m_pauseOffset; }
-            internal set { m_pauseOffset = value; }
+            get { return _pauseOffset; }
+            internal set { _pauseOffset = value; }
         }
 
         /// <summary>
@@ -143,11 +143,11 @@ namespace CRH.Framework.Disk
         /// </summary>
         public uint PauseSize
         {
-            get { return m_pauseSize; }
+            get { return _pauseSize; }
             internal set
             {
-                m_pauseSize = value;
-                m_hasPause  = value > 0;
+                _pauseSize = value;
+                _hasPause  = value > 0;
             }
         }
 
@@ -156,8 +156,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         internal bool HasPause
         {
-            get { return m_hasPause; }
-            set { m_hasPause = value; }
+            get { return _hasPause; }
+            set { _hasPause = value; }
         }
 
         /// <summary>
@@ -165,7 +165,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         public bool IsData
         {
-            get { return m_type == TrackType.DATA; }
+            get { return _type == TrackType.DATA; }
         }
 
         /// <summary>
@@ -173,7 +173,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         public bool IsAudio
         {
-            get { return m_type == TrackType.AUDIO; }
+            get { return _type == TrackType.AUDIO; }
         }
 
         /// <summary>
@@ -181,7 +181,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         public int SectorSize
         {
-            get { return m_sectorSize; }
+            get { return _sectorSize; }
         }
     }
 

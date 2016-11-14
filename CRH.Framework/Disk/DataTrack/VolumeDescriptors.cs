@@ -27,17 +27,17 @@ namespace CRH.Framework.Disk.DataTrack
         public const string VOLUME_ID = "CD001";
         public const string VOLUME_XA = "CD-XA001";
 
-        protected VolumeDescriptorType m_type;
-        protected string m_id;
-        protected byte   m_version;
+        protected VolumeDescriptorType _type;
+        protected string _id;
+        protected byte   _version;
 
     // Constructors
 
         internal VolumeDescriptor(VolumeDescriptorType type, byte version)
         {
-            m_type    = type;
-            m_version = version;
-            m_id      = VOLUME_ID;
+            _type    = type;
+            _version = version;
+            _id      = VOLUME_ID;
         }
 
     // Methods
@@ -50,27 +50,27 @@ namespace CRH.Framework.Disk.DataTrack
         {
             if (buffer.Length == 17)
             {
-                String value = Encoding.ASCII.GetString(buffer, 0, 16);
+                string value = Encoding.ASCII.GetString(buffer, 0, 16);
                 byte timeZone = buffer[16];
                 if (value.Equals("0000000000000000"))
                     return DateTime.MinValue;
                 else
                 {
-                    DateTime date = new DateTime
+                    var date = new DateTime
                     (
-                        Int32.Parse(value.Substring(0, 4)),       // Year (1 to 9999)
-                        Int32.Parse(value.Substring(4, 2)),       // Month (1 to 12)
-                        Int32.Parse(value.Substring(6, 2)),       // Day (1 to 31)
-                        Int32.Parse(value.Substring(8, 2)),       // Hours (0 to 23)
-                        Int32.Parse(value.Substring(10, 2)),      // Minutes (0 to 59)
-                        Int32.Parse(value.Substring(12, 2)),      // Seconds (0 to 59)
-                        Int32.Parse(value.Substring(14, 2)) * 10  // Hundredth of seconds (0 to 99)
+                        int.Parse(value.Substring(0, 4)),       // Year (1 to 9999)
+                        int.Parse(value.Substring(4, 2)),       // Month (1 to 12)
+                        int.Parse(value.Substring(6, 2)),       // Day (1 to 31)
+                        int.Parse(value.Substring(8, 2)),       // Hours (0 to 23)
+                        int.Parse(value.Substring(10, 2)),      // Minutes (0 to 59)
+                        int.Parse(value.Substring(12, 2)),      // Seconds (0 to 59)
+                        int.Parse(value.Substring(14, 2)) * 10  // Hundredth of seconds (0 to 99)
                     );
 
                     // There's also a timezone, but realy... who cares ?
                     // Just for info, format is :
                     // int8 with a value range of 0 to 100 (0 = -48 to 100 = 52, the value is then multiplied by 15 to obtain the timezone in minutes)
-                    return (DateTime)date;
+                    return date;
                 }
             }
             else
@@ -114,8 +114,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public VolumeDescriptorType Type
         {
-            get { return m_type; }
-            set { m_type = value; }
+            get { return _type; }
+            set { _type = value; }
         }
 
         /// <summary>
@@ -125,8 +125,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string Id
         {
-            get { return m_id; }
-            set { m_id = value; }
+            get { return _id; }
+            set { _id = value; }
         }
 
         /// <summary>
@@ -135,8 +135,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte Version
         {
-            get { return m_version; }
-            set { m_version = value; }
+            get { return _version; }
+            set { _version = value; }
         }
     }
 
@@ -145,68 +145,68 @@ namespace CRH.Framework.Disk.DataTrack
     /// </summary>
     public sealed class PrimaryVolumeDescriptor : VolumeDescriptor
     {
-        private byte     m_unused1;
-        private string   m_systemId;
-        private string   m_volumeId;
-        private byte[]   m_unused2;
-        private uint     m_volumeSpaceSize;
-        private byte[]   m_unused3;
-        private ushort   m_volumeSetSize;
-        private ushort   m_volumeSequenceNumber;
-        private ushort   m_logicalBlockSize;
-        private uint     m_pathTableSize;
-        private uint     m_typeLPathTableLBA;
-        private uint     m_optTypeLPathTableLBA;
-        private uint     m_typeMPathTableLBA;
-        private uint     m_optTypeMPathTableLBA;
-        private DirectoryEntry m_rootDirectoryEntry;
-        private string   m_volumeSetId;
-        private string   m_publisherId;
-        private string   m_preparerId;
-        private string   m_applicationId;
-        private string   m_copyrightFileId;
-        private string   m_abstractFileId;
-        private string   m_bibliographicFileId;
-        private DateTime m_creationDate;
-        private DateTime m_modificationDate;
-        private DateTime m_expirationDate;
-        private DateTime m_effectiveDate;
-        private byte     m_fileStructureVersion;
-        private byte     m_unused4;
-        private byte[]   m_applicationData;
-        private byte[]   m_reserved;
+        private byte     _unused1;
+        private string   _systemId;
+        private string   _volumeId;
+        private byte[]   _unused2;
+        private uint     _volumeSpaceSize;
+        private byte[]   _unused3;
+        private ushort   _volumeSetSize;
+        private ushort   _volumeSequenceNumber;
+        private ushort   _logicalBlockSize;
+        private uint     _pathTableSize;
+        private uint     _typeLPathTableLBA;
+        private uint     _optTypeLPathTableLBA;
+        private uint     _typeMPathTableLBA;
+        private uint     _optTypeMPathTableLBA;
+        private DirectoryEntry _rootDirectoryEntry;
+        private string   _volumeSetId;
+        private string   _publisherId;
+        private string   _preparerId;
+        private string   _applicationId;
+        private string   _copyrightFileId;
+        private string   _abstractFileId;
+        private string   _bibliographicFileId;
+        private DateTime _creationDate;
+        private DateTime _modificationDate;
+        private DateTime _expirationDate;
+        private DateTime _effectiveDate;
+        private byte     _fileStructureVersion;
+        private byte     _unused4;
+        private byte[]   _applicationData;
+        private byte[]   _reserved;
 
     // Constructors
 
         internal PrimaryVolumeDescriptor(byte version)
             : base(VolumeDescriptorType.PRIMARY, version)
         {
-            m_unused1              = 0;
-            m_systemId             = "";
-            m_volumeId             = "";
-            m_unused2              = new byte[8];
-            m_volumeSpaceSize      = 0;
-            m_unused3              = new byte[32];
-            m_volumeSetSize        = 1;
-            m_volumeSequenceNumber = 1;
-            m_logicalBlockSize     = 2048;
-            m_pathTableSize        = 0;
-            m_typeLPathTableLBA    = 0;
-            m_optTypeLPathTableLBA = 0;
-            m_typeMPathTableLBA    = 0;
-            m_optTypeMPathTableLBA = 0;
-            m_volumeSetId          = "";
-            m_publisherId          = "";
-            m_preparerId           = "";
-            m_applicationId        = "";
-            m_copyrightFileId      = "";
-            m_abstractFileId       = "";
-            m_bibliographicFileId  = "";
-            m_creationDate         = DateTime.Now;
-            m_fileStructureVersion = 1;
-            m_unused4              = 0;
-            m_applicationData      = new byte[512];
-            m_reserved             = new byte[653];
+            _unused1              = 0;
+            _systemId             = "";
+            _volumeId             = "";
+            _unused2              = new byte[8];
+            _volumeSpaceSize      = 0;
+            _unused3              = new byte[32];
+            _volumeSetSize        = 1;
+            _volumeSequenceNumber = 1;
+            _logicalBlockSize     = 2048;
+            _pathTableSize        = 0;
+            _typeLPathTableLBA    = 0;
+            _optTypeLPathTableLBA = 0;
+            _typeMPathTableLBA    = 0;
+            _optTypeMPathTableLBA = 0;
+            _volumeSetId          = "";
+            _publisherId          = "";
+            _preparerId           = "";
+            _applicationId        = "";
+            _copyrightFileId      = "";
+            _abstractFileId       = "";
+            _bibliographicFileId  = "";
+            _creationDate         = DateTime.Now;
+            _fileStructureVersion = 1;
+            _unused4              = 0;
+            _applicationData      = new byte[512];
+            _reserved             = new byte[653];
         }
 
     // Accessors
@@ -216,8 +216,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte Unused1
         {
-            get { return m_unused1; }
-            set { m_unused1 = value; }
+            get { return _unused1; }
+            set { _unused1 = value; }
         }
 
         /// <summary>
@@ -226,8 +226,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string SystemId
         {
-            get { return m_systemId; }
-            set { m_systemId = value; }
+            get { return _systemId; }
+            set { _systemId = value; }
         }
 
         /// <summary>
@@ -236,8 +236,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string VolumeId
         {
-            get { return m_volumeId; }
-            set { m_volumeId = value; }
+            get { return _volumeId; }
+            set { _volumeId = value; }
         }
 
         /// <summary>
@@ -246,8 +246,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte[] Unused2
         {
-            get { return m_unused2; }
-            set { m_unused2 = value; }
+            get { return _unused2; }
+            set { _unused2 = value; }
         }
 
         /// <summary>
@@ -255,8 +255,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint VolumeSpaceSize
         {
-            get { return m_volumeSpaceSize; }
-            set { m_volumeSpaceSize = value; }
+            get { return _volumeSpaceSize; }
+            set { _volumeSpaceSize = value; }
         }
 
         /// <summary>
@@ -265,8 +265,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte[] Unused3
         {
-            get { return m_unused3; }
-            set { m_unused3 = value; }
+            get { return _unused3; }
+            set { _unused3 = value; }
         }
 
         /// <summary>
@@ -274,8 +274,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public ushort VolumeSetSize
         {
-            get { return m_volumeSetSize; }
-            set { m_volumeSetSize = value; }
+            get { return _volumeSetSize; }
+            set { _volumeSetSize = value; }
         }
 
         /// <summary>
@@ -283,8 +283,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public ushort VolumeSequenceNumber
         {
-            get { return m_volumeSequenceNumber; }
-            set { m_volumeSequenceNumber = value; }
+            get { return _volumeSequenceNumber; }
+            set { _volumeSequenceNumber = value; }
         }
 
         /// <summary>
@@ -292,8 +292,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public ushort LogicalBlockSize
         {
-            get { return m_logicalBlockSize; }
-            set { m_logicalBlockSize = value; }
+            get { return _logicalBlockSize; }
+            set { _logicalBlockSize = value; }
         }
 
         /// <summary>
@@ -301,8 +301,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint PathTableSize
         {
-            get { return m_pathTableSize; }
-            set { m_pathTableSize = value; }
+            get { return _pathTableSize; }
+            set { _pathTableSize = value; }
         }
 
         /// <summary>
@@ -310,8 +310,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint TypeLPathTableLBA
         {
-            get { return m_typeLPathTableLBA; }
-            set { m_typeLPathTableLBA = value; }
+            get { return _typeLPathTableLBA; }
+            set { _typeLPathTableLBA = value; }
         }
 
         /// <summary>
@@ -320,8 +320,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint OptTypeLPathTableLBA
         {
-            get { return m_optTypeLPathTableLBA; }
-            set { m_optTypeLPathTableLBA = value; }
+            get { return _optTypeLPathTableLBA; }
+            set { _optTypeLPathTableLBA = value; }
         }
 
         /// <summary>
@@ -329,8 +329,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint TypeMPathTableLBA
         {
-            get { return m_typeMPathTableLBA; }
-            set { m_typeMPathTableLBA = value; }
+            get { return _typeMPathTableLBA; }
+            set { _typeMPathTableLBA = value; }
         }
 
         /// <summary>
@@ -339,8 +339,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint OptTypeMPathTableLBA
         {
-            get { return m_optTypeMPathTableLBA; }
-            set { m_optTypeMPathTableLBA = value; }
+            get { return _optTypeMPathTableLBA; }
+            set { _optTypeMPathTableLBA = value; }
         }
 
         /// <summary>
@@ -349,8 +349,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DirectoryEntry RootDirectoryEntry
         {
-            get { return m_rootDirectoryEntry; }
-            set { m_rootDirectoryEntry = value; }
+            get { return _rootDirectoryEntry; }
+            set { _rootDirectoryEntry = value; }
         }
 
         /// <summary>
@@ -359,8 +359,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string VolumeSetId
         {
-            get { return m_volumeSetId; }
-            set { m_volumeSetId = value; }
+            get { return _volumeSetId; }
+            set { _volumeSetId = value; }
         }
 
         /// <summary>
@@ -371,8 +371,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string PublisherId
         {
-            get { return m_publisherId; }
-            set { m_publisherId = value; }
+            get { return _publisherId; }
+            set { _publisherId = value; }
         }
 
         /// <summary>
@@ -383,8 +383,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string PreparerId
         {
-            get { return m_preparerId; }
-            set { m_preparerId = value; }
+            get { return _preparerId; }
+            set { _preparerId = value; }
         }
 
         /// <summary>
@@ -395,8 +395,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string ApplicationId
         {
-            get { return m_applicationId; }
-            set { m_applicationId = value; }
+            get { return _applicationId; }
+            set { _applicationId = value; }
         }
 
         /// <summary>
@@ -407,8 +407,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string CopyrightFileId
         {
-            get { return m_copyrightFileId; }
-            set { m_copyrightFileId = value; }
+            get { return _copyrightFileId; }
+            set { _copyrightFileId = value; }
         }
 
         /// <summary>
@@ -419,8 +419,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string AbstractFileId
         {
-            get { return m_abstractFileId; }
-            set { m_abstractFileId = value; }
+            get { return _abstractFileId; }
+            set { _abstractFileId = value; }
         }
 
         /// <summary>
@@ -431,8 +431,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string BibliographicFileId
         {
-            get { return m_bibliographicFileId; }
-            set { m_bibliographicFileId = value; }
+            get { return _bibliographicFileId; }
+            set { _bibliographicFileId = value; }
         }
 
         /// <summary>
@@ -440,8 +440,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DateTime CreationDate
         {
-            get { return m_creationDate; }
-            set { m_creationDate = value; }
+            get { return _creationDate; }
+            set { _creationDate = value; }
         }
 
         /// <summary>
@@ -449,8 +449,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DateTime ModificationDate
         {
-            get { return m_modificationDate; }
-            set { m_modificationDate = value; }
+            get { return _modificationDate; }
+            set { _modificationDate = value; }
         }
 
         /// <summary>
@@ -458,8 +458,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DateTime ExpirationDate
         {
-            get { return m_expirationDate; }
-            set { m_expirationDate = value; }
+            get { return _expirationDate; }
+            set { _expirationDate = value; }
         }
 
         /// <summary>
@@ -467,8 +467,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DateTime EffectiveDate
         {
-            get { return m_effectiveDate; }
-            set { m_effectiveDate = value; }
+            get { return _effectiveDate; }
+            set { _effectiveDate = value; }
         }
 
         /// <summary>
@@ -477,8 +477,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte FileStructureVersion
         {
-            get { return m_fileStructureVersion; }
-            set { m_fileStructureVersion = value; }
+            get { return _fileStructureVersion; }
+            set { _fileStructureVersion = value; }
         }
 
         /// <summary>
@@ -486,8 +486,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte Unused4
         {
-            get { return m_unused4; }
-            set { m_unused4 = value; }
+            get { return _unused4; }
+            set { _unused4 = value; }
         }
 
         /// <summary>
@@ -496,8 +496,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte[] ApplicationData
         {
-            get { return m_applicationData; }
-            set { m_applicationData = value; }
+            get { return _applicationData; }
+            set { _applicationData = value; }
         }
 
         /// <summary>
@@ -506,8 +506,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte[] Reserved
         {
-            get { return m_reserved; }
-            set { m_reserved = value; }
+            get { return _reserved; }
+            set { _reserved = value; }
         }
     }
 

@@ -9,12 +9,12 @@ namespace CRH.Framework.Disk.DataTrack
 {
     public sealed class DataTrackReader : DataTrack, ITrackReader
     {
-        private CBinaryReader m_stream;
+        private CBinaryReader _stream;
 
-        private bool m_descriptorsRead;
-        private bool m_indexBuilt;
+        private bool _descriptorsRead;
+        private bool _indexBuilt;
 
-        private static Regex m_regFileName = new Regex("(.+?)(?:;[0-9]+)?$");
+        private static Regex _regFileName = new Regex("(.+?)(?:;[0-9]+)?$");
 
     // Constructors
 
@@ -30,10 +30,10 @@ namespace CRH.Framework.Disk.DataTrack
         internal DataTrackReader(CBinaryReader stream, int trackNumber, DiskFileSystem system, DataTrackMode mode, bool readDescriptors = true, bool buildIndex = true)
             : base((FileStream)stream.BaseStream, trackNumber, system, mode)
         {
-            m_stream          = stream;
-            m_descriptorsRead = false;
-            m_indexBuilt      = false;
-            m_entriesOrder    = DataTrackEntriesOrder.DEFAULT;
+            _stream          = stream;
+            _descriptorsRead = false;
+            _indexBuilt      = false;
+            _entriesOrder    = DataTrackEntriesOrder.DEFAULT;
 
             try
             {
@@ -71,24 +71,24 @@ namespace CRH.Framework.Disk.DataTrack
                 buffer = new byte[dataSize];
 
                 if (mode != SectorMode.RAW)
-                    m_stream.Position += (SYNC_SIZE + HEADER_SIZE);
+                    _stream.Position += (SYNC_SIZE + HEADER_SIZE);
 
                 if (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
-                   m_stream.Position += SUBHEADER_SIZE;
+                   _stream.Position += SUBHEADER_SIZE;
                 
-                m_stream.Read(buffer, 0, dataSize);
+                _stream.Read(buffer, 0, dataSize);
                 
                 if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
-                    m_stream.Position += EDC_SIZE;
+                    _stream.Position += EDC_SIZE;
 
                 if (mode == SectorMode.MODE1)
-                    m_stream.Position += INTERMEDIATE_SIZE;
+                    _stream.Position += INTERMEDIATE_SIZE;
 
                 if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
-                    m_stream.Position += ECC_SIZE;
+                    _stream.Position += ECC_SIZE;
 
                 if (mode == SectorMode.XA_FORM2)
-                    m_stream.Position += EDC_SIZE;
+                    _stream.Position += EDC_SIZE;
 
                 return buffer;
             }
@@ -122,30 +122,30 @@ namespace CRH.Framework.Disk.DataTrack
                 buffer = new byte[dataSize];
 
                 if (mode != SectorMode.RAW)
-                    m_stream.Position += (SYNC_SIZE + HEADER_SIZE);
+                    _stream.Position += (SYNC_SIZE + HEADER_SIZE);
 
                 if (mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
                 {
-                    subHeader.File     = m_stream.ReadByte();
-                    subHeader.Channel  = m_stream.ReadByte();
-                    subHeader.SubMode  = m_stream.ReadByte();
-                    subHeader.DataType = m_stream.ReadByte();
-                    m_stream.Position += SUBHEADER_SIZE / 2;
+                    subHeader.File     = _stream.ReadByte();
+                    subHeader.Channel  = _stream.ReadByte();
+                    subHeader.SubMode  = _stream.ReadByte();
+                    subHeader.DataType = _stream.ReadByte();
+                    _stream.Position += SUBHEADER_SIZE / 2;
                 }
 
-                m_stream.Read(buffer, 0, dataSize);
+                _stream.Read(buffer, 0, dataSize);
 
                 if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
-                    m_stream.Position += EDC_SIZE;
+                    _stream.Position += EDC_SIZE;
 
                 if (mode == SectorMode.MODE1)
-                    m_stream.Position += INTERMEDIATE_SIZE;
+                    _stream.Position += INTERMEDIATE_SIZE;
 
                 if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1)
-                    m_stream.Position += ECC_SIZE;
+                    _stream.Position += ECC_SIZE;
 
                 if (mode == SectorMode.XA_FORM2)
-                    m_stream.Position += EDC_SIZE;
+                    _stream.Position += EDC_SIZE;
 
                 return buffer;
             }
@@ -191,7 +191,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte[] ReadSector()
         {
-            return ReadSector(m_defaultSectorMode);
+            return ReadSector(_defaultSectorMode);
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="subHeader">Sub header container to write sub header to</param>
         public byte[] ReadSector(out XaSubHeader subHeader)
         {
-            return ReadSector(m_defaultSectorMode, out subHeader);
+            return ReadSector(_defaultSectorMode, out subHeader);
         }
 
         /// <summary>
@@ -211,7 +211,7 @@ namespace CRH.Framework.Disk.DataTrack
         public byte[] ReadSector(long lba, out XaSubHeader subHeader)
         {
             SeekSector(lba);
-            return ReadSector(m_defaultSectorMode, out subHeader);
+            return ReadSector(_defaultSectorMode, out subHeader);
         }
 
         /// <summary>
@@ -277,23 +277,23 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="stream">The stream to write the data</param>
         public void ReadFile(string filePath, Stream stream)
         {
-            if (!m_indexBuilt)
+            if (!_indexBuilt)
                 throw new FrameworkException("Error : You must build the index cache first");
 
             try
             {
-                DataTrackIndexEntry entry = m_index.GetEntry(filePath);
+                var entry = _index.GetEntry(filePath);
                 if (entry == null)
                     throw new FrameworkException("File not found : unable to find file \"{0}\"", filePath);
 
                 if (entry.IsDirectory)
                     throw new FrameworkException("Not a file : specified path seems to be a directory, not a file", filePath);
 
-                SectorMode mode = (m_mode != DataTrackMode.MODE2_XA)
-                                    ? m_defaultSectorMode
-                                    : entry.DirectoryEntry.XaEntry.IsForm1
-                                        ? SectorMode.XA_FORM1
-                                        : SectorMode.XA_FORM2;
+                var mode = (_mode != DataTrackMode.MODE2_XA)
+                                ? _defaultSectorMode
+                                : entry.DirectoryEntry.XaEntry.IsForm1
+                                    ? SectorMode.XA_FORM1
+                                    : SectorMode.XA_FORM2;
 
                 ReadFile(entry.DirectoryEntry.ExtentLba, entry.DirectoryEntry.ExtentSize, mode, stream);
             }
@@ -313,7 +313,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="filePath">The full file path of the file (eg : /FOO/BAR/FILE.EXT)</param>
         public Stream ReadFile(string filePath)
         {
-            MemoryStream stream = new MemoryStream();
+            var stream = new MemoryStream();
             ReadFile(filePath, stream);
             stream.Position = 0;
 
@@ -327,7 +327,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="outFilePath">The full path of the output file</param>
         public void ExtractFile(string filePath, string outFilePath)
         {
-            if (!m_indexBuilt)
+            if (!_indexBuilt)
                 throw new FrameworkException("Error : You must build the index cache first");
 
             try
@@ -355,10 +355,10 @@ namespace CRH.Framework.Disk.DataTrack
         /// <returns></returns>
         public bool FileExists(string filePath)
         {
-            if (!m_indexBuilt)
+            if (!_indexBuilt)
                 throw new FrameworkException("Error : You must build the index cache first");
 
-            return m_index.GetEntry(filePath) != null;
+            return _index.GetEntry(filePath) != null;
         }
 
         /// <summary>
@@ -366,7 +366,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public void ReadVolumeDescriptors()
         {
-            if (m_descriptorsRead)
+            if (_descriptorsRead)
                 return;
 
             try
@@ -378,7 +378,7 @@ namespace CRH.Framework.Disk.DataTrack
 
                 do
                 {
-                    using (CBinaryReader stream = new CBinaryReader(ReadSector(m_defaultSectorMode)))
+                    using (var stream = new CBinaryReader(ReadSector(_defaultSectorMode)))
                     {
                         descriptor = ReadVolumeDescriptor(stream);
                     }
@@ -386,7 +386,7 @@ namespace CRH.Framework.Disk.DataTrack
                     switch (descriptor.Type)
                     {
                         case VolumeDescriptorType.PRIMARY:
-                            m_primaryVolumeDescriptor = (PrimaryVolumeDescriptor)descriptor;
+                            _primaryVolumeDescriptor = (PrimaryVolumeDescriptor)descriptor;
                             hasPrimaryDescriptor = true;
                             break;
                         case VolumeDescriptorType.SET_TERMINATOR:
@@ -395,7 +395,7 @@ namespace CRH.Framework.Disk.DataTrack
                     }
                 } while (!endOfList);
 
-                m_descriptorsRead = true;
+                _descriptorsRead = true;
 
                 if (!hasPrimaryDescriptor)
                     throw new FrameworkException("Error while reading volume descriptors : no primary descriptor found");
@@ -495,7 +495,7 @@ namespace CRH.Framework.Disk.DataTrack
                 descriptor.OptTypeMPathTableLBA = stream.ReadUInt32BE();
 
                 if (descriptor.OptTypeLPathTableLBA != 0 || descriptor.OptTypeMPathTableLBA != 0)
-                    m_hasOptionalPathTable = true;
+                    _hasOptionalPathTable = true;
 
                 descriptor.RootDirectoryEntry = ReadDirectoryEntry(stream);
 
@@ -521,7 +521,7 @@ namespace CRH.Framework.Disk.DataTrack
                 // if the disk is CDROM/XA (and then contains an XaEntry in his DirectoryEntries),
                 // "CD-XA001" can be read at offset 0x400 of the pvd (actually offset 0x8D of ApplicationData field)
                 if (CBuffer.ReadAsciiString(descriptor.ApplicationData, 0x8D, 8) == VolumeDescriptor.VOLUME_XA)
-                    m_isXa = true;
+                    _isXa = true;
             }
             catch (FrameworkException ex)
             {
@@ -571,12 +571,12 @@ namespace CRH.Framework.Disk.DataTrack
                     throw new FrameworkException("Error while reading DirectoryEntry : VolumeSequenceNumber is not valid");
 
                 byte nameLength = stream.ReadByte();
-                entry.Name = m_regFileName.Match(stream.ReadAsciiString(nameLength, false)).Groups[1].Value;
+                entry.Name = _regFileName.Match(stream.ReadAsciiString(nameLength, false)).Groups[1].Value;
 
                 if (nameLength % 2 == 0)
                     stream.Position += 1;
 
-                if (m_isXa && (stream.Position != position + entry.Length))
+                if (_isXa && (stream.Position != position + entry.Length))
                 {
                     entry.XaEntry = new XaEntry();
                     entry.XaEntry.GroupId = stream.ReadUInt16BE();
@@ -608,21 +608,21 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public void BuildIndex()
         {
-            if (m_indexBuilt)
+            if (_indexBuilt)
                 return;
 
-            if (!m_descriptorsRead)
+            if (!_descriptorsRead)
                 throw new FrameworkException("Error : You must read the descriptors first");
 
             try
             {
-                long rootLba = m_primaryVolumeDescriptor.RootDirectoryEntry.ExtentLba;
-                CBinaryReader stream     = new CBinaryReader(ReadSector(rootLba, m_defaultSectorMode));
-                DirectoryEntry rootEntry = ReadDirectoryEntry(stream);
+                long rootLba   = _primaryVolumeDescriptor.RootDirectoryEntry.ExtentLba;
+                var stream     = new CBinaryReader(ReadSector(rootLba, _defaultSectorMode));
+                var rootEntry  = ReadDirectoryEntry(stream);
 
-                m_index = new DataTrackIndex(rootEntry);
-                AddDirectoryToIndex(m_index.Root);
-                m_indexBuilt = true;
+                _index = new DataTrackIndex(rootEntry);
+                AddDirectoryToIndex(_index.Root);
+                _indexBuilt = true;
             }
             catch (FrameworkException ex)
             {
@@ -643,9 +643,9 @@ namespace CRH.Framework.Disk.DataTrack
             DataTrackIndexEntry indexEntry;
             long lba          = indexDirectoryEntry.DirectoryEntry.ExtentLba;
             long size         = indexDirectoryEntry.DirectoryEntry.ExtentSize;
-            int  sectorsCount = (int)(size / GetSectorDataSize(m_defaultSectorMode));
+            int  sectorsCount = (int)(size / GetSectorDataSize(_defaultSectorMode));
 
-            CBinaryReader stream = new CBinaryReader(ReadSectors(lba, sectorsCount, m_defaultSectorMode));
+            var stream = new CBinaryReader(ReadSectors(lba, sectorsCount, _defaultSectorMode));
 
             // First directory entry of a directory entry is the directory itself, so let's skip it
             ReadDirectoryEntry(stream);
@@ -661,7 +661,7 @@ namespace CRH.Framework.Disk.DataTrack
                 if (b == 0)
                 {
                     // DirectoryEntry cannot be "splitted" on two sectors
-                    int dataSize = GetSectorDataSize(m_defaultSectorMode);
+                    int dataSize = GetSectorDataSize(_defaultSectorMode);
                     stream.Position = (((stream.Position / dataSize) + 1) * dataSize);
                     b = stream.TestByte();
                 }
@@ -673,7 +673,7 @@ namespace CRH.Framework.Disk.DataTrack
                     entry = ReadDirectoryEntry(stream);
 
                     indexEntry = new DataTrackIndexEntry(indexDirectoryEntry, entry);
-                    m_index.AddToIndex(indexEntry);
+                    _index.AddToIndex(indexEntry);
 
                     if (indexEntry.IsDirectory)
                         AddDirectoryToIndex(indexEntry);
@@ -692,9 +692,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_indexBuilt)
+                if (!_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.GetEntries(m_entriesOrder);
+                return _index.GetEntries(_entriesOrder);
             }
         }
 
@@ -705,9 +705,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_indexBuilt)
+                if (!_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.GetDirectories(m_entriesOrder);
+                return _index.GetDirectories(_entriesOrder);
             }
         }
 
@@ -719,9 +719,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_indexBuilt)
+                if (!_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.GetFiles(m_entriesOrder);
+                return _index.GetFiles(_entriesOrder);
             }
         }
 
@@ -732,9 +732,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_indexBuilt)
+                if (!_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.EntriesCount;
+                return _index.EntriesCount;
             }
         }
 
@@ -745,9 +745,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_indexBuilt)
+                if (!_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.EntriesCount;
+                return _index.EntriesCount;
             }
         }
 
@@ -758,9 +758,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_indexBuilt)
+                if (!_indexBuilt)
                     throw new FrameworkException("Error : You must build the index cache first");
-                return m_index.FileEntriesCount;
+                return _index.FileEntriesCount;
             }
         }
     }

@@ -6,13 +6,13 @@ namespace CRH.Framework.Disk.DataTrack
 {
     public class DataTrackIndexEntry
     {
-        private DirectoryEntry m_directoryEntry;
-        private DataTrackIndexEntry m_parentEntry;
-        private List<DataTrackIndexEntry> m_subEntries = null;
+        private DirectoryEntry            _directoryEntry;
+        private DataTrackIndexEntry       _parentEntry;
+        private List<DataTrackIndexEntry> _subEntries = null;
 
-        private string m_fullPath;
-        private bool m_isRoot;
-        private uint m_directoryAvailableSpace = 0;
+        private string _fullPath;
+        private bool   _isRoot;
+        private uint   _directoryAvailableSpace = 0;
 
         // Constructors
 
@@ -22,28 +22,28 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="directoryEntry">The directory entry that this tree entry refers to</param>
         internal DataTrackIndexEntry(DataTrackIndexEntry parent, DirectoryEntry directoryEntry)
         {
-            m_parentEntry = parent;
-            m_isRoot = (parent == null);
-            m_directoryEntry = directoryEntry;
+            _parentEntry = parent;
+            _isRoot = (parent == null);
+            _directoryEntry = directoryEntry;
 
-            if (!m_isRoot)
-                m_fullPath = parent.FullPath
+            if (!_isRoot)
+                _fullPath = parent.FullPath
                                 + (parent.FullPath != "/" ? "/" : "")
                                 + directoryEntry.Name;
             else
-                m_fullPath = "/";
+                _fullPath = "/";
 
             if (IsDirectory)
             {
-                m_subEntries = new List<DataTrackIndexEntry>();
+                _subEntries = new List<DataTrackIndexEntry>();
 
-                if (!m_isRoot)
-                    m_directoryAvailableSpace = directoryEntry.ExtentSize
+                if (!_isRoot)
+                    _directoryAvailableSpace = directoryEntry.ExtentSize
                                                 - parent.DirectoryEntry.Length
                                                 - parent.DirectoryEntry.ExtendedAttributeRecordlength
                                                 - directoryEntry.Length;
                 else
-                    m_directoryAvailableSpace = directoryEntry.ExtentSize
+                    _directoryAvailableSpace = directoryEntry.ExtentSize
                                                 - directoryEntry.Length
                                                 - directoryEntry.ExtendedAttributeRecordlength
                                                 - directoryEntry.Length;
@@ -63,13 +63,13 @@ namespace CRH.Framework.Disk.DataTrack
         private void Add(DataTrackIndexEntry subEntry)
         {
             if (!IsDirectory)
-                throw new FrameworkException("Error while adding entry to directory : entry \"{0}\" is not a directory", m_fullPath);
+                throw new FrameworkException("Error while adding entry to directory : entry \"{0}\" is not a directory", _fullPath);
 
-            if (subEntry.DirectoryEntry.Length > m_directoryAvailableSpace)
-                throw new FrameworkException("Error while adding entry to directory : directory \"{0}\" is too small", m_fullPath);
+            if (subEntry.DirectoryEntry.Length > _directoryAvailableSpace)
+                throw new FrameworkException("Error while adding entry to directory : directory \"{0}\" is too small", _fullPath);
 
-            m_subEntries.Add(subEntry);
-            m_directoryAvailableSpace -= subEntry.DirectoryEntry.Length;
+            _subEntries.Add(subEntry);
+            _directoryAvailableSpace -= subEntry.DirectoryEntry.Length;
         }
 
         // Accessors
@@ -79,8 +79,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal DirectoryEntry DirectoryEntry
         {
-            get { return m_directoryEntry; }
-            set { m_directoryEntry = value; }
+            get { return _directoryEntry; }
+            set { _directoryEntry = value; }
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool IsRoot
         {
-            get { return m_isRoot; }
+            get { return _isRoot; }
         }
 
         /// <summary>
@@ -96,8 +96,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DataTrackIndexEntry ParentEntry
         {
-            get { return m_parentEntry; }
-            set { m_parentEntry = value; }
+            get { return _parentEntry; }
+            set { _parentEntry = value; }
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal List<DataTrackIndexEntry> SubEntries
         {
-            get { return m_subEntries; }
+            get { return _subEntries; }
         }
 
         /// <summary>
@@ -114,8 +114,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal uint DirectoryAvailableSpace
         {
-            get { return m_directoryAvailableSpace; }
-            set { m_directoryAvailableSpace = value; }
+            get { return _directoryAvailableSpace; }
+            set { _directoryAvailableSpace = value; }
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public int SubEntriesCount
         {
-            get { return m_subEntries == null ? -1 : m_subEntries.Count; }
+            get { return _subEntries == null ? -1 : _subEntries.Count; }
         }
 
         /// <summary>
@@ -132,15 +132,15 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsDirectory
         {
-            get { return m_directoryEntry.IsDirectory; }
+            get { return _directoryEntry.IsDirectory; }
         }
 
         public bool IsStream
         {
             get
             {
-                return m_directoryEntry.HasXa
-                    ? m_directoryEntry.XaEntry.IsForm2 || m_directoryEntry.XaEntry.IsInterleaved
+                return _directoryEntry.HasXa
+                    ? _directoryEntry.XaEntry.IsForm2 || _directoryEntry.XaEntry.IsInterleaved
                     : false;
             }
         }
@@ -150,7 +150,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint Size
         {
-            get { return m_directoryEntry.ExtentSize; }
+            get { return _directoryEntry.ExtentSize; }
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal uint Length
         {
-            get { return m_directoryEntry.Length; }
+            get { return _directoryEntry.Length; }
         }
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint Lba
         {
-            get { return m_directoryEntry.ExtentLba; }
+            get { return _directoryEntry.ExtentLba; }
         }
 
         /// <summary>
@@ -175,8 +175,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string FullPath
         {
-            get { return m_fullPath; }
-            set { m_fullPath = value; }
+            get { return _fullPath; }
+            set { _fullPath = value; }
         }
     }
 }

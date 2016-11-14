@@ -5,7 +5,7 @@ namespace CRH.Framework.IO.Hash
 {
     public class Crc32
     {
-        private static uint[] m_lookupTable;
+        private static uint[] _lookupTable;
 
         /// <summary>
         /// Initialize lookup table
@@ -13,7 +13,7 @@ namespace CRH.Framework.IO.Hash
         static Crc32()
         {
             uint p = 0xEDB88320;
-            m_lookupTable = new uint[256];
+            _lookupTable = new uint[256];
 
             uint tmp = 0;
             for(int i = 0; i < 256; i++)
@@ -26,7 +26,7 @@ namespace CRH.Framework.IO.Hash
                     else
                         tmp >>= 1;
                 }
-                m_lookupTable[i] = tmp;
+                _lookupTable[i] = tmp;
             }
         }
 
@@ -61,7 +61,7 @@ namespace CRH.Framework.IO.Hash
                 for (int i = 0; i < dataRead; i++)
                 {
                     b = (byte)((crc & 0xFF) ^ buffer[i]);
-                    crc = (uint)((crc >> 8) ^ m_lookupTable[b]);
+                    crc = (uint)((crc >> 8) ^ _lookupTable[b]);
                 }
             }
 

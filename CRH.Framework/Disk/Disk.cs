@@ -7,14 +7,14 @@ namespace CRH.Framework.Disk
 {
     public abstract class Disk
     {
-        protected FileInfo   m_file;
-        protected FileStream m_fileStream;
-        protected bool       m_fileOpen;
+        protected FileInfo   _file;
+        protected FileStream _fileStream;
+        protected bool       _fileOpen;
 
-        protected DiskFileSystem m_system;
-        protected List<Track>    m_tracks;
+        protected DiskFileSystem _system;
+        protected List<Track>    _tracks;
 
-        protected bool m_hasDataTrack;
+        protected bool _hasDataTrack;
 
     // Constructors
 
@@ -25,11 +25,11 @@ namespace CRH.Framework.Disk
         /// <param name="system">File system used for data track</param>
         internal Disk(DiskFileSystem system)
         {
-            m_fileOpen     = false;
-            m_system       = system;
-            m_hasDataTrack = false;
+            _fileOpen     = false;
+            _system       = system;
+            _hasDataTrack = false;
 
-            m_tracks = new List<Track>();
+            _tracks = new List<Track>();
         }
 
     // Abstract methods
@@ -43,7 +43,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         public int TracksCount
         {
-            get { return m_tracks.Count; }
+            get { return _tracks.Count; }
         }
     }
 }

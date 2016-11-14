@@ -11,7 +11,7 @@ namespace CRH.Framework.Disk
 {
     public sealed class DiskWriter : Disk
     {
-        private CBinaryWriter m_stream;
+        private CBinaryWriter _stream;
 
     // Constructors
 
@@ -26,11 +26,11 @@ namespace CRH.Framework.Disk
         {
             try
             {
-                m_file = new FileInfo(fileUrl);
+                _file = new FileInfo(fileUrl);
 
-                m_fileStream = new FileStream(m_file.FullName, overwriteIfExists ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, FileShare.Read);
-                m_stream     = new CBinaryWriter(m_fileStream);
-                m_fileOpen   = true;
+                _fileStream = new FileStream(_file.FullName, overwriteIfExists ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+                _stream     = new CBinaryWriter(_fileStream);
+                _fileOpen   = true;
             }
             catch (Exception)
             {
@@ -58,10 +58,10 @@ namespace CRH.Framework.Disk
         {
             try
             {
-                if (!m_fileOpen)
+                if (!_fileOpen)
                     return;
 
-                foreach (Track track in m_tracks)
+                foreach (Track track in _tracks)
                 {
                     if (track.IsData && !((DataTrackWriter)track).IsFinalized)
                         throw new FrameworkException("Error while closing ISO : data track is not finalized, it will be unreadable");
@@ -70,8 +70,8 @@ namespace CRH.Framework.Disk
                 // Create CUE sheet
                 CreateCue();
 
-                m_stream.CloseAndDispose();
-                m_fileOpen = false;
+                _stream.CloseAndDispose();
+                _fileOpen = false;
             }
             catch (FrameworkException ex)
             {
@@ -90,13 +90,13 @@ namespace CRH.Framework.Disk
         /// <returns></returns>
         public DataTrackWriter CreateDataTrack(DataTrackMode mode)
         {
-            if(m_hasDataTrack)
+            if(_hasDataTrack)
                 throw new FrameworkException("Error while adding track : only Mixed Mode multi tracks disks are supported, it must contains only one DATA track");
 
-            DataTrackWriter dataTrack = new DataTrackWriter(m_stream, TracksCount + 1, m_system, mode);
+            var dataTrack = new DataTrackWriter(_stream, TracksCount + 1, _system, mode);
             
-            m_tracks.Add(dataTrack);
-            m_hasDataTrack = true;
+            _tracks.Add(dataTrack);
+            _hasDataTrack = true;
 
             return dataTrack;
         }
@@ -110,10 +110,10 @@ namespace CRH.Framework.Disk
             if(TracksCount == 0)
                 throw new FrameworkException("Error while adding track : only Mixed Mode multi tracks disks are supported, the first track must be a DATA track");
 
-            if(!((ITrackWriter)m_tracks[TracksCount - 1]).IsFinalized)
+            if(!((ITrackWriter)_tracks[TracksCount - 1]).IsFinalized)
                 throw new FrameworkException("Error while adding track : you have to finalize the current track before creating new one");
 
-            AudioTrackWriter audioTrack = new AudioTrackWriter(m_stream, TracksCount + 1);
+            var audioTrack = new AudioTrackWriter(_stream, TracksCount + 1);
 
             // Default pregap / pause
             if (TracksCount == 1)
@@ -121,7 +121,7 @@ namespace CRH.Framework.Disk
             else
                 audioTrack.PauseSize = 150;
             
-            m_tracks.Add(audioTrack);
+            _tracks.Add(audioTrack);
 
             return audioTrack;
         }
@@ -133,10 +133,10 @@ namespace CRH.Framework.Disk
         {
             try
             {
-                FileInfo cueFile = new FileInfo(Path.Combine(m_file.DirectoryName, Path.GetFileNameWithoutExtension(m_file.FullName) + ".cue"));
+                var cueFile = new FileInfo(Path.Combine(_file.DirectoryName, Path.GetFileNameWithoutExtension(_file.FullName) + ".cue"));
 
-                using (FileStream cueFileStream = new FileStream(cueFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
-                using (StreamWriter cueStream   = new StreamWriter(cueFileStream))
+                using (var cueFileStream = new FileStream(cueFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                using (var cueStream     = new StreamWriter(cueFileStream))
                 {
                     int maxTrackNumberLength = TracksCount.ToString().Length;
                     int m, s, b, dv;
@@ -145,12 +145,12 @@ namespace CRH.Framework.Disk
                     if (maxTrackNumberLength < 2)
                         maxTrackNumberLength = 2;
 
-                    cueStream.WriteLine(String.Format("FILE \"{0}\" BINARY", m_file.Name.ToUpper()));
-                    foreach(Track track in m_tracks)
+                    cueStream.WriteLine(String.Format("FILE \"{0}\" BINARY", _file.Name.ToUpper()));
+                    foreach(var track in _tracks)
                     {
                         if(track.IsData)
                         {
-                            DataTrackWriter dataTrack = (DataTrackWriter)track;
+                            var dataTrack = (DataTrackWriter)track;
 
                             string mode;
                             switch(dataTrack.Mode)
@@ -181,7 +181,7 @@ namespace CRH.Framework.Disk
                         }
                         else if(track.IsAudio)
                         {
-                            AudioTrackWriter audioTrack = (AudioTrackWriter)track;
+                            var audioTrack = (AudioTrackWriter)track;
 
                             cueStream.WriteLine(String.Format
                             (

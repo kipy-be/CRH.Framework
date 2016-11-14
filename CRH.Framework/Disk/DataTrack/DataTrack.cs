@@ -22,17 +22,17 @@ namespace CRH.Framework.Disk.DataTrack
 
         internal static readonly byte[] SYNC = new byte[] { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 };
 
-        protected DiskFileSystem m_system;
-        protected DataTrackMode  m_mode;
-        protected SectorMode     m_defaultSectorMode;
+        protected DiskFileSystem _system;
+        protected DataTrackMode  _mode;
+        protected SectorMode     _defaultSectorMode;
 
-        protected bool m_isXa;
-        protected bool m_hasOptionalPathTable;
+        protected bool _isXa;
+        protected bool _hasOptionalPathTable;
 
-        protected PrimaryVolumeDescriptor m_primaryVolumeDescriptor;
+        protected PrimaryVolumeDescriptor _primaryVolumeDescriptor;
 
-        protected DataTrackEntriesOrder m_entriesOrder;
-        protected DataTrackIndex        m_index;
+        protected DataTrackEntriesOrder _entriesOrder;
+        protected DataTrackIndex        _index;
 
     // Constructors
 
@@ -46,27 +46,27 @@ namespace CRH.Framework.Disk.DataTrack
         internal DataTrack(FileStream fileStream, int trackNumber, DiskFileSystem system, DataTrackMode mode)
             : base(fileStream, trackNumber, TrackType.DATA)
         {
-            m_system     = system;
-            m_mode       = mode;
-            m_sectorSize = mode == DataTrackMode.RAW ? 2048 : 2352;
-            m_isXa       = false;
-            m_pregapSize = 150;
+            _system     = system;
+            _mode       = mode;
+            _sectorSize = mode == DataTrackMode.RAW ? 2048 : 2352;
+            _isXa       = false;
+            _pregapSize = 150;
 
-            switch (m_mode)
+            switch (_mode)
             {
                 case DataTrackMode.MODE1:
-                    m_defaultSectorMode = SectorMode.MODE1;
+                    _defaultSectorMode = SectorMode.MODE1;
                     break;
                 case DataTrackMode.MODE2:
-                    m_defaultSectorMode = SectorMode.MODE2;
+                    _defaultSectorMode = SectorMode.MODE2;
                     break;
                 case DataTrackMode.MODE2_XA:
-                    m_defaultSectorMode = SectorMode.XA_FORM1;
-                    m_isXa = true;
+                    _defaultSectorMode = SectorMode.XA_FORM1;
+                    _isXa = true;
                     break;
                 case DataTrackMode.RAW:
                 default:
-                    m_defaultSectorMode = SectorMode.RAW;
+                    _defaultSectorMode = SectorMode.RAW;
                     break;
             }
         }
@@ -108,8 +108,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DataTrackEntriesOrder EntriesOrder
         {
-            get { return m_entriesOrder; }
-            set { m_entriesOrder = value; }
+            get { return _entriesOrder; }
+            set { _entriesOrder = value; }
         }
 
         /// <summary>
@@ -117,8 +117,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsXa
         {
-            get { return m_isXa; }
-            set { m_isXa = value; }
+            get { return _isXa; }
+            set { _isXa = value; }
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DiskFileSystem System
         {
-            get { return m_system; }
+            get { return _system; }
         }
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DataTrackMode Mode
         {
-            get { return m_mode; }
+            get { return _mode; }
         }
 
         /// <summary>
@@ -142,7 +142,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal SectorMode DefautSectorMode
         {
-            get { return m_defaultSectorMode; }
+            get { return _defaultSectorMode; }
         }
 
         /// <summary>
@@ -150,7 +150,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public PrimaryVolumeDescriptor PrimaryVolumeDescriptor
         {
-            get { return m_primaryVolumeDescriptor; }
+            get { return _primaryVolumeDescriptor; }
         }
 
         /// <summary>
@@ -158,8 +158,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool HasOptionalPathTable
         {
-            get { return m_hasOptionalPathTable; }
-            set { m_hasOptionalPathTable = value; }
+            get { return _hasOptionalPathTable; }
+            set { _hasOptionalPathTable = value; }
         }
     }
 }

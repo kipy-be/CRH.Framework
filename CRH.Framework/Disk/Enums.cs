@@ -20,7 +20,8 @@ namespace CRH.Framework.Disk
     public enum DiskFileSystem
     {
         ISO9660,
-        ISO9660_UDF
+        UDF102
+        //ISO9660_UDF102
     }
 
     /// <summary>

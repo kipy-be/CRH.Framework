@@ -24,8 +24,8 @@ namespace CRH.Framework.IO.Compression
         {
             try
             {
-                m_metas.Read(streamIn, (uint)streamIn.Length);
-                streamIn.Position = m_metas.DataOffset;
+                _metas.Read(streamIn, (uint)streamIn.Length);
+                streamIn.Position = _metas.DataOffset;
                 using (DeflateStream dfIn = new DeflateStream(streamIn, CompressionMode.Decompress))
                 {
                     dfIn.CopyTo(streamOut);

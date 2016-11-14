@@ -7,20 +7,20 @@ namespace CRH.Framework.IO.Compression
 {
     public abstract class GZip
     {
-        protected GZipMetas m_metas;
+        protected GZipMetas _metas;
 
     // Constructors
 
         public GZip()
         {
-            m_metas = new GZipMetas();
+            _metas = new GZipMetas();
         }
 
     // Accessors
 
         public GZipMetas Metas
         {
-            get { return m_metas; }
+            get { return _metas; }
         }
     }
 }

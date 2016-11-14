@@ -21,7 +21,7 @@ namespace CRH.Framework.Disk.AudioTrack
         internal AudioTrack(FileStream fileStream, int trackNumber)
             : base(fileStream, trackNumber, TrackType.AUDIO)
         {
-            m_sectorSize = 2352;
+            _sectorSize = 2352;
         }
     }
 }

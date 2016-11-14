@@ -25,15 +25,15 @@ namespace CRH.Framework.IO.Compression
         {
             try
             {
-                m_metas.WriteHeader(streamOut);
-                m_metas.DataRealSize = (uint)streamIn.Length;
+                _metas.WriteHeader(streamOut);
+                _metas.DataRealSize = (uint)streamIn.Length;
                 using(DeflateStream dfOut = new DeflateStream(streamOut, CompressionMode.Compress, true))
                 {
                     streamIn.CopyTo(dfOut);
                 }
                 streamIn.Position = 0;
-                m_metas.Crc32 = Crc32.Compute(streamIn);
-                m_metas.WriteFooter(streamOut);
+                _metas.Crc32 = Crc32.Compute(streamIn);
+                _metas.WriteFooter(streamOut);
             }
             catch (FrameworkException ex)
             {

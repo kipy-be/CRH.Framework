@@ -9,14 +9,14 @@ namespace CRH.Framework.Disk.DataTrack
 {
     public sealed class DataTrackWriter : DataTrack, ITrackWriter
     {
-        private CBinaryWriter m_stream;
+        private CBinaryWriter _stream;
 
-        private bool m_prepared;
-        private bool m_finalized;
-        private bool m_appendVersionToFileName;
+        private bool _prepared;
+        private bool _finalized;
+        private bool _appendVersionToFileName;
 
-        private static Regex m_regDirectoryName = new Regex("[\\/]([^\\/]+)[\\/]?$");
-        private static Regex m_regFileName = new Regex("[\\/]([^\\/]+?)$");
+        private static Regex _regDirectoryName = new Regex("[\\/]([^\\/]+)[\\/]?$");
+        private static Regex _regFileName = new Regex("[\\/]([^\\/]+?)$");
 
     // Constructors
 
@@ -30,10 +30,10 @@ namespace CRH.Framework.Disk.DataTrack
         internal DataTrackWriter(CBinaryWriter stream, int trackNumber, DiskFileSystem system, DataTrackMode mode)
             : base((FileStream)stream.BaseStream, trackNumber,system, mode)
         {
-            m_stream    = stream;
-            m_prepared  = false;
-            m_finalized = false;
-            m_appendVersionToFileName = true;
+            _stream    = stream;
+            _prepared  = false;
+            _finalized = false;
+            _appendVersionToFileName = true;
 
             try
             {
@@ -62,32 +62,32 @@ namespace CRH.Framework.Disk.DataTrack
         {
             try
             {
-                if (m_prepared)
+                if (_prepared)
                     return;
 
                 SeekSector(16);
                 WriteEmptySectors(2 + pathTableSize * 4);
 
-                DirectoryEntry root = new DirectoryEntry(m_isXa);
+                var root = new DirectoryEntry(_isXa);
                 root.IsDirectory = true;
-                root.ExtentSize = (uint)(rootDirectorySize * GetSectorDataSize(m_defaultSectorMode));
+                root.ExtentSize = (uint)(rootDirectorySize * GetSectorDataSize(_defaultSectorMode));
                 root.ExtentLba = (uint)SectorCount;
 
-                m_index = new DataTrackIndex(root);
+                _index = new DataTrackIndex(root);
 
-                m_primaryVolumeDescriptor = new PrimaryVolumeDescriptor(1);
-                m_primaryVolumeDescriptor.VolumeId = volumeId;
-                m_primaryVolumeDescriptor.PathTableSize = (uint)(pathTableSize * GetSectorDataSize(m_defaultSectorMode));
+                _primaryVolumeDescriptor = new PrimaryVolumeDescriptor(1);
+                _primaryVolumeDescriptor.VolumeId = volumeId;
+                _primaryVolumeDescriptor.PathTableSize = (uint)(pathTableSize * GetSectorDataSize(_defaultSectorMode));
 
                 // The root directory included in the volume descriptor doesn't allow XA, so let's create a separated one
-                m_primaryVolumeDescriptor.RootDirectoryEntry = new DirectoryEntry(false);
-                m_primaryVolumeDescriptor.RootDirectoryEntry.IsDirectory = true;
-                m_primaryVolumeDescriptor.RootDirectoryEntry.ExtentSize = root.ExtentSize;
-                m_primaryVolumeDescriptor.RootDirectoryEntry.ExtentLba = root.ExtentLba;
+                _primaryVolumeDescriptor.RootDirectoryEntry = new DirectoryEntry(false);
+                _primaryVolumeDescriptor.RootDirectoryEntry.IsDirectory = true;
+                _primaryVolumeDescriptor.RootDirectoryEntry.ExtentSize = root.ExtentSize;
+                _primaryVolumeDescriptor.RootDirectoryEntry.ExtentLba = root.ExtentLba;
 
                 WriteEmptySectors(rootDirectorySize);
 
-                m_prepared = true;
+                _prepared = true;
             }
             catch (FrameworkException ex)
             {
@@ -106,17 +106,17 @@ namespace CRH.Framework.Disk.DataTrack
         {
             try
             {
-                if (m_finalized)
+                if (_finalized)
                     return;
 
-                if (!m_prepared)
+                if (!_prepared)
                     throw new FrameworkException("Error while finalizing ISO : DataTrack has not been prepared, it will be unreadable");
 
                 // Write 2 minutes of empty sectors at the end of the track
                 SeekSector(SectorCount);
                 WriteEmptySectors(150);
 
-                m_finalized = true;
+                _finalized = true;
             }
             catch (FrameworkException ex)
             {
@@ -133,19 +133,19 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public void FinaliseFileSystem()
         {
-            uint pathTableSectorSize = (uint)(m_primaryVolumeDescriptor.PathTableSize / GetSectorDataSize(m_defaultSectorMode));
-            m_primaryVolumeDescriptor.VolumeSpaceSize = (uint)SectorCount;
-            m_primaryVolumeDescriptor.TypeLPathTableLBA = 16 + 2;
-            m_primaryVolumeDescriptor.TypeMPathTableLBA = 16 + 2 + pathTableSectorSize * 2;
-            if (m_hasOptionalPathTable)
+            uint pathTableSectorSize = (uint)(_primaryVolumeDescriptor.PathTableSize / GetSectorDataSize(_defaultSectorMode));
+            _primaryVolumeDescriptor.VolumeSpaceSize = (uint)SectorCount;
+            _primaryVolumeDescriptor.TypeLPathTableLBA = 16 + 2;
+            _primaryVolumeDescriptor.TypeMPathTableLBA = 16 + 2 + pathTableSectorSize * 2;
+            if (_hasOptionalPathTable)
             {
-                m_primaryVolumeDescriptor.OptTypeLPathTableLBA = 16 + 2 + pathTableSectorSize;
-                m_primaryVolumeDescriptor.OptTypeMPathTableLBA = 16 + 2 + pathTableSectorSize * 3;
+                _primaryVolumeDescriptor.OptTypeLPathTableLBA = 16 + 2 + pathTableSectorSize;
+                _primaryVolumeDescriptor.OptTypeMPathTableLBA = 16 + 2 + pathTableSectorSize * 3;
             }
 
             // Write directory entries
-            WriteDirectoryEntry(m_index.Root);
-            foreach (DataTrackIndexEntry entry in m_index.GetDirectories(DataTrackEntriesOrder.DEFAULT))
+            WriteDirectoryEntry(_index.Root);
+            foreach (var entry in _index.GetDirectories(DataTrackEntriesOrder.DEFAULT))
                 WriteDirectoryEntry(entry);
 
             // Write path tables
@@ -153,8 +153,8 @@ namespace CRH.Framework.Disk.DataTrack
 
             // Write descriptors
             SeekSector(16);
-            WriteSector(GetPrimaryVolumeDescriptorBuffer(), m_defaultSectorMode, XaSubHeader.EndOfRecord);
-            WriteSector(GetSetTerminatorVolumeDescriptorBuffer(), m_defaultSectorMode, XaSubHeader.EndOfFile);
+            WriteSector(GetPrimaryVolumeDescriptorBuffer(), _defaultSectorMode, XaSubHeader.EndOfRecord);
+            WriteSector(GetSetTerminatorVolumeDescriptorBuffer(), _defaultSectorMode, XaSubHeader.EndOfFile);
         }
 
         /// <summary>
@@ -165,10 +165,10 @@ namespace CRH.Framework.Disk.DataTrack
             SeekSector(entry.Lba);
 
             int size = (int)entry.Size;
-            int sectorSize = GetSectorDataSize(m_defaultSectorMode);
+            int sectorSize = GetSectorDataSize(_defaultSectorMode);
             byte[] data = new byte[size];
 
-            using (CBinaryWriter stream = new CBinaryWriter(data))
+            using (var stream = new CBinaryWriter(data))
             {
                 // First directory entry of a directory entry is the directory itself
                 stream.Write(GetDirectoryEntryBuffer(entry.DirectoryEntry, true, false));
@@ -179,7 +179,7 @@ namespace CRH.Framework.Disk.DataTrack
                 else
                     stream.Write(GetDirectoryEntryBuffer(entry.DirectoryEntry, false, true));
 
-                foreach (DataTrackIndexEntry subEntry in entry.SubEntries)
+                foreach (var subEntry in entry.SubEntries)
                 {
                     // DirectoryEntry cannot be "splitted" on two sectors
                     if ((stream.Position - (stream.Position / sectorSize) * sectorSize) + subEntry.Length >= sectorSize)
@@ -196,7 +196,7 @@ namespace CRH.Framework.Disk.DataTrack
                 WriteSector
                 (
                     CBuffer.Create(data, i, sectorSize),
-                    m_defaultSectorMode,
+                    _defaultSectorMode,
                     (i + sectorSize >= size) ? XaSubHeader.EndOfFile : XaSubHeader.Basic
                 );
         }
@@ -206,23 +206,23 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         private void WritePathTables()
         {
-            int sectorSize = GetSectorDataSize(m_defaultSectorMode);
+            int sectorSize = GetSectorDataSize(_defaultSectorMode);
 
-            byte[] lePathTableData = new byte[m_primaryVolumeDescriptor.PathTableSize];
-            byte[] bePathTableData = new byte[m_primaryVolumeDescriptor.PathTableSize];
-            Dictionary<string, ushort> dNums = new Dictionary<string, ushort>();
+            byte[] lePathTableData = new byte[_primaryVolumeDescriptor.PathTableSize];
+            byte[] bePathTableData = new byte[_primaryVolumeDescriptor.PathTableSize];
+            var dNums = new Dictionary<string, ushort>();
             ushort dNum = 0, refNum;
             int totalSize = 0;
 
-            using (CBinaryWriter lePathTableStream = new CBinaryWriter(lePathTableData))
-            using (CBinaryWriter bePathTableStream = new CBinaryWriter(bePathTableData))
+            using (var lePathTableStream = new CBinaryWriter(lePathTableData))
+            using (var bePathTableStream = new CBinaryWriter(bePathTableData))
             {
-                lePathTableStream.Write(GetPathTableEntryBuffer(m_index.Root.DirectoryEntry, PathTableType.LE, 1));
-                bePathTableStream.Write(GetPathTableEntryBuffer(m_index.Root.DirectoryEntry, PathTableType.BE, 1));
-                dNums.Add(m_index.Root.FullPath, ++dNum);
-                totalSize += (8 + m_index.Root.DirectoryEntry.Name.Length + (m_index.Root.DirectoryEntry.Name.Length % 2 != 0 ? 1 : 0));
+                lePathTableStream.Write(GetPathTableEntryBuffer(_index.Root.DirectoryEntry, PathTableType.LE, 1));
+                bePathTableStream.Write(GetPathTableEntryBuffer(_index.Root.DirectoryEntry, PathTableType.BE, 1));
+                dNums.Add(_index.Root.FullPath, ++dNum);
+                totalSize += (8 + _index.Root.DirectoryEntry.Name.Length + (_index.Root.DirectoryEntry.Name.Length % 2 != 0 ? 1 : 0));
 
-                foreach (DataTrackIndexEntry entry in m_index.GetDirectories(DataTrackEntriesOrder.DEFAULT))
+                foreach (var entry in _index.GetDirectories(DataTrackEntriesOrder.DEFAULT))
                 {
                     refNum = dNums[entry.ParentEntry.FullPath];
                     lePathTableStream.Write(GetPathTableEntryBuffer(entry.DirectoryEntry, PathTableType.LE, refNum));
@@ -232,15 +232,15 @@ namespace CRH.Framework.Disk.DataTrack
                 }
             }
 
-            WritePathTable(m_primaryVolumeDescriptor.TypeLPathTableLBA, lePathTableData);
-            WritePathTable(m_primaryVolumeDescriptor.TypeMPathTableLBA, bePathTableData);
-            if(m_hasOptionalPathTable)
+            WritePathTable(_primaryVolumeDescriptor.TypeLPathTableLBA, lePathTableData);
+            WritePathTable(_primaryVolumeDescriptor.TypeMPathTableLBA, bePathTableData);
+            if(_hasOptionalPathTable)
             {
-                WritePathTable(m_primaryVolumeDescriptor.OptTypeLPathTableLBA, lePathTableData);
-                WritePathTable(m_primaryVolumeDescriptor.OptTypeMPathTableLBA, bePathTableData);
+                WritePathTable(_primaryVolumeDescriptor.OptTypeLPathTableLBA, lePathTableData);
+                WritePathTable(_primaryVolumeDescriptor.OptTypeMPathTableLBA, bePathTableData);
             }
 
-            m_primaryVolumeDescriptor.PathTableSize = (uint)totalSize;
+            _primaryVolumeDescriptor.PathTableSize = (uint)totalSize;
         }
 
         /// <summary>
@@ -251,13 +251,13 @@ namespace CRH.Framework.Disk.DataTrack
         private void WritePathTable(uint lba, byte[] data)
         {
             SeekSector(lba);
-            int sectorSize = GetSectorDataSize(m_defaultSectorMode);
+            int sectorSize = GetSectorDataSize(_defaultSectorMode);
 
             for (int i = 0; i < data.Length; i += sectorSize)
                 WriteSector
                 (
                     CBuffer.Create(data, i, sectorSize),
-                    m_defaultSectorMode,
+                    _defaultSectorMode,
                     (i + sectorSize >= data.Length) ? XaSubHeader.EndOfFile : XaSubHeader.Basic
                 );
         }
@@ -272,8 +272,8 @@ namespace CRH.Framework.Disk.DataTrack
         {
             try
             {
-                byte[] buffer = new byte[m_sectorSize];
-                using (CBinaryWriter bufferStream = new CBinaryWriter(buffer))
+                byte[] buffer = new byte[_sectorSize];
+                using (var bufferStream = new CBinaryWriter(buffer))
                 {
                     if (mode != SectorMode.RAW)
                     {
@@ -310,7 +310,7 @@ namespace CRH.Framework.Disk.DataTrack
                     if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
                         EccEdc.EccEdcCompute(buffer, mode);
 
-                    m_stream.Write(buffer);
+                    _stream.Write(buffer);
                 }
             }
             catch (Exception)
@@ -339,7 +339,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="subHeader">Subheader (if mode XA_FORM1 or XA_FORM2)</param>
         public void WriteSector(byte[] data, XaSubHeader subHeader = null)
         {
-            WriteSector(data, m_defaultSectorMode, subHeader);
+            WriteSector(data, _defaultSectorMode, subHeader);
         }
 
         /// <summary>
@@ -351,7 +351,7 @@ namespace CRH.Framework.Disk.DataTrack
         public void WriteSector(long lba, byte[] data, XaSubHeader subHeader = null)
         {
             SeekSector(lba);
-            WriteSector(data, m_defaultSectorMode, subHeader);
+            WriteSector(data, _defaultSectorMode, subHeader);
         }
 
         /// <summary>
@@ -359,7 +359,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public void WriteEmptySector()
         {
-            if(m_mode == DataTrackMode.RAW)
+            if(_mode == DataTrackMode.RAW)
                 WriteSector(new byte[2048], SectorMode.RAW);
             else
                 WriteSector(new byte[2048], SectorMode.MODE0);
@@ -372,7 +372,7 @@ namespace CRH.Framework.Disk.DataTrack
         public void WriteEmptySectors(int count)
         {
             byte[] data = new byte[2048];
-            if (m_mode == DataTrackMode.RAW)
+            if (_mode == DataTrackMode.RAW)
             {
                 for (int i = 0; i < count; i++)
                     WriteSector(data, SectorMode.RAW);
@@ -426,70 +426,70 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="m_primaryVolumeDescriptor">The primary volume descriptor</param>
         private byte[] GetPrimaryVolumeDescriptorBuffer()
         {
-            byte[] buffer = new byte[GetSectorDataSize(m_defaultSectorMode)];
+            byte[] buffer = new byte[GetSectorDataSize(_defaultSectorMode)];
             try
             {
-                using (CBinaryWriter stream = new CBinaryWriter(buffer))
+                using (var stream = new CBinaryWriter(buffer))
                 {
-                    stream.Write((byte)m_primaryVolumeDescriptor.Type);
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.Id);
-                    stream.Write(m_primaryVolumeDescriptor.Version);
-                    stream.Write(m_primaryVolumeDescriptor.Unused1);
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.SystemId, 32, " ");
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.VolumeId, 32, " ");
-                    stream.Write(m_primaryVolumeDescriptor.Unused2);
+                    stream.Write((byte)_primaryVolumeDescriptor.Type);
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.Id);
+                    stream.Write(_primaryVolumeDescriptor.Version);
+                    stream.Write(_primaryVolumeDescriptor.Unused1);
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.SystemId, 32, " ");
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.VolumeId, 32, " ");
+                    stream.Write(_primaryVolumeDescriptor.Unused2);
 
-                    stream.Write(m_primaryVolumeDescriptor.VolumeSpaceSize);
-                    stream.WriteBE(m_primaryVolumeDescriptor.VolumeSpaceSize);
+                    stream.Write(_primaryVolumeDescriptor.VolumeSpaceSize);
+                    stream.WriteBE(_primaryVolumeDescriptor.VolumeSpaceSize);
 
-                    stream.Write(m_primaryVolumeDescriptor.Unused3);
+                    stream.Write(_primaryVolumeDescriptor.Unused3);
 
-                    stream.Write(m_primaryVolumeDescriptor.VolumeSetSize);
-                    stream.WriteBE(m_primaryVolumeDescriptor.VolumeSetSize);
+                    stream.Write(_primaryVolumeDescriptor.VolumeSetSize);
+                    stream.WriteBE(_primaryVolumeDescriptor.VolumeSetSize);
 
-                    stream.Write(m_primaryVolumeDescriptor.VolumeSequenceNumber);
-                    stream.WriteBE(m_primaryVolumeDescriptor.VolumeSequenceNumber);
+                    stream.Write(_primaryVolumeDescriptor.VolumeSequenceNumber);
+                    stream.WriteBE(_primaryVolumeDescriptor.VolumeSequenceNumber);
 
-                    stream.Write(m_primaryVolumeDescriptor.LogicalBlockSize);
-                    stream.WriteBE(m_primaryVolumeDescriptor.LogicalBlockSize);
+                    stream.Write(_primaryVolumeDescriptor.LogicalBlockSize);
+                    stream.WriteBE(_primaryVolumeDescriptor.LogicalBlockSize);
 
-                    stream.Write(m_primaryVolumeDescriptor.PathTableSize);
-                    stream.WriteBE(m_primaryVolumeDescriptor.PathTableSize);
+                    stream.Write(_primaryVolumeDescriptor.PathTableSize);
+                    stream.WriteBE(_primaryVolumeDescriptor.PathTableSize);
 
-                    stream.Write(m_primaryVolumeDescriptor.TypeLPathTableLBA);
-                    stream.Write(m_primaryVolumeDescriptor.OptTypeLPathTableLBA);
-                    stream.WriteBE(m_primaryVolumeDescriptor.TypeMPathTableLBA);
-                    stream.WriteBE(m_primaryVolumeDescriptor.OptTypeMPathTableLBA);
-                    stream.Write(GetDirectoryEntryBuffer(m_primaryVolumeDescriptor.RootDirectoryEntry));
+                    stream.Write(_primaryVolumeDescriptor.TypeLPathTableLBA);
+                    stream.Write(_primaryVolumeDescriptor.OptTypeLPathTableLBA);
+                    stream.WriteBE(_primaryVolumeDescriptor.TypeMPathTableLBA);
+                    stream.WriteBE(_primaryVolumeDescriptor.OptTypeMPathTableLBA);
+                    stream.Write(GetDirectoryEntryBuffer(_primaryVolumeDescriptor.RootDirectoryEntry));
 
                     // TODO : cas des fichiers
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.VolumeSetId, 128, " ");
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.PublisherId, 128, " ");
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.PreparerId, 128, " ");
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.ApplicationId, 128, " ");
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.CopyrightFileId, 38, " ");
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.AbstractFileId, 36, " ");
-                    stream.WriteAsciiString(m_primaryVolumeDescriptor.BibliographicFileId, 37, " ");
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.VolumeSetId, 128, " ");
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.PublisherId, 128, " ");
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.PreparerId, 128, " ");
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.ApplicationId, 128, " ");
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.CopyrightFileId, 38, " ");
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.AbstractFileId, 36, " ");
+                    stream.WriteAsciiString(_primaryVolumeDescriptor.BibliographicFileId, 37, " ");
                     //
 
-                    stream.Write(VolumeDescriptor.FromDateTime(m_primaryVolumeDescriptor.CreationDate));
-                    stream.Write(VolumeDescriptor.FromDateTime(m_primaryVolumeDescriptor.ModificationDate));
-                    stream.Write(VolumeDescriptor.FromDateTime(m_primaryVolumeDescriptor.ExpirationDate));
-                    stream.Write(VolumeDescriptor.FromDateTime(m_primaryVolumeDescriptor.EffectiveDate));
-                    stream.Write(m_primaryVolumeDescriptor.FileStructureVersion);
-                    stream.Write(m_primaryVolumeDescriptor.Unused4);
+                    stream.Write(VolumeDescriptor.FromDateTime(_primaryVolumeDescriptor.CreationDate));
+                    stream.Write(VolumeDescriptor.FromDateTime(_primaryVolumeDescriptor.ModificationDate));
+                    stream.Write(VolumeDescriptor.FromDateTime(_primaryVolumeDescriptor.ExpirationDate));
+                    stream.Write(VolumeDescriptor.FromDateTime(_primaryVolumeDescriptor.EffectiveDate));
+                    stream.Write(_primaryVolumeDescriptor.FileStructureVersion);
+                    stream.Write(_primaryVolumeDescriptor.Unused4);
 
-                    if (m_isXa)
+                    if (_isXa)
                     {
-                        using (CBinaryWriter appDataStream = new CBinaryWriter(m_primaryVolumeDescriptor.ApplicationData))
+                        using (CBinaryWriter appDataStream = new CBinaryWriter(_primaryVolumeDescriptor.ApplicationData))
                         {
                             appDataStream.Position = 0x8D;
                             appDataStream.WriteAsciiString(VolumeDescriptor.VOLUME_XA);
                         }
                     }
 
-                    stream.Write(m_primaryVolumeDescriptor.ApplicationData);
-                    stream.Write(m_primaryVolumeDescriptor.Reserved);
+                    stream.Write(_primaryVolumeDescriptor.ApplicationData);
+                    stream.Write(_primaryVolumeDescriptor.Reserved);
                 }
 
                 return buffer;
@@ -505,12 +505,12 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         private byte[] GetSetTerminatorVolumeDescriptorBuffer()
         {
-            byte[] buffer = new byte[GetSectorDataSize(m_defaultSectorMode)];
+            byte[] buffer = new byte[GetSectorDataSize(_defaultSectorMode)];
             try
             {
-                using (CBinaryWriter stream = new CBinaryWriter(buffer))
+                using (var stream = new CBinaryWriter(buffer))
                 {
-                    SetTerminatorVolumeDescriptor descriptor = new SetTerminatorVolumeDescriptor();
+                    var descriptor = new SetTerminatorVolumeDescriptor();
                     stream.Write((byte)descriptor.Type);
                     stream.WriteAsciiString(descriptor.Id);
                     stream.Write(descriptor.Version);
@@ -544,7 +544,7 @@ namespace CRH.Framework.Disk.DataTrack
             byte[] buffer = new byte[entryLength];
             try
             {
-                using (CBinaryWriter stream = new CBinaryWriter(buffer))
+                using (var stream = new CBinaryWriter(buffer))
                 {
                     stream.Write(entryLength);
                     stream.Write(entry.ExtendedAttributeRecordlength);
@@ -614,7 +614,7 @@ namespace CRH.Framework.Disk.DataTrack
             int entrySize = 8 + entry.Name.Length + (entry.Name.Length % 2 != 0 ? 1 : 0);
             byte[] buffer = new byte[entrySize];
 
-            using (CBinaryWriter stream = new CBinaryWriter(buffer))
+            using (var stream = new CBinaryWriter(buffer))
             {
                 stream.Write((byte)entry.Name.Length);
                 stream.Write(entry.ExtendedAttributeRecordlength);
@@ -646,30 +646,30 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="size">Size of the directory in sectors (default 1)</param>
         public void CreateDirectory(string path, int size = 1)
         {
-            if (m_index.GetEntry(path) != null)
+            if (_index.GetEntry(path) != null)
                 throw new FrameworkException("Error while creating directory \"{0}\" : entry already exists", path);
 
-            DataTrackIndexEntry parent = m_index.FindAParent(path);
+            var parent = _index.FindAParent(path);
             if(parent == null)
                 throw new FrameworkException("Error while creating directory \"{0}\" : parent directory does not exists", path);
 
-            DirectoryEntry entry = new DirectoryEntry(m_isXa);
+            var entry = new DirectoryEntry(_isXa);
             entry.IsDirectory    = true;
-            entry.Name           = m_regDirectoryName.Match(path).Groups[1].Value;
+            entry.Name           = _regDirectoryName.Match(path).Groups[1].Value;
             entry.Length        += (byte)(entry.Name.Length - 1);
             entry.Length        += (byte)(entry.Name.Length % 2 == 0 ? 1 : 0);
-            entry.ExtentSize     = (uint)(size * GetSectorDataSize(m_defaultSectorMode));
+            entry.ExtentSize     = (uint)(size * GetSectorDataSize(_defaultSectorMode));
             entry.ExtentLba      = (uint)SectorCount;
 
-            if (m_isXa)
+            if (_isXa)
             {
                 entry.XaEntry.IsDirectory  = true;
                 entry.XaEntry.IsForm1 = true;
             }
 
-            DataTrackIndexEntry indexEntry = new DataTrackIndexEntry(parent, entry);
+            var indexEntry = new DataTrackIndexEntry(parent, entry);
 
-            m_index.AddToIndex(indexEntry);
+            _index.AddToIndex(indexEntry);
 
             SeekSector(SectorCount);
             WriteEmptySectors(size);
@@ -686,7 +686,7 @@ namespace CRH.Framework.Disk.DataTrack
 
             stream.Position = 0;
             SeekSector(SectorCount);
-            int dataSize = GetSectorDataSize(m_defaultSectorMode);
+            int dataSize = GetSectorDataSize(_defaultSectorMode);
             int dataRead;
             byte[] buffer = new byte[dataSize];
 
@@ -716,25 +716,25 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="size">The size of the file's content</param>
         public void CreateFileEntry(string filePath, uint lba, uint size)
         {
-            if (m_index.GetEntry(filePath) != null)
+            if (_index.GetEntry(filePath) != null)
                 throw new FrameworkException("Error while creating file \"{0}\" : entry already exists", filePath);
 
-            DataTrackIndexEntry parent = m_index.FindAParent(filePath);
+            var parent = _index.FindAParent(filePath);
             if (parent == null)
                 throw new FrameworkException("Error while creating file \"{0}\" : parent directory does not exists", filePath);
 
-            DirectoryEntry entry = new DirectoryEntry(m_isXa);
-            entry.Name = m_regFileName.Match(filePath).Groups[1].Value + (m_appendVersionToFileName ? ";1" : "");
+            var entry = new DirectoryEntry(_isXa);
+            entry.Name = _regFileName.Match(filePath).Groups[1].Value + (_appendVersionToFileName ? ";1" : "");
             entry.Length += (byte)(entry.Name.Length - 1);
             entry.Length += (byte)(entry.Name.Length % 2 == 0 ? 1 : 0);
             entry.ExtentSize = size;
             entry.ExtentLba = lba;
 
-            if (m_isXa)
+            if (_isXa)
                 entry.XaEntry.IsForm1 = true;
 
-            DataTrackIndexEntry indexEntry = new DataTrackIndexEntry(parent, entry);
-            m_index.AddToIndex(indexEntry);
+            var indexEntry = new DataTrackIndexEntry(parent, entry);
+            _index.AddToIndex(indexEntry);
         }
 
         /// <summary>
@@ -745,7 +745,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="size"></param>
         public void SetFileContent(string filePath, uint lba, uint size)
         {
-            DataTrackIndexEntry entry = m_index.GetEntry(filePath);
+            var entry = _index.GetEntry(filePath);
 
             if (entry == null)
                 throw new FrameworkException("Error while setting file content of \"{0}\" : entry does not exists", filePath);
@@ -762,29 +762,29 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="entry">The entry of the reading disk</param>
         public void CopyStream(string filePath, DataTrackReader diskIn, DataTrackIndexEntry inEntry)
         {
-            if (m_index.GetEntry(filePath) != null)
+            if (_index.GetEntry(filePath) != null)
                 throw new FrameworkException("Error while creating file \"{0}\" : entry already exists", filePath);
 
-            DataTrackIndexEntry parent = m_index.FindAParent(filePath);
+            var parent = _index.FindAParent(filePath);
             if (parent == null)
                 throw new FrameworkException("Error while creating file \"{0}\" : parent directory does not exists", filePath);
 
-            DirectoryEntry entry = new DirectoryEntry(m_isXa);
-            entry.Name = m_regFileName.Match(filePath).Groups[1].Value + (m_appendVersionToFileName ? ";1" : "");
+            var entry = new DirectoryEntry(_isXa);
+            entry.Name = _regFileName.Match(filePath).Groups[1].Value + (_appendVersionToFileName ? ";1" : "");
             entry.Length += (byte)(entry.Name.Length - 1);
             entry.Length += (byte)(entry.Name.Length % 2 == 0 ? 1 : 0);
             entry.ExtentSize = (uint)inEntry.Size;
             entry.ExtentLba = (uint)SectorCount;
 
-            DataTrackIndexEntry indexEntry = new DataTrackIndexEntry(parent, entry);
-            m_index.AddToIndex(indexEntry);
+            var indexEntry = new DataTrackIndexEntry(parent, entry);
+            _index.AddToIndex(indexEntry);
 
             CopySectors
             (
                 diskIn,
-                m_defaultSectorMode == SectorMode.XA_FORM1
+                _defaultSectorMode == SectorMode.XA_FORM1
                         ? SectorMode.XA_FORM2
-                        : m_defaultSectorMode,
+                        : _defaultSectorMode,
                 entry.ExtentLba, inEntry.Lba,
                 (int)(inEntry.Size / GetSectorDataSize(diskIn.DefautSectorMode))
             );
@@ -796,7 +796,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="diskIn">The disk to copy sector's from</param>
         public void CopySystemZone(DataTrackReader diskIn)
         {
-            CopySectors(diskIn, m_defaultSectorMode, 0, 0, 16);
+            CopySectors(diskIn, _defaultSectorMode, 0, 0, 16);
         }
 
         /// <summary>
@@ -805,7 +805,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="diskIn"></param>
         public void CopyApplicationData(DataTrackReader diskIn)
         {
-            CBuffer.Copy(diskIn.PrimaryVolumeDescriptor.ApplicationData, m_primaryVolumeDescriptor.ApplicationData);
+            CBuffer.Copy(diskIn.PrimaryVolumeDescriptor.ApplicationData, _primaryVolumeDescriptor.ApplicationData);
         }
 
     // Accessors
@@ -815,7 +815,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsFinalized
         {
-            get { return m_finalized; }
+            get { return _finalized; }
         }
 
         /// <summary>
@@ -825,9 +825,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_prepared)
+                if (!_prepared)
                     throw new FrameworkException("Error : You must prepare the iso first");
-                return m_index.GetEntries();
+                return _index.GetEntries();
             }
         }
 
@@ -838,9 +838,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_prepared)
+                if (!_prepared)
                     throw new FrameworkException("Error : You must prepare the iso first");
-                return m_index.GetDirectories();
+                return _index.GetDirectories();
             }
         }
 
@@ -852,9 +852,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_prepared)
+                if (!_prepared)
                     throw new FrameworkException("Error : You must prepare the iso first");
-                return m_index.GetFiles();
+                return _index.GetFiles();
             }
         }
 
@@ -865,9 +865,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_prepared)
+                if (!_prepared)
                     throw new FrameworkException("Error : You must prepare the iso first");
-                return m_index.EntriesCount;
+                return _index.EntriesCount;
             }
         }
 
@@ -878,9 +878,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_prepared)
+                if (!_prepared)
                     throw new FrameworkException("Error : You must prepare the iso first");
-                return m_index.EntriesCount;
+                return _index.EntriesCount;
             }
         }
 
@@ -891,9 +891,9 @@ namespace CRH.Framework.Disk.DataTrack
         {
             get
             {
-                if (!m_prepared)
+                if (!_prepared)
                     throw new FrameworkException("Error : You must prepare the iso first");
-                return m_index.FileEntriesCount;
+                return _index.FileEntriesCount;
             }
         }
 
@@ -902,8 +902,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool AppendVersionToFileName
         {
-            get { return m_appendVersionToFileName; }
-            set { m_appendVersionToFileName = value; }
+            get { return _appendVersionToFileName; }
+            set { _appendVersionToFileName = value; }
         }
     }
 }

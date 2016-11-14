@@ -7,7 +7,7 @@ namespace CRH.Framework.Disk.AudioTrack
 {
     public sealed class AudioTrackReader : AudioTrack, ITrackReader
     {
-        private CBinaryReader m_stream;
+        private CBinaryReader _stream;
 
     // Constructors
 
@@ -18,7 +18,7 @@ namespace CRH.Framework.Disk.AudioTrack
         internal AudioTrackReader(CBinaryReader stream, int trackNumber)
             : base((FileStream)stream.BaseStream, trackNumber)
         {
-            m_stream    = stream;
+            _stream = stream;
 
             SeekSector(0);
         }
@@ -32,7 +32,7 @@ namespace CRH.Framework.Disk.AudioTrack
         {
             try
             {
-                return m_stream.ReadBytes(m_sectorSize);
+                return _stream.ReadBytes(_sectorSize);
             }
             catch (FrameworkException ex)
             {
@@ -64,7 +64,7 @@ namespace CRH.Framework.Disk.AudioTrack
         /// <param name="count">Number of sectors to read</param>
         public byte[] ReadSectors(int count)
         {
-            return m_stream.ReadBytes(count * m_sectorSize);
+            return _stream.ReadBytes(count * _sectorSize);
         }
 
         /// <summary>
@@ -85,8 +85,8 @@ namespace CRH.Framework.Disk.AudioTrack
         public void Read(Stream stream)
         {
             SeekSector(0);
-            for (int sectorsReads = 0; sectorsReads < m_size; sectorsReads++)
-                stream.Write(ReadSector(), 0, m_sectorSize);
+            for (int sectorsReads = 0; sectorsReads < _size; sectorsReads++)
+                stream.Write(ReadSector(), 0, _sectorSize);
 
             stream.Flush();
         }
@@ -112,14 +112,14 @@ namespace CRH.Framework.Disk.AudioTrack
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(outFilePath));
-                using (FileStream fs = new FileStream(outFilePath, FileMode.Create, FileAccess.Write))
+                using (var fs = new FileStream(outFilePath, FileMode.Create, FileAccess.Write))
                 {
                     if(container == AudioFileContainer.WAVE)
                     {
-                        using(CBinaryWriter stream = new CBinaryWriter(fs))
+                        using(var stream = new CBinaryWriter(fs))
                         {
                             // WAVE Header
-                            uint dataSize = (uint)(m_size * m_sectorSize);
+                            uint dataSize = (uint)(_size * _sectorSize);
                             stream.WriteAsciiString("RIFF");          // RIFF sign
                             stream.Write((uint)(dataSize + 44 - 8));  // File size - 8, wave header is 44 bytes long
                             stream.WriteAsciiString("WAVE");          // Format ID

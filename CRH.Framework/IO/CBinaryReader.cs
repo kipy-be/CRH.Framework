@@ -90,7 +90,7 @@ namespace CRH.Framework.IO
         /// <returns></returns>
         public string ReadAsciiString(int maxSize = -1, bool trim = true)
         {
-            using (MemoryStream ms = new MemoryStream())
+            using (var ms = new MemoryStream())
             {
                 byte b;
                 int bytesRead = 0;

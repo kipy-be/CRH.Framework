@@ -7,10 +7,10 @@ namespace CRH.Framework.Disk.AudioTrack
 {
     public sealed class AudioTrackWriter : AudioTrack, ITrackWriter
     {
-        private CBinaryWriter m_stream;
+        private CBinaryWriter _stream;
 
-        private bool m_prepared;
-        private bool m_finalized;
+        private bool _prepared;
+        private bool _finalized;
 
     // Constructors
 
@@ -22,8 +22,8 @@ namespace CRH.Framework.Disk.AudioTrack
         internal AudioTrackWriter(CBinaryWriter stream, int trackNumber)
             : base((FileStream)stream.BaseStream, trackNumber)
         {
-            m_stream    = stream;
-            m_finalized = false;
+            _stream    = stream;
+            _finalized = false;
         }
 
     // Methods
@@ -35,20 +35,20 @@ namespace CRH.Framework.Disk.AudioTrack
         {
             try
             {
-                if (m_prepared)
+                if (_prepared)
                     return;
 
-                m_fileStream.Position = m_fileStream.Length;
+                _fileStream.Position = _fileStream.Length;
 
-                if (m_pauseSize > 0)
+                if (_pauseSize > 0)
                 {
-                    m_pauseOffset = m_fileStream.Length;
-                    WriteEmptySectors((int)m_pauseSize);
+                    _pauseOffset = _fileStream.Length;
+                    WriteEmptySectors((int)_pauseSize);
                 }
 
-                m_offset = m_fileStream.Length;
+                _offset = _fileStream.Length;
 
-                m_prepared = true;
+                _prepared = true;
             }
             catch (FrameworkException ex)
             {
@@ -67,18 +67,18 @@ namespace CRH.Framework.Disk.AudioTrack
         {
             try
             {
-                if (m_finalized)
+                if (_finalized)
                     return;
 
-                if (!m_prepared)
+                if (!_prepared)
                     throw new FrameworkException("Error while finalizing ISO : AudioTrack has not been prepared");
 
-                m_fileStream.Position = m_fileStream.Length;
+                _fileStream.Position = _fileStream.Length;
 
-                if (m_postgapSize > 0)
-                    WriteEmptySectors((int)m_postgapSize);
+                if (_postgapSize > 0)
+                    WriteEmptySectors((int)_postgapSize);
 
-                m_finalized = true;
+                _finalized = true;
             }
             catch (FrameworkException ex)
             {
@@ -97,7 +97,7 @@ namespace CRH.Framework.Disk.AudioTrack
         {
             try
             {
-                m_stream.Write(data);
+                _stream.Write(data);
             }
             catch (Exception)
             {
@@ -120,7 +120,7 @@ namespace CRH.Framework.Disk.AudioTrack
         /// </summary>
         public void WriteEmptySector()
         {
-            WriteSector(new byte[m_sectorSize]);
+            WriteSector(new byte[_sectorSize]);
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace CRH.Framework.Disk.AudioTrack
         /// <param name="count">Number of sectors to write</param>
         public void WriteEmptySectors(int count)
         {
-            byte[] data = new byte[m_sectorSize];
+            byte[] data = new byte[_sectorSize];
             for (int i = 0; i < count; i++)
                 WriteSector(data);
         }
@@ -143,19 +143,19 @@ namespace CRH.Framework.Disk.AudioTrack
         {
             try
             {
-                byte[] buffer = new byte[m_sectorSize];
+                byte[] buffer = new byte[_sectorSize];
                 int dataRead;
 
                 stream.Position = (container == AudioFileContainer.WAVE) ? 44 : 0;
-                m_size = ((stream.Length - stream.Position) / m_sectorSize) + 1;
+                _size = ((stream.Length - stream.Position) / _sectorSize) + 1;
 
-                for (int sectorsDone = 0; sectorsDone < m_size; sectorsDone++)
+                for (int sectorsDone = 0; sectorsDone < _size; sectorsDone++)
                 {
-                    dataRead = stream.Read(buffer, 0, m_sectorSize);
+                    dataRead = stream.Read(buffer, 0, _sectorSize);
 
-                    if (dataRead < m_sectorSize)
+                    if (dataRead < _sectorSize)
                     {
-                        for (int i = dataRead; i < m_sectorSize; i++)
+                        for (int i = dataRead; i < _sectorSize; i++)
                             buffer[i] = 0;
                     }
 
@@ -175,7 +175,7 @@ namespace CRH.Framework.Disk.AudioTrack
         /// </summary>
         public bool IsFinalized
         {
-            get { return m_finalized; }
+            get { return _finalized; }
         }
     }
 }

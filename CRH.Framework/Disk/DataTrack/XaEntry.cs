@@ -30,28 +30,28 @@ namespace CRH.Framework.Disk.DataTrack
         public const int SIZE = 14;
         public const string XA_SIGNATURE = "XA";
 
-        private ushort m_groupId;
-        private ushort m_userId;
-        private ushort m_attributes;
-        private string m_signature;
-        private byte m_fileNumber;
-        private byte[] m_unused;
+        private ushort _groupId;
+        private ushort _userId;
+        private ushort _attributes;
+        private string _signature;
+        private byte   _fileNumber;
+        private byte[] _unused;
 
     // Constructors
 
         internal XaEntry()
         {
-            m_groupId    = 0;
-            m_userId     = 0;
-            m_attributes = (ushort)XaEntryFlag.PERM_USER_R
+            _groupId    = 0;
+            _userId     = 0;
+            _attributes = (ushort)XaEntryFlag.PERM_USER_R
                             | (ushort)XaEntryFlag.PERM_USER_X
                             | (ushort)XaEntryFlag.PERM_GROUP_R
                             | (ushort)XaEntryFlag.PERM_GROUP_X
                             | (ushort)XaEntryFlag.PERM_OTHERS_R
                             | (ushort)XaEntryFlag.PERM_OTHERS_X;
-            m_signature  = XA_SIGNATURE;
-            m_fileNumber = 1;
-            m_unused     = new byte[5] { 0, 0, 0, 0, 0 };
+            _signature  = XA_SIGNATURE;
+            _fileNumber = 1;
+            _unused     = new byte[5] { 0, 0, 0, 0, 0 };
         }
 
     // Methods
@@ -62,7 +62,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="mask">Attribute's bitmask to read</param>
         private bool GetAttribute(XaEntryFlag mask)
         {
-            return (m_attributes & (ushort)mask) > 0;
+            return (_attributes & (ushort)mask) > 0;
         }
 
         /// <summary>
@@ -73,9 +73,9 @@ namespace CRH.Framework.Disk.DataTrack
         private void SetAttribute(XaEntryFlag mask, bool value)
         {
             if (value)
-                m_attributes |= (ushort)mask;
+                _attributes |= (ushort)mask;
             else
-                m_attributes &= (ushort)(0xFFFF ^ (ushort)mask);
+                _attributes &= (ushort)(0xFFFF ^ (ushort)mask);
         }
 
     // Accessors
@@ -85,8 +85,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal ushort GroupId
         {
-            get { return m_groupId; }
-            set { m_groupId = value; }
+            get { return _groupId; }
+            set { _groupId = value; }
         }
 
         /// <summary>
@@ -94,8 +94,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal ushort UserId
         {
-            get { return m_userId; }
-            set { m_userId = value; }
+            get { return _userId; }
+            set { _userId = value; }
         }
 
         /// <summary>
@@ -103,8 +103,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal ushort Attributes
         {
-            get { return m_attributes; }
-            set { m_attributes = value; }
+            get { return _attributes; }
+            set { _attributes = value; }
         }
 
         /// <summary>
@@ -225,8 +225,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal string Signature
         {
-            get { return m_signature; }
-            set { m_signature = value; }
+            get { return _signature; }
+            set { _signature = value; }
         }
 
         /// <summary>
@@ -234,8 +234,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal byte FileNumber
         {
-            get { return m_fileNumber; }
-            set { m_fileNumber = value; }
+            get { return _fileNumber; }
+            set { _fileNumber = value; }
         }
 
         /// <summary>
@@ -244,8 +244,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal byte[] Unused
         {
-            get { return m_unused; }
-            set { m_unused = value; }
+            get { return _unused; }
+            set { _unused = value; }
         }
     }
 }

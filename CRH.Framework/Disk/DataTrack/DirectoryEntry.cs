@@ -23,18 +23,18 @@ namespace CRH.Framework.Disk.DataTrack
     /// </summary>
     public sealed class DirectoryEntry
     {
-        private bool     m_hasXa;
-        private byte     m_length;
-        private byte     m_extendedAttributeRecordlength;
-        private uint     m_extentLba;
-        private uint     m_extentSize;
-        private DateTime m_date;
-        private byte     m_flags;
-        private byte     m_fileUnitSize;
-        private byte     m_interleave;
-        private ushort   m_volumeSequenceNumber;
-        private string   m_name;
-        private XaEntry  m_xaEntry;
+        private bool     _hasXa;
+        private byte     _length;
+        private byte     _extendedAttributeRecordlength;
+        private uint     _extentLba;
+        private uint     _extentSize;
+        private DateTime _date;
+        private byte     _flags;
+        private byte     _fileUnitSize;
+        private byte     _interleave;
+        private ushort   _volumeSequenceNumber;
+        private string   _name;
+        private XaEntry  _xaEntry;
 
     // Constructors
 
@@ -44,21 +44,21 @@ namespace CRH.Framework.Disk.DataTrack
         /// <param name="hasXa">The entry has a XA field</param>
         public DirectoryEntry(bool hasXa = false)
         {
-            m_hasXa                         = hasXa;
-            m_length                        = 34;
-            m_extendedAttributeRecordlength = 0;
-            m_extentLba                     = 0;
-            m_date                          = DateTime.Now;
-            m_flags                         = 0;
-            m_fileUnitSize                  = 0;
-            m_interleave                    = 0;
-            m_volumeSequenceNumber          = 1;
-            m_name                          = "\0";
+            _hasXa                         = hasXa;
+            _length                        = 34;
+            _extendedAttributeRecordlength = 0;
+            _extentLba                     = 0;
+            _date                          = DateTime.Now;
+            _flags                         = 0;
+            _fileUnitSize                  = 0;
+            _interleave                    = 0;
+            _volumeSequenceNumber          = 1;
+            _name                          = "\0";
 
             if (hasXa)
             {
-                m_xaEntry = new XaEntry();
-                m_length += XaEntry.SIZE;
+                _xaEntry = new XaEntry();
+                _length += XaEntry.SIZE;
             }
         }
 
@@ -69,7 +69,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         private bool GetFlag(DirectoryEntryFlag mask)
         {
-            return (m_flags & (byte)mask) > 0;
+            return (_flags & (byte)mask) > 0;
         }
 
         /// <summary>
@@ -78,9 +78,9 @@ namespace CRH.Framework.Disk.DataTrack
         private void SetFlag(DirectoryEntryFlag mask, bool value)
         {
             if (value)
-                m_flags |= (byte)mask;
+                _flags |= (byte)mask;
             else
-                m_flags &= (byte)(0xFF ^ (byte)mask);
+                _flags &= (byte)(0xFF ^ (byte)mask);
         }
 
     // Accessors
@@ -90,10 +90,10 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool HasXa
         {
-            get { return m_hasXa; }
+            get { return _hasXa; }
             set
             {
-                m_hasXa = value;
+                _hasXa = value;
             }
         }
 
@@ -102,8 +102,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte Length
         {
-            get { return m_length; }
-            internal set { m_length = value; }
+            get { return _length; }
+            internal set { _length = value; }
         }
 
         /// <summary>
@@ -111,8 +111,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte ExtendedAttributeRecordlength
         {
-            get { return m_extendedAttributeRecordlength; }
-            internal set { m_extendedAttributeRecordlength = value; }
+            get { return _extendedAttributeRecordlength; }
+            internal set { _extendedAttributeRecordlength = value; }
         }
 
         /// <summary>
@@ -120,8 +120,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint ExtentLba
         {
-            get { return m_extentLba; }
-            internal set { m_extentLba = value; }
+            get { return _extentLba; }
+            internal set { _extentLba = value; }
         }
 
         /// <summary>
@@ -129,8 +129,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint ExtentSize
         {
-            get { return m_extentSize; }
-            internal set { m_extentSize = value; }
+            get { return _extentSize; }
+            internal set { _extentSize = value; }
         }
 
         /// <summary>
@@ -138,8 +138,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DateTime Date
         {
-            get { return m_date; }
-            internal set { m_date = value; }
+            get { return _date; }
+            internal set { _date = value; }
         }
 
         /// <summary>
@@ -147,8 +147,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte Flags
         {
-            get { return m_flags; }
-            internal set { m_flags = value; }
+            get { return _flags; }
+            internal set { _flags = value; }
         }
 
         /// <summary>
@@ -211,8 +211,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal byte FileUnitSize
         {
-            get { return m_fileUnitSize; }
-            set { m_fileUnitSize = value; }
+            get { return _fileUnitSize; }
+            set { _fileUnitSize = value; }
         }
 
         /// <summary>
@@ -221,8 +221,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal byte Interleave
         {
-            get { return m_interleave; }
-            set { m_interleave = value; }
+            get { return _interleave; }
+            set { _interleave = value; }
         }
 
         /// <summary>
@@ -230,8 +230,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal ushort VolumeSequenceNumber
         {
-            get { return m_volumeSequenceNumber; }
-            set { m_volumeSequenceNumber = value; }
+            get { return _volumeSequenceNumber; }
+            set { _volumeSequenceNumber = value; }
         }
 
         /// <summary>
@@ -239,13 +239,13 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string Name
         {
-            get { return m_name; }
+            get { return _name; }
             internal set
             {
-                if (value.Length > 0xFF)
+                if (value.Length > 255)
                     throw new FrameworkException("Entry name is too long");
 
-                m_name = value;
+                _name = value;
             }
         }
 
@@ -254,11 +254,11 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal XaEntry XaEntry
         {
-            get { return m_xaEntry; }
+            get { return _xaEntry; }
             set
             {
-                m_xaEntry = value;
-                m_hasXa   = true;
+                _xaEntry = value;
+                _hasXa   = true;
             }
         }
     }

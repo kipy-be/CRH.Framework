@@ -11,13 +11,13 @@ namespace CRH.Framework.Disk
 {
     public sealed class DiskReader : Disk
     {
-        private CBinaryReader m_stream;
+        private CBinaryReader _stream;
 
-        private static Regex m_regCueKeyWord = new Regex("^[ \t]*([^ \t]+)");
-        private static Regex m_regCueFile    = new Regex("FILE[ \t]+\"([^\"]+)\"[ \t]+BINARY", RegexOptions.IgnoreCase);
-        private static Regex m_regCueTrack   = new Regex("TRACK[ \t]+([0-9]+)[ \t]+(.+)", RegexOptions.IgnoreCase);
-        private static Regex m_regCueIndex   = new Regex("INDEX[ \t]+([0-9]+)[ \t]+([0-9]+):([0-9]+):([0-9]+)", RegexOptions.IgnoreCase);
-        private static Regex m_regCueGap     = new Regex("(?:PRE|POST)GAP[ \t]+([0-9]+):([0-9]+):([0-9]+)", RegexOptions.IgnoreCase);
+        private static Regex _regCueKeyWord = new Regex("^[ \t]*([^ \t]+)");
+        private static Regex _regCueFile    = new Regex("FILE[ \t]+\"([^\"]+)\"[ \t]+BINARY", RegexOptions.IgnoreCase);
+        private static Regex _regCueTrack   = new Regex("TRACK[ \t]+([0-9]+)[ \t]+(.+)", RegexOptions.IgnoreCase);
+        private static Regex _regCueIndex   = new Regex("INDEX[ \t]+([0-9]+)[ \t]+([0-9]+):([0-9]+):([0-9]+)", RegexOptions.IgnoreCase);
+        private static Regex _regCueGap     = new Regex("(?:PRE|POST)GAP[ \t]+([0-9]+):([0-9]+):([0-9]+)", RegexOptions.IgnoreCase);
 
     // Constructors
 
@@ -31,13 +31,13 @@ namespace CRH.Framework.Disk
         {
             try
             {
-                FileInfo cueFile = new FileInfo(fileUrl);
+                var cueFile = new FileInfo(fileUrl);
                 
-                using (FileStream cueFileStream = new FileStream(cueFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                using (StreamReader cueStream   = new StreamReader(cueFileStream))
+                using (var cueFileStream = new FileStream(cueFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var cueStream   = new StreamReader(cueFileStream))
                 {
-                    Dictionary<int, Track> tracksDic = new Dictionary<int, Track>();
-                    List<long> indexOffsets = new List<long>();
+                    var tracksDic = new Dictionary<int, Track>();
+                    var indexOffsets = new List<long>();
                     Match match = null;
                     Track track = null;
                     int trackNumber = 0;
@@ -47,48 +47,48 @@ namespace CRH.Framework.Disk
                     string keyWord;
                     while ((line = cueStream.ReadLine()) != null)
                     {
-                        keyWord = m_regCueKeyWord.Match(line).Groups[1].Value.ToUpper();
+                        keyWord = _regCueKeyWord.Match(line).Groups[1].Value.ToUpper();
 
                         switch (keyWord)
                         {
                             case "FILE":
-                                if (m_fileOpen)
+                                if (_fileOpen)
                                     throw new FrameworkException("Error while parsing cue sheet : framework does not support multi files per cue but only one file with multi tracks");
 
-                                fileUrl = m_regCueFile.Match(line).Groups[1].Value;
+                                fileUrl = _regCueFile.Match(line).Groups[1].Value;
 
                                 if (!(fileUrl.StartsWith("/") || fileUrl.StartsWith("\\") || fileUrl.Contains(":/") || fileUrl.Contains(":\\")))
                                     fileUrl = cueFile.DirectoryName + "/" + fileUrl;
 
-                                m_file = new FileInfo(fileUrl);
+                                _file = new FileInfo(fileUrl);
 
-                                if (!m_file.Exists)
+                                if (!_file.Exists)
                                     throw new FrameworkException("Error while parsing cue sheet : targeted file \"{0}\" not found", fileUrl);
 
-                                string extension = m_file.Extension.ToUpper();
+                                string extension = _file.Extension.ToUpper();
                                 if (!(extension == ".BIN" || extension == ".IMG" || extension == ".ISO"))
                                     throw new FrameworkException("Error while parsing cue sheet : targeted file \"{0}\" is not a BIN/IMG/ISO file", fileUrl);
 
 
-                                m_fileStream = new FileStream(m_file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
-                                m_stream = new CBinaryReader(m_fileStream);
-                                m_fileOpen = true;
+                                _fileStream = new FileStream(_file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
+                                _stream = new CBinaryReader(_fileStream);
+                                _fileOpen = true;
                                 break;
 
                             case "TRACK":
-                                if (!m_fileOpen)
+                                if (!_fileOpen)
                                     throw new FrameworkException("Error while parsing cue sheet : TRACK defined before FILE");
 
-                                match = m_regCueTrack.Match(line);
+                                match = _regCueTrack.Match(line);
 
                                 if (!int.TryParse(match.Groups[1].Value, out trackNumber))
                                     throw new FrameworkException("Error while parsing cue sheet : track number invalid");
 
                                 string mode = match.Groups[2].Value.ToUpper();
 
-                                if ((!mode.StartsWith("MODE") && !m_hasDataTrack))
+                                if ((!mode.StartsWith("MODE") && !_hasDataTrack))
                                     throw new FrameworkException("Error while parsing cue sheet : only Mixed Mode multi tracks disks are supported, the first track must be a DATA track");
-                                else if ((mode.StartsWith("MODE") && m_hasDataTrack))
+                                else if ((mode.StartsWith("MODE") && _hasDataTrack))
                                     throw new FrameworkException("Error while parsing cue sheet : only Mixed Mode multi tracks disks are supported, it must contains only one DATA track");
 
                                 switch (mode)
@@ -96,35 +96,35 @@ namespace CRH.Framework.Disk
                                     case "RAW":
                                     case "RAW/2048":
                                     case "MODE1/2048":
-                                        track = new DataTrackReader(m_stream, trackNumber, m_system, DataTrackMode.RAW, false, false);
-                                        m_hasDataTrack = true;
+                                        track = new DataTrackReader(_stream, trackNumber, _system, DataTrackMode.RAW, false, false);
+                                        _hasDataTrack = true;
                                         break;
                                     case "MODE1/2352":
-                                        track = new DataTrackReader(m_stream, trackNumber, m_system, DataTrackMode.MODE1, false, false);
-                                        m_hasDataTrack = true;
+                                        track = new DataTrackReader(_stream, trackNumber, _system, DataTrackMode.MODE1, false, false);
+                                        _hasDataTrack = true;
                                         break;
                                     case "MODE2/2336":
-                                        track = new DataTrackReader(m_stream, trackNumber, m_system, DataTrackMode.MODE2, false, false);
-                                        m_hasDataTrack = true;
+                                        track = new DataTrackReader(_stream, trackNumber, _system, DataTrackMode.MODE2, false, false);
+                                        _hasDataTrack = true;
                                         break;
                                     case "MODE2/2352":
-                                        track = new DataTrackReader(m_stream, trackNumber, m_system, DataTrackMode.MODE2_XA, false, false);
-                                        m_hasDataTrack = true;
+                                        track = new DataTrackReader(_stream, trackNumber, _system, DataTrackMode.MODE2_XA, false, false);
+                                        _hasDataTrack = true;
                                         break;
                                     case "AUDIO":
-                                        track = new AudioTrackReader(m_stream, trackNumber);
+                                        track = new AudioTrackReader(_stream, trackNumber);
                                         break;
                                     default:
                                         throw new FrameworkException("Error while parsing cue sheet : unknown/not supported track type \"{0}\"", mode);
                                 }
                                 tracksDic.Add(trackNumber, track);
-                                m_tracks.Add(track);
+                                _tracks.Add(track);
                                 break;
 
                             case "INDEX":
                                 track = tracksDic[trackNumber];
 
-                                match = m_regCueIndex.Match(line);
+                                match = _regCueIndex.Match(line);
 
                                 int indexNumber;
                                 if (!int.TryParse(match.Groups[1].Value, out indexNumber) || indexNumber > 2)
@@ -147,7 +147,7 @@ namespace CRH.Framework.Disk
                             case "POSTGAP":
                                 track = tracksDic[trackNumber];
 
-                                match = m_regCueGap.Match(line);
+                                match = _regCueGap.Match(line);
 
                                 if (!int.TryParse(match.Groups[1].Value, out m)
                                     || !int.TryParse(match.Groups[2].Value, out s) || s > 59
@@ -164,11 +164,11 @@ namespace CRH.Framework.Disk
                                 break;
                         }
                     }
-                    indexOffsets.Add(m_fileStream.Length);
+                    indexOffsets.Add(_fileStream.Length);
 
-                    for (int i = 0, u = 0, max = m_tracks.Count; i < max; i++)
+                    for (int i = 0, u = 0, max = _tracks.Count; i < max; i++)
                     {
-                        track = m_tracks[i];
+                        track = _tracks[i];
                         if (track.HasPause)
                         {
                             track.PauseOffset = indexOffsets[u];
@@ -181,7 +181,7 @@ namespace CRH.Framework.Disk
                         u++;
                     }
                 }
-                m_stream.Position = 0;
+                _stream.Position = 0;
             }
             catch (FrameworkException ex)
             {
@@ -206,14 +206,14 @@ namespace CRH.Framework.Disk
         {
             try
             {
-                m_file = new FileInfo(fileUrl);
-                m_fileStream = new FileStream(m_file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
-                m_stream = new CBinaryReader(m_fileStream);
-                m_fileOpen = true;
+                _file = new FileInfo(fileUrl);
+                _fileStream = new FileStream(_file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
+                _stream = new CBinaryReader(_fileStream);
+                _fileOpen = true;
 
-                m_stream.Position = 0;
+                _stream.Position = 0;
 
-                m_tracks.Add(new DataTrackReader(m_stream, 1, system, mode, readDescriptors, buildIndex));
+                _tracks.Add(new DataTrackReader(_stream, 1, system, mode, readDescriptors, buildIndex));
             }
             catch (FrameworkException ex)
             {
@@ -255,11 +255,11 @@ namespace CRH.Framework.Disk
         /// </summary>
         public override void Close()
         {
-            if (!m_fileOpen)
+            if (!_fileOpen)
                 return;
 
-            m_stream.CloseAndDispose();
-            m_fileOpen = false;
+            _stream.CloseAndDispose();
+            _fileOpen = false;
         }
 
         /// <summary>
@@ -268,7 +268,7 @@ namespace CRH.Framework.Disk
         /// <returns></returns>
         internal IEnumerable<Track> GetAudioTracks()
         {
-            foreach (Track track in m_tracks)
+            foreach (Track track in _tracks)
             {
                 if (track.IsAudio)
                     yield return track;
@@ -282,7 +282,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         public IEnumerable<Track> Tracks
         {
-            get { return m_tracks; }
+            get { return _tracks; }
         }
 
         /// <summary>
@@ -300,9 +300,9 @@ namespace CRH.Framework.Disk
         {
             get
             {
-                if (m_tracks.Count == 0)
+                if (_tracks.Count == 0)
                     throw new FrameworkException("Error while getting track : track does not exists");
-                return m_tracks[0];
+                return _tracks[0];
             }
         }
     }
