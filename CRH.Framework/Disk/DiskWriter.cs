@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.RegularExpressions;
-using CRH.Framework.Common;
-using CRH.Framework.IO;
+﻿using CRH.Framework.Common;
 using CRH.Framework.Disk.AudioTrack;
 using CRH.Framework.Disk.DataTrack;
+using CRH.Framework.IO;
+using System;
+using System.IO;
 
 namespace CRH.Framework.Disk
 {
     public sealed class DiskWriter : Disk
     {
         private CBinaryWriter _stream;
-
-    // Constructors
 
         /// <summary>
         /// DiskWriter (multi tracks)
@@ -37,8 +33,6 @@ namespace CRH.Framework.Disk
                 throw new FrameworkException("Error while while writing ISO : Unable to create the ISO File");
             }
         }
-
-    // Methods
 
         /// <summary>
         /// Initialize a new multi tracks DiskWriter
@@ -64,7 +58,9 @@ namespace CRH.Framework.Disk
                 foreach (Track track in _tracks)
                 {
                     if (track.IsData && !((DataTrackWriter)track).IsFinalized)
+                    {
                         throw new FrameworkException("Error while closing ISO : data track is not finalized, it will be unreadable");
+                    }
                 }
 
                 // Create CUE sheet
@@ -73,9 +69,9 @@ namespace CRH.Framework.Disk
                 _stream.CloseAndDispose();
                 _fileOpen = false;
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch (Exception)
             {
@@ -90,8 +86,10 @@ namespace CRH.Framework.Disk
         /// <returns></returns>
         public DataTrackWriter CreateDataTrack(DataTrackMode mode)
         {
-            if(_hasDataTrack)
+            if (_hasDataTrack)
+            {
                 throw new FrameworkException("Error while adding track : only Mixed Mode multi tracks disks are supported, it must contains only one DATA track");
+            }
 
             var dataTrack = new DataTrackWriter(_stream, TracksCount + 1, _system, mode);
             
@@ -107,19 +105,27 @@ namespace CRH.Framework.Disk
         /// <returns></returns>
         public AudioTrackWriter CreateAudioTrack()
         {
-            if(TracksCount == 0)
+            if (TracksCount == 0)
+            {
                 throw new FrameworkException("Error while adding track : only Mixed Mode multi tracks disks are supported, the first track must be a DATA track");
+            }
 
-            if(!((ITrackWriter)_tracks[TracksCount - 1]).IsFinalized)
+            if (!((ITrackWriter)_tracks[TracksCount - 1]).IsFinalized)
+            {
                 throw new FrameworkException("Error while adding track : you have to finalize the current track before creating new one");
+            }
 
             var audioTrack = new AudioTrackWriter(_stream, TracksCount + 1);
 
             // Default pregap / pause
             if (TracksCount == 1)
+            {
                 audioTrack.PregapSize = 150;
+            }
             else
+            {
                 audioTrack.PauseSize = 150;
+            }
             
             _tracks.Add(audioTrack);
 
@@ -143,9 +149,11 @@ namespace CRH.Framework.Disk
                     int sectorPos;
 
                     if (maxTrackNumberLength < 2)
+                    {
                         maxTrackNumberLength = 2;
+                    }
 
-                    cueStream.WriteLine(String.Format("FILE \"{0}\" BINARY", _file.Name.ToUpper()));
+                    cueStream.WriteLine(string.Format("FILE \"{0}\" BINARY", _file.Name.ToUpper()));
                     foreach(var track in _tracks)
                     {
                         if(track.IsData)
@@ -158,20 +166,22 @@ namespace CRH.Framework.Disk
                                 case DataTrackMode.MODE1:
                                     mode = "MODE1/2352";
                                     break;
+
                                 case DataTrackMode.MODE2:
                                     mode = "MODE2/2336";
                                     break;
+
                                 case DataTrackMode.MODE2_XA:
                                     mode = "MODE2/2352";
                                     break;
+
                                 case DataTrackMode.RAW:
                                 default:
                                     mode = "MODE1/2048";
                                     break;
                             }
 
-                            cueStream.WriteLine(String.Format
-                            (
+                            cueStream.WriteLine(string.Format(
                                 "  TRACK {0} {1}",
                                 Utils.PrePaddStr(track.TrackNumber.ToString(), maxTrackNumberLength, '0'),
                                 mode
@@ -183,8 +193,7 @@ namespace CRH.Framework.Disk
                         {
                             var audioTrack = (AudioTrackWriter)track;
 
-                            cueStream.WriteLine(String.Format
-                            (
+                            cueStream.WriteLine(string.Format(
                                 "  TRACK {0} AUDIO",
                                 Utils.PrePaddStr(track.TrackNumber.ToString(), maxTrackNumberLength, '0')
                             ));
@@ -196,8 +205,7 @@ namespace CRH.Framework.Disk
                                 s = dv % 60; dv /= 60;
                                 m = dv % 255;
 
-                                cueStream.WriteLine(String.Format
-                                (
+                                cueStream.WriteLine(string.Format(
                                     "    PREGAP {0}:{1}:{2}",
                                     Utils.PrePaddStr(m.ToString(), 2, '0'),
                                     Utils.PrePaddStr(s.ToString(), 2, '0'),
@@ -213,8 +221,7 @@ namespace CRH.Framework.Disk
                                 s = dv % 60; dv /= 60;
                                 m = dv % 255;
 
-                                cueStream.WriteLine(String.Format
-                                (
+                                cueStream.WriteLine(string.Format(
                                     "    INDEX 00 {0}:{1}:{2}",
                                     Utils.PrePaddStr(m.ToString(), 2, '0'),
                                     Utils.PrePaddStr(s.ToString(), 2, '0'),
@@ -228,8 +235,7 @@ namespace CRH.Framework.Disk
                             s = dv % 60; dv /= 60;
                             m = dv % 255;
 
-                            cueStream.WriteLine(String.Format
-                            (
+                            cueStream.WriteLine(string.Format(
                                 "    INDEX 01 {0}:{1}:{2}",
                                 Utils.PrePaddStr(m.ToString(), 2, '0'),
                                 Utils.PrePaddStr(s.ToString(), 2, '0'),
@@ -243,8 +249,7 @@ namespace CRH.Framework.Disk
                                 s = dv % 60; dv /= 60;
                                 m = dv % 255;
 
-                                cueStream.WriteLine(String.Format
-                                (
+                                cueStream.WriteLine(string.Format(
                                     "    POSTGAP {0}:{1}:{2}",
                                     Utils.PrePaddStr(m.ToString(), 2, '0'),
                                     Utils.PrePaddStr(s.ToString(), 2, '0'),

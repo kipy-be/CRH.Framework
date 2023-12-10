@@ -8,13 +8,9 @@ namespace CRH.Framework.IO.Compression
 {
     public class GZipWriter : GZip
     {
-    // Constructors
-
         public GZipWriter()
             : base()
         { }
-
-    // Methods
 
         /// <summary>
         /// Compress streamIn into streamOut
@@ -35,9 +31,9 @@ namespace CRH.Framework.IO.Compression
                 _metas.Crc32 = Crc32.Compute(streamIn);
                 _metas.WriteFooter(streamOut);
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch(Exception)
             {

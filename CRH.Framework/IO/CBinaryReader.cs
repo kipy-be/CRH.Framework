@@ -8,15 +8,13 @@ namespace CRH.Framework.IO
     /// CBinaryReader
     /// BinaryReader extension (including big endian support)
     /// </summary>
-    public class CBinaryReader : System.IO.BinaryReader
+    public class CBinaryReader : BinaryReader
     {
-    // Constructors
-
         public CBinaryReader(Stream input)
             : base(input)
         {}
 
-        public CBinaryReader(Stream input, System.Text.Encoding encoding)
+        public CBinaryReader(Stream input, Encoding encoding)
             : base(input, encoding)
         {}
 
@@ -24,11 +22,9 @@ namespace CRH.Framework.IO
             : base(new MemoryStream(buffer))
         {}
 
-        public CBinaryReader(byte[] buffer, System.Text.Encoding encoding)
+        public CBinaryReader(byte[] buffer, Encoding encoding)
             : base(new MemoryStream(buffer), encoding)
         {}
-
-    // Methods
 
         /// <summary>
         /// Read int16 (BE)
@@ -36,7 +32,7 @@ namespace CRH.Framework.IO
         /// <returns></returns>
         public short ReadInt16BE()
         {
-            byte[] buffer = this.ReadBytes(2);
+            byte[] buffer = ReadBytes(2);
             return (short)
                 ((buffer[0] << 8)
                 | buffer[1]);
@@ -48,7 +44,7 @@ namespace CRH.Framework.IO
         /// <returns></returns>
         public ushort ReadUInt16BE()
         {
-            byte[] buffer = this.ReadBytes(2);
+            byte[] buffer = ReadBytes(2);
             return (ushort)
                 ((buffer[0] << 8)
                 | buffer[1]);
@@ -60,7 +56,7 @@ namespace CRH.Framework.IO
         /// <returns></returns>
         public int ReadInt32BE()
         {
-            byte[] buffer = this.ReadBytes(4);
+            byte[] buffer = ReadBytes(4);
             return (int)
                 ( (buffer[0] << 24)
                 | (buffer[1] << 16)
@@ -74,7 +70,7 @@ namespace CRH.Framework.IO
         /// <returns></returns>
         public uint ReadUInt32BE()
         {
-            byte[] buffer = this.ReadBytes(4);
+            byte[] buffer = ReadBytes(4);
             return (uint)
                 ( (buffer[0] << 24)
                 | (buffer[1] << 16)
@@ -97,7 +93,7 @@ namespace CRH.Framework.IO
 
                 if (maxSize > -1)
                 {
-                    while (bytesRead < maxSize && (b = this.ReadByte()) != 0)
+                    while (bytesRead < maxSize && (b = ReadByte()) != 0)
                     {
                         ms.WriteByte(b);
                         bytesRead++;
@@ -105,17 +101,16 @@ namespace CRH.Framework.IO
                 }
                 else
                 {
-                    while ((b = this.ReadByte()) != 0)
+                    while ((b = ReadByte()) != 0)
                     {
                         ms.WriteByte(b);
                         bytesRead++;
                     }
                 }
 
-                if (trim)
-                    return Encoding.ASCII.GetString(ms.ToArray()).TrimEnd();
-                else
-                    return Encoding.ASCII.GetString(ms.ToArray());
+                return trim
+                    ? Encoding.ASCII.GetString(ms.ToArray()).TrimEnd()
+                    : Encoding.ASCII.GetString(ms.ToArray());
             }
         }
 
@@ -127,7 +122,7 @@ namespace CRH.Framework.IO
         public string ReadHexa(int size)
         {
             byte[] buffer = new byte[size];
-            this.Read(buffer, 0, size);
+            Read(buffer, 0, size);
             return BitConverter.ToString(buffer).Replace("-", string.Empty);
         }
 
@@ -141,8 +136,8 @@ namespace CRH.Framework.IO
 
             try
             {
-                b = this.ReadByte();
-                this.Position--;
+                b = ReadByte();
+                Position--;
             }
             catch(Exception)
             {
@@ -159,16 +154,13 @@ namespace CRH.Framework.IO
         /// </summary>
         public long Position
         {
-            get { return this.BaseStream.Position; }
-            set { this.BaseStream.Position = value; }
+            get => BaseStream.Position;
+            set => BaseStream.Position = value;
         }
 
         /// <summary>
         /// Length of the base stream
         /// </summary>
-        public long Length
-        {
-            get { return this.BaseStream.Length; }
-        }
+        public long Length => BaseStream.Length;
     }
 }

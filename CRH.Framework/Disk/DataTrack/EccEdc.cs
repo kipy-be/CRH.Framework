@@ -2,9 +2,6 @@
     Based on C sources by yuaiyu1987 from http://linux.programdevelop.com/1752355/
 */
 
-using System;
-using CRH.Framework.IO;
-
 namespace CRH.Framework.Disk.DataTrack
 {
     internal static class EccEdc
@@ -33,8 +30,10 @@ namespace CRH.Framework.Disk.DataTrack
                 _eccFLookupTable[i] = (byte)j;
                 _eccBLookupTable[i ^ j] = (byte)i;
 		        edc = i;
-		        for (j = 0; j < 8; j++)
-			        edc = (uint)((edc >> 1) ^ ((edc & 1) != 0 ? 0xD8018001 : 0));
+                for (j = 0; j < 8; j++)
+                {
+                    edc = (uint)((edc >> 1) ^ ((edc & 1) != 0 ? 0xD8018001 : 0));
+                }
 		        _edcLookupTable[i] = edc;
 	        }
         }
@@ -51,6 +50,7 @@ namespace CRH.Framework.Disk.DataTrack
                     EdcBlockCompute(sector, 0, DataTrack.GetSectorDataSize(mode) + 16);
                     EccCompute(sector);
                     break;
+
                 case SectorMode.XA_FORM1:
                     EdcBlockCompute(sector, 16, DataTrack.SUBHEADER_SIZE + DataTrack.GetSectorDataSize(mode));
                     _headerBackup[0] = sector[12]; _headerBackup[1] = sector[13]; _headerBackup[2] = sector[14]; _headerBackup[3] = sector[15];
@@ -58,6 +58,7 @@ namespace CRH.Framework.Disk.DataTrack
                     EccCompute(sector);
                     sector[12] = _headerBackup[0]; sector[13] = _headerBackup[1]; sector[14] = _headerBackup[2]; sector[15] = _headerBackup[3];
                     break;
+
                 case SectorMode.XA_FORM2:
                     EdcBlockCompute(sector, 16, DataTrack.SUBHEADER_SIZE + DataTrack.GetSectorDataSize(mode));
                     break;
@@ -75,7 +76,9 @@ namespace CRH.Framework.Disk.DataTrack
             uint edc = 0;
 
             for (int i = offset, max = offset + length; i < max; i++)
+            {
                 edc = (uint)((edc >> 8) ^ _edcLookupTable[(edc ^ (sector[i])) & 0xFF]);
+            }
 
             sector[2072] = (byte)(edc & 0xFF);
             sector[2073] = (byte)((edc >> 8) & 0xFF);
@@ -113,7 +116,9 @@ namespace CRH.Framework.Disk.DataTrack
                     i += minorInc;
 
                     if (i >= size)
+                    {
                         i -= size;
+                    }
 
                     eccA ^= temp;
                     eccB ^= temp;

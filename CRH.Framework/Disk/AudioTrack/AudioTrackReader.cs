@@ -1,15 +1,13 @@
-﻿using System;
-using System.IO;
-using CRH.Framework.Common;
+﻿using CRH.Framework.Common;
 using CRH.Framework.IO;
+using System;
+using System.IO;
 
 namespace CRH.Framework.Disk.AudioTrack
 {
     public sealed class AudioTrackReader : AudioTrack, ITrackReader
     {
         private CBinaryReader _stream;
-
-    // Constructors
 
         /// <summary>
         /// AudioTrackReader
@@ -23,8 +21,6 @@ namespace CRH.Framework.Disk.AudioTrack
             SeekSector(0);
         }
 
-    // Methods
-
         /// <summary>
         /// Read a sector's data
         /// </summary>
@@ -34,9 +30,9 @@ namespace CRH.Framework.Disk.AudioTrack
             {
                 return _stream.ReadBytes(_sectorSize);
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch (EndOfStreamException)
             {
@@ -86,7 +82,9 @@ namespace CRH.Framework.Disk.AudioTrack
         {
             SeekSector(0);
             for (int sectorsReads = 0; sectorsReads < _size; sectorsReads++)
+            {
                 stream.Write(ReadSector(), 0, _sectorSize);
+            }
 
             stream.Flush();
         }
@@ -140,11 +138,11 @@ namespace CRH.Framework.Disk.AudioTrack
                         Read(fs);
                 }
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FrameworkException("Error while writing audio file : unable to write file \"{0}\"", outFilePath);
             }

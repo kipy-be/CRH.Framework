@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Text;
+﻿using System.Text;
 
 namespace CRH.Framework.IO
 {
@@ -19,10 +17,9 @@ namespace CRH.Framework.IO
         /// <returns></returns>
         public static string ReadAsciiString(byte[] data, int index, int count, bool trim = true)
         {
-            if (trim)
-                return Encoding.ASCII.GetString(data, index, count).TrimEnd();
-            else
-                return Encoding.ASCII.GetString(data, index, count);
+            return trim
+                ? Encoding.ASCII.GetString(data, index, count).TrimEnd()
+                : Encoding.ASCII.GetString(data, index, count);
         }
 
         /// <summary>
@@ -35,12 +32,16 @@ namespace CRH.Framework.IO
         public static byte[] Create(byte[] data, int index = 0, int count = -1)
         {
             if (count == -1)
+            {
                 count = data.Length;
+            }
 
             byte[] buffer = new byte[count];
 
             for (int i = 0; i < count; i++)
+            {
                 buffer[i] = data[index + i];
+            }
 
             return buffer;
         }
@@ -57,10 +58,14 @@ namespace CRH.Framework.IO
         public static byte[] Copy(byte[] data, byte[] buffer, int indexData = 0, int indexBuffer = 0, int count = -1)
         {
             if (count == -1)
+            {
                 count = data.Length;
+            }
 
             for (int i = 0; i < count; i++)
+            {
                 buffer[indexBuffer + i] = data[indexData + i];
+            }
 
             return buffer;
         }
@@ -74,12 +79,16 @@ namespace CRH.Framework.IO
         public static bool IsEquals(byte[] buffer1, byte[] buffer2)
         {
             if (buffer1.Length != buffer2.Length)
+            {
                 return false;
+            }
 
             for(int i = 0, max = buffer1.Length; i < max; i++)
             {
                 if (buffer1[i] != buffer2[i])
+                {
                     return false;
+                }
             }
 
             return true;

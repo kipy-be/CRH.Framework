@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace CRH.Framework.IO.Hash
 {
@@ -15,17 +14,22 @@ namespace CRH.Framework.IO.Hash
             uint p = 0xEDB88320;
             _lookupTable = new uint[256];
 
-            uint tmp = 0;
+            uint tmp;
             for(int i = 0; i < 256; i++)
             {
                 tmp = (uint)i;
                 for(int j = 8; j > 0; j--)
                 {
-                    if((tmp & 1) == 1)
+                    if ((tmp & 1) == 1)
+                    {
                         tmp = (tmp >> 1) ^ p;
+                    }
                     else
+                    {
                         tmp >>= 1;
+                    }
                 }
+
                 _lookupTable[i] = tmp;
             }
         }
@@ -55,13 +59,15 @@ namespace CRH.Framework.IO.Hash
             while(stream.Position < endPosition)
             {
                 if (endPosition - stream.Position < bufferSize)
+                {
                     bufferSize = (int)(endPosition - stream.Position);
+                }
 
                 dataRead = stream.Read(buffer, 0, bufferSize);
                 for (int i = 0; i < dataRead; i++)
                 {
                     b = (byte)((crc & 0xFF) ^ buffer[i]);
-                    crc = (uint)((crc >> 8) ^ _lookupTable[b]);
+                    crc = (crc >> 8) ^ _lookupTable[b];
                 }
             }
 

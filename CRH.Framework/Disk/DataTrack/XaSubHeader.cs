@@ -1,22 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace CRH.Framework.Disk.DataTrack
+﻿namespace CRH.Framework.Disk.DataTrack
 {
-    internal enum XaSubModeFlag : byte
-    {
-        EOR           = 1,
-        VIDEO         = 1 << 1,
-        AUDIO         = 1 << 2,
-        DATA          = 1 << 3,
-        TRIGGER_ON    = 1 << 4,
-        FORM2         = 1 << 5,
-        REAL_TIME     = 1 << 6,
-        EOF           = 1 << 7
-    }
-
     public sealed class XaSubHeader
     {
         private byte _file;
@@ -27,8 +10,6 @@ namespace CRH.Framework.Disk.DataTrack
         private static XaSubHeader _basicSubHeader;
         private static XaSubHeader _endOfRecordSubHeader;
         private static XaSubHeader _endOfFileSubHeader;
-
-    // Constructors
 
         /// <summary>
         /// XA Subheader
@@ -46,8 +27,6 @@ namespace CRH.Framework.Disk.DataTrack
             _subMode  = subMode;
             _dataType = dataType;
         }
-
-    // Methods
 
         /// <summary>
         /// Get specific flag state from SubMode field
@@ -67,12 +46,14 @@ namespace CRH.Framework.Disk.DataTrack
         private void SetSubModeFlag(XaSubModeFlag mask, bool value)
         {
             if (value)
+            {
                 _subMode |= (byte)mask;
+            }
             else
+            {
                 _subMode &= (byte)(0xFF ^ (byte)mask);
+            }
         }
-
-    // Accessors
 
         /// <summary>
         /// Basic subHeader (data)
@@ -86,6 +67,7 @@ namespace CRH.Framework.Disk.DataTrack
                     _basicSubHeader = new XaSubHeader();
                     _basicSubHeader.IsData = true;
                 }
+
                 return _basicSubHeader;
             }
         }
@@ -103,6 +85,7 @@ namespace CRH.Framework.Disk.DataTrack
                     _endOfRecordSubHeader.IsData = true;
                     _endOfRecordSubHeader.IsEOR = true;
                 }
+
                 return _endOfRecordSubHeader;
             }
         }
@@ -121,6 +104,7 @@ namespace CRH.Framework.Disk.DataTrack
                     _endOfFileSubHeader.IsEOF = true;
                     _endOfFileSubHeader.IsEOR = true;
                 }
+
                 return _endOfFileSubHeader;
             }
         }
@@ -130,8 +114,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte File
         {
-            get { return _file; }
-            internal set { _file = value; }
+            get => _file;
+            internal set => _file = value;
         }
 
         /// <summary>
@@ -139,8 +123,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte Channel
         {
-            get { return _channel; }
-            internal set { _channel = value; }
+            get => _channel;
+            internal set => _channel = value;
         }
 
         /// <summary>
@@ -148,8 +132,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte SubMode
         {
-            get { return _subMode; }
-            internal set { _subMode = value; }
+            get => _subMode;
+            internal set => _subMode = value;
         }
 
         /// <summary>
@@ -157,8 +141,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsEOR
         {
-            get { return GetSubModeFlag(XaSubModeFlag.EOR); }
-            set { SetSubModeFlag(XaSubModeFlag.EOR, value); }
+            get => GetSubModeFlag(XaSubModeFlag.EOR);
+            set => SetSubModeFlag(XaSubModeFlag.EOR, value);
         }
 
         /// <summary>
@@ -166,8 +150,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsAudio
         {
-            get { return GetSubModeFlag(XaSubModeFlag.AUDIO); }
-            set { SetSubModeFlag(XaSubModeFlag.AUDIO, value); }
+            get => GetSubModeFlag(XaSubModeFlag.AUDIO);
+            set => SetSubModeFlag(XaSubModeFlag.AUDIO, value);
         }
 
         /// <summary>
@@ -175,8 +159,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsVideo
         {
-            get { return GetSubModeFlag(XaSubModeFlag.VIDEO); }
-            set { SetSubModeFlag(XaSubModeFlag.VIDEO, value); }
+            get => GetSubModeFlag(XaSubModeFlag.VIDEO);
+            set => SetSubModeFlag(XaSubModeFlag.VIDEO, value);
         }
 
         /// <summary>
@@ -184,8 +168,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsData
         {
-            get { return GetSubModeFlag(XaSubModeFlag.DATA); }
-            set { SetSubModeFlag(XaSubModeFlag.DATA, value); }
+            get => GetSubModeFlag(XaSubModeFlag.DATA);
+            set => SetSubModeFlag(XaSubModeFlag.DATA, value);
         }
 
         /// <summary>
@@ -193,8 +177,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool TriggerOn
         {
-            get { return GetSubModeFlag(XaSubModeFlag.TRIGGER_ON); }
-            set { SetSubModeFlag(XaSubModeFlag.TRIGGER_ON, value); }
+            get => GetSubModeFlag(XaSubModeFlag.TRIGGER_ON);
+            set => SetSubModeFlag(XaSubModeFlag.TRIGGER_ON, value);
         }
 
         /// <summary>
@@ -202,8 +186,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsForm2
         {
-            get { return GetSubModeFlag(XaSubModeFlag.FORM2); }
-            set { SetSubModeFlag(XaSubModeFlag.FORM2, value); }
+            get => GetSubModeFlag(XaSubModeFlag.FORM2);
+            set => SetSubModeFlag(XaSubModeFlag.FORM2, value);
         }
 
         /// <summary>
@@ -211,8 +195,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsRealTime
         {
-            get { return GetSubModeFlag(XaSubModeFlag.REAL_TIME); }
-            set { SetSubModeFlag(XaSubModeFlag.REAL_TIME, value); }
+            get => GetSubModeFlag(XaSubModeFlag.REAL_TIME);
+            set => SetSubModeFlag(XaSubModeFlag.REAL_TIME, value);
         }
 
         /// <summary>
@@ -220,8 +204,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsEOF
         {
-            get { return GetSubModeFlag(XaSubModeFlag.EOF); }
-            set { SetSubModeFlag(XaSubModeFlag.EOF, value); }
+            get => GetSubModeFlag(XaSubModeFlag.EOF);
+            set => SetSubModeFlag(XaSubModeFlag.EOF, value);
         }
 
         /// <summary>
@@ -229,8 +213,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte DataType
         {
-            get { return _dataType; }
-            internal set { _dataType = value; }
+            get => _dataType;
+            internal set => _dataType = value;
         }
     }
 }

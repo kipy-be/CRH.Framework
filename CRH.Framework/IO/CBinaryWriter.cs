@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace CRH.Framework.IO
@@ -8,15 +7,13 @@ namespace CRH.Framework.IO
     /// CBinaryWriter
     /// BinaryWriter extension (including big endian support)
     /// </summary>
-    public class CBinaryWriter :  System.IO.BinaryWriter
+    public class CBinaryWriter : BinaryWriter
     {
-    // Constructors
-
         public CBinaryWriter(Stream input)
             : base(input)
         {}
 
-        public CBinaryWriter(Stream input, System.Text.Encoding encoding)
+        public CBinaryWriter(Stream input, Encoding encoding)
             : base(input, encoding)
         {}
 
@@ -24,7 +21,7 @@ namespace CRH.Framework.IO
             : base(new MemoryStream(buffer))
         {}
 
-        public CBinaryWriter(byte[] buffer, System.Text.Encoding encoding)
+        public CBinaryWriter(byte[] buffer, Encoding encoding)
             : base(new MemoryStream(buffer), encoding)
         {}
 
@@ -35,10 +32,11 @@ namespace CRH.Framework.IO
         /// </summary>
         public void WriteBE(short value)
         {
-            byte[] buffer = new byte[2];
-            buffer[0] = (byte)(value >> 8);
-            buffer[1] = (byte)(value);
-            this.Write(buffer);
+            byte[] buffer = [
+                (byte)(value >> 8),
+                (byte)(value)
+            ];
+            Write(buffer);
         }
 
         /// <summary>
@@ -46,10 +44,11 @@ namespace CRH.Framework.IO
         /// </summary>
         public void WriteBE(ushort value)
         {
-            byte[] buffer = new byte[2];
-            buffer[0] = (byte)(value >> 8);
-            buffer[1] = (byte)(value);
-            this.Write(buffer);
+            byte[] buffer = [
+                (byte)(value >> 8),
+                (byte)(value)
+            ];
+            Write(buffer);
         }
 
         /// <summary>
@@ -57,12 +56,13 @@ namespace CRH.Framework.IO
         /// </summary>
         public void WriteBE(int value)
         {
-            byte[] buffer = new byte[4];
-            buffer[0] = (byte)(value >> 24);
-            buffer[1] = (byte)(value >> 16);
-            buffer[2] = (byte)(value >> 8);
-            buffer[3] = (byte)(value);
-            this.Write(buffer);
+            byte[] buffer = [
+                (byte)(value >> 24),
+                (byte)(value >> 16),
+                (byte)(value >> 8),
+                (byte)(value)
+            ];
+            Write(buffer);
         }
 
         /// <summary>
@@ -70,12 +70,13 @@ namespace CRH.Framework.IO
         /// </summary>
         public void WriteBE(uint value)
         {
-            byte[] buffer = new byte[4];
-            buffer[0] = (byte)(value >> 24);
-            buffer[1] = (byte)(value >> 16);
-            buffer[2] = (byte)(value >> 8);
-            buffer[3] = (byte)(value);
-            this.Write(buffer);
+            byte[] buffer = [
+                (byte)(value >> 24),
+                (byte)(value >> 16),
+                (byte)(value >> 8),
+                (byte)(value)
+            ];
+            Write(buffer);
         }
 
         /// <summary>
@@ -87,9 +88,11 @@ namespace CRH.Framework.IO
         public void WriteAsciiString(string str, int minSize = 0, string paddChar = " ")
         {
             while (str.Length < minSize)
+            {
                 str += paddChar;
+            }
 
-            this.Write(Encoding.ASCII.GetBytes(str));
+            Write(Encoding.ASCII.GetBytes(str));
         }
 
         /// <summary>
@@ -99,7 +102,7 @@ namespace CRH.Framework.IO
         /// <param name="encoding"></param>
         public void WriteString(string str, Encoding encoding)
         {
-            this.Write(encoding.GetBytes(str));
+            Write(encoding.GetBytes(str));
         }
 
         /// <summary>
@@ -110,7 +113,9 @@ namespace CRH.Framework.IO
         public void WritePadding(int length, byte value = 0)
         {
             for (int i = 0; i < length; i++)
-                this.Write(value);
+            {
+                Write(value);
+            }
         }
 
     // Accessors
@@ -120,16 +125,13 @@ namespace CRH.Framework.IO
         /// </summary>
         public long Position
         {
-            get { return this.BaseStream.Position; }
-            set { this.BaseStream.Position = value; }
+            get => BaseStream.Position;
+            set => BaseStream.Position = value;
         }
 
         /// <summary>
         /// Length of the base stream
         /// </summary>
-        public long Length
-        {
-            get { return this.BaseStream.Length; }
-        }
+        public long Length => BaseStream.Length;
     }
 }

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CRH.Framework.Common
 {
@@ -18,7 +15,7 @@ namespace CRH.Framework.Common
         {}
 
         public FrameworkException(string message, params object[] obj)
-            : base(String.Format(message, obj))
+            : base(string.Format(message, obj))
         {}
 
         public FrameworkException(string message, Exception inner)
@@ -39,7 +36,7 @@ namespace CRH.Framework.Common
         {}
 
         public FrameworkNotYetImplementedException(string message, params object[] obj)
-            : base(String.Format(message, obj))
+            : base(string.Format(message, obj))
         {}
 
         public FrameworkNotYetImplementedException(string message, Exception inner)
@@ -60,7 +57,7 @@ namespace CRH.Framework.Common
         {}
 
         public FrameworkNotSupportedException(string message, params object[] obj)
-            : base(String.Format(message, obj))
+            : base(string.Format(message, obj))
         {}
 
         public FrameworkNotSupportedException(string message, Exception inner)

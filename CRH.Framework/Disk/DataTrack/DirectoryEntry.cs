@@ -1,23 +1,8 @@
-﻿using System;
-using System.IO;
-using CRH.Framework.Common;
-using CRH.Framework.IO;
+﻿using CRH.Framework.Common;
+using System;
 
 namespace CRH.Framework.Disk.DataTrack
 {
-    /// <summary>
-    /// Directory entry flag mask
-    /// </summary>
-    internal enum DirectoryEntryFlag
-    {
-        HIDDEN        = 1,
-        DIRECTORY     = 1 << 1,
-        ASSOCIATED    = 1 << 2,
-        FORMAT_IN_EXT = 1 << 3,
-        PERMS_IN_EXT  = 1 << 4,
-        NOT_FINAL     = 1 << 7
-    }
-
     /// <summary>
     /// Directory entry
     /// </summary>
@@ -35,8 +20,6 @@ namespace CRH.Framework.Disk.DataTrack
         private ushort   _volumeSequenceNumber;
         private string   _name;
         private XaEntry  _xaEntry;
-
-    // Constructors
 
         /// <summary>
         /// Directory entry
@@ -62,8 +45,6 @@ namespace CRH.Framework.Disk.DataTrack
             }
         }
 
-    // Methods
-
         /// <summary>
         /// Get specific flag state from Flags field
         /// </summary>
@@ -78,23 +59,22 @@ namespace CRH.Framework.Disk.DataTrack
         private void SetFlag(DirectoryEntryFlag mask, bool value)
         {
             if (value)
+            {
                 _flags |= (byte)mask;
+            }
             else
+            {
                 _flags &= (byte)(0xFF ^ (byte)mask);
+            }
         }
-
-    // Accessors
 
         /// <summary>
         /// Got a XA entry
         /// </summary>
         internal bool HasXa
         {
-            get { return _hasXa; }
-            set
-            {
-                _hasXa = value;
-            }
+            get => _hasXa;
+            set => _hasXa = value;
         }
 
         /// <summary>
@@ -102,8 +82,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte Length
         {
-            get { return _length; }
-            internal set { _length = value; }
+            get => _length;
+            internal set => _length = value;
         }
 
         /// <summary>
@@ -111,8 +91,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte ExtendedAttributeRecordlength
         {
-            get { return _extendedAttributeRecordlength; }
-            internal set { _extendedAttributeRecordlength = value; }
+            get => _extendedAttributeRecordlength; 
+            internal set => _extendedAttributeRecordlength = value;
         }
 
         /// <summary>
@@ -120,8 +100,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint ExtentLba
         {
-            get { return _extentLba; }
-            internal set { _extentLba = value; }
+            get => _extentLba;
+            internal set => _extentLba = value;
         }
 
         /// <summary>
@@ -129,8 +109,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public uint ExtentSize
         {
-            get { return _extentSize; }
-            internal set { _extentSize = value; }
+            get => _extentSize;
+            internal set => _extentSize = value;
         }
 
         /// <summary>
@@ -138,8 +118,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public DateTime Date
         {
-            get { return _date; }
-            internal set { _date = value; }
+            get => _date;
+            internal set => _date = value;
         }
 
         /// <summary>
@@ -147,8 +127,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public byte Flags
         {
-            get { return _flags; }
-            internal set { _flags = value; }
+            get => _flags;
+            internal set => _flags = value;
         }
 
         /// <summary>
@@ -156,8 +136,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsHidden
         {
-            get { return GetFlag(DirectoryEntryFlag.HIDDEN); }
-            internal set { SetFlag(DirectoryEntryFlag.HIDDEN, value); }
+            get => GetFlag(DirectoryEntryFlag.HIDDEN);
+            internal set => SetFlag(DirectoryEntryFlag.HIDDEN, value);
         }
 
         /// <summary>
@@ -165,8 +145,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsDirectory
         {
-            get { return GetFlag(DirectoryEntryFlag.DIRECTORY); }
-            internal set { SetFlag(DirectoryEntryFlag.DIRECTORY, value); }
+            get => GetFlag(DirectoryEntryFlag.DIRECTORY);
+            internal set => SetFlag(DirectoryEntryFlag.DIRECTORY, value);
         }
 
         /// <summary>
@@ -174,8 +154,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool IsAssociatedFile
         {
-            get { return GetFlag(DirectoryEntryFlag.ASSOCIATED); }
-            internal set { SetFlag(DirectoryEntryFlag.ASSOCIATED, value); }
+            get => GetFlag(DirectoryEntryFlag.ASSOCIATED);
+            internal set => SetFlag(DirectoryEntryFlag.ASSOCIATED, value);
         }
 
         /// <summary>
@@ -183,8 +163,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool HasFormatInfosInExtended
         {
-            get { return GetFlag(DirectoryEntryFlag.FORMAT_IN_EXT); }
-            internal set { SetFlag(DirectoryEntryFlag.FORMAT_IN_EXT, value); }
+            get => GetFlag(DirectoryEntryFlag.FORMAT_IN_EXT);
+            internal set => SetFlag(DirectoryEntryFlag.FORMAT_IN_EXT, value);
         }
 
         /// <summary>
@@ -192,8 +172,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool HasPermissionsInfosInExtended
         {
-            get { return GetFlag(DirectoryEntryFlag.PERMS_IN_EXT); }
-            internal set { SetFlag(DirectoryEntryFlag.PERMS_IN_EXT, value); }
+            get => GetFlag(DirectoryEntryFlag.PERMS_IN_EXT);
+            internal set => SetFlag(DirectoryEntryFlag.PERMS_IN_EXT, value);
         }
 
         /// <summary>
@@ -201,8 +181,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool IsFinal
         {
-            get { return !GetFlag(DirectoryEntryFlag.NOT_FINAL); }
-            set { SetFlag(DirectoryEntryFlag.NOT_FINAL, !value); }
+            get => !GetFlag(DirectoryEntryFlag.NOT_FINAL);
+            set => SetFlag(DirectoryEntryFlag.NOT_FINAL, !value);
         }
 
         /// <summary>
@@ -211,8 +191,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal byte FileUnitSize
         {
-            get { return _fileUnitSize; }
-            set { _fileUnitSize = value; }
+            get => _fileUnitSize;
+            set => _fileUnitSize = value;
         }
 
         /// <summary>
@@ -221,8 +201,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal byte Interleave
         {
-            get { return _interleave; }
-            set { _interleave = value; }
+            get => _interleave;
+            set => _interleave = value;
         }
 
         /// <summary>
@@ -230,8 +210,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal ushort VolumeSequenceNumber
         {
-            get { return _volumeSequenceNumber; }
-            set { _volumeSequenceNumber = value; }
+            get => _volumeSequenceNumber;
+            set => _volumeSequenceNumber = value;
         }
 
         /// <summary>
@@ -239,11 +219,13 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string Name
         {
-            get { return _name; }
+            get => _name;
             internal set
             {
                 if (value.Length > 255)
+                {
                     throw new FrameworkException("Entry name is too long");
+                }
 
                 _name = value;
             }
@@ -254,7 +236,7 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal XaEntry XaEntry
         {
-            get { return _xaEntry; }
+            get => _xaEntry;
             set
             {
                 _xaEntry = value;

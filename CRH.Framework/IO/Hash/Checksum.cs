@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace CRH.Framework.IO.Hash
 {
@@ -28,11 +27,15 @@ namespace CRH.Framework.IO.Hash
             while (stream.Position < endPosition)
             {
                 if (endPosition - stream.Position < bufferSize)
+                {
                     bufferSize = (int)(endPosition - stream.Position);
+                }
 
                 dataRead = stream.Read(buffer, 0, bufferSize);
                 for (int i = 0; i < dataRead; i++)
+                {
                     sum += buffer[i];
+                }
             }
 
             stream.Position = savePosition;
@@ -63,11 +66,15 @@ namespace CRH.Framework.IO.Hash
             while (stream.Position < endPosition)
             {
                 if (endPosition - stream.Position < bufferSize)
+                {
                     bufferSize = (int)(endPosition - stream.Position);
+                }
 
                 dataRead = stream.Read(buffer, 0, bufferSize);
                 for (int i = 0; i < dataRead; i++)
+                {
                     sum += buffer[i];
+                }
             }
 
             stream.Position = savePosition;

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using CRH.Framework.Common;
 
 namespace CRH.Framework.Disk
 {
@@ -15,8 +13,6 @@ namespace CRH.Framework.Disk
         protected List<Track>    _tracks;
 
         protected bool _hasDataTrack;
-
-    // Constructors
 
         /// <summary>
         /// Disk (abstract)
@@ -32,18 +28,11 @@ namespace CRH.Framework.Disk
             _tracks = new List<Track>();
         }
 
-    // Abstract methods
-
         public abstract void Close();
-
-    // Accessors
 
         /// <summary>
         /// Number of tracks
         /// </summary>
-        public int TracksCount
-        {
-            get { return _tracks.Count; }
-        }
+        public int TracksCount=> _tracks.Count;
     }
 }

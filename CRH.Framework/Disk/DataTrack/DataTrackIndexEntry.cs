@@ -1,6 +1,5 @@
-﻿using System;
+﻿using CRH.Framework.Common;
 using System.Collections.Generic;
-using CRH.Framework.Common;
 
 namespace CRH.Framework.Disk.DataTrack
 {
@@ -14,8 +13,6 @@ namespace CRH.Framework.Disk.DataTrack
         private bool   _isRoot;
         private uint   _directoryAvailableSpace = 0;
 
-        // Constructors
-
         /// <summary>
         /// TreeEntry
         /// </summary>
@@ -27,34 +24,42 @@ namespace CRH.Framework.Disk.DataTrack
             _directoryEntry = directoryEntry;
 
             if (!_isRoot)
+            {
                 _fullPath = parent.FullPath
                                 + (parent.FullPath != "/" ? "/" : "")
                                 + directoryEntry.Name;
+            }
             else
+            {
                 _fullPath = "/";
+            }
 
             if (IsDirectory)
             {
                 _subEntries = new List<DataTrackIndexEntry>();
 
                 if (!_isRoot)
+                {
                     _directoryAvailableSpace = directoryEntry.ExtentSize
                                                 - parent.DirectoryEntry.Length
                                                 - parent.DirectoryEntry.ExtendedAttributeRecordlength
                                                 - directoryEntry.Length;
+                }
                 else
+                {
                     _directoryAvailableSpace = directoryEntry.ExtentSize
                                                 - directoryEntry.Length
                                                 - directoryEntry.ExtendedAttributeRecordlength
                                                 - directoryEntry.Length;
+                }
 
             }
 
             if (parent != null)
+            {
                 parent.Add(this);
+            }
         }
-
-        // Methods
 
         /// <summary>
         /// Add sub entry to this entry (add file / folder to folder)
@@ -63,10 +68,14 @@ namespace CRH.Framework.Disk.DataTrack
         private void Add(DataTrackIndexEntry subEntry)
         {
             if (!IsDirectory)
+            {
                 throw new FrameworkException("Error while adding entry to directory : entry \"{0}\" is not a directory", _fullPath);
+            }
 
             if (subEntry.DirectoryEntry.Length > _directoryAvailableSpace)
+            {
                 throw new FrameworkException("Error while adding entry to directory : directory \"{0}\" is too small", _fullPath);
+            }
 
             _subEntries.Add(subEntry);
             _directoryAvailableSpace -= subEntry.DirectoryEntry.Length;
@@ -79,95 +88,71 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal DirectoryEntry DirectoryEntry
         {
-            get { return _directoryEntry; }
-            set { _directoryEntry = value; }
+            get => _directoryEntry;
+            set => _directoryEntry = value;
         }
 
         /// <summary>
         /// Is this entry root
         /// </summary>
-        internal bool IsRoot
-        {
-            get { return _isRoot; }
-        }
+        internal bool IsRoot => _isRoot;
 
         /// <summary>
         /// The parent tree entry (null if root)
         /// </summary>
         public DataTrackIndexEntry ParentEntry
         {
-            get { return _parentEntry; }
-            set { _parentEntry = value; }
+            get => _parentEntry;
+            set => _parentEntry = value;
         }
 
         /// <summary>
         /// The entries contained in this entry
         /// Value : null if not directory
         /// </summary>
-        internal List<DataTrackIndexEntry> SubEntries
-        {
-            get { return _subEntries; }
-        }
+        internal List<DataTrackIndexEntry> SubEntries => _subEntries;
 
         /// <summary>
         /// The directory available space (used only in writing mode)
         /// </summary>
         internal uint DirectoryAvailableSpace
         {
-            get { return _directoryAvailableSpace; }
-            set { _directoryAvailableSpace = value; }
+            get => _directoryAvailableSpace;
+            set => _directoryAvailableSpace = value;
         }
 
         /// <summary>
         /// The number of files/directories contained in the directory
         /// Value : -1 if not directory
         /// </summary>
-        public int SubEntriesCount
-        {
-            get { return _subEntries == null ? -1 : _subEntries.Count; }
-        }
+        public int SubEntriesCount => _subEntries == null ? -1 : _subEntries.Count;
 
         /// <summary>
-        /// is Directory
+        /// Is Directory
         /// </summary>
-        public bool IsDirectory
-        {
-            get { return _directoryEntry.IsDirectory; }
-        }
+        public bool IsDirectory => _directoryEntry.IsDirectory;
 
-        public bool IsStream
-        {
-            get
-            {
-                return _directoryEntry.HasXa
+        /// <summary>
+        /// Is Stream
+        /// </summary>
+        public bool IsStream => _directoryEntry.HasXa
                     ? _directoryEntry.XaEntry.IsForm2 || _directoryEntry.XaEntry.IsInterleaved
                     : false;
-            }
-        }
 
         /// <summary>
         /// Size of the entry
         /// </summary>
-        public uint Size
-        {
-            get { return _directoryEntry.ExtentSize; }
-        }
+        public uint Size => _directoryEntry.ExtentSize;
 
         /// <summary>
         /// Length of the DirectoryEntry
         /// </summary>
-        internal uint Length
-        {
-            get { return _directoryEntry.Length; }
-        }
+        internal uint Length => _directoryEntry.Length;
 
         /// <summary>
         /// Lba of the entry
         /// </summary>
-        public uint Lba
-        {
-            get { return _directoryEntry.ExtentLba; }
-        }
+        public uint Lba => _directoryEntry.ExtentLba;
 
         /// <summary>
         /// The full path of the file/directory that this entry refers to
@@ -175,8 +160,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public string FullPath
         {
-            get { return _fullPath; }
-            set { _fullPath = value; }
+            get => _fullPath;
+            set => _fullPath = value;
         }
     }
 }

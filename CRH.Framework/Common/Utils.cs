@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace CRH.Framework.Common
+﻿namespace CRH.Framework.Common
 {
     public static class Utils
     {
@@ -14,7 +12,10 @@ namespace CRH.Framework.Common
         public static string PaddStr(string str, int targetSize, char padChar = ' ')
         {
             while (str.Length < targetSize)
+            {
                 str += padChar;
+            }
+
             return str;
         }
 
@@ -28,7 +29,10 @@ namespace CRH.Framework.Common
         public static string PrePaddStr(string str, int targetSize, char padChar = ' ')
         {
             while (str.Length < targetSize)
+            {
                 str = padChar + str;
+            }
+
             return str;
         }
     }

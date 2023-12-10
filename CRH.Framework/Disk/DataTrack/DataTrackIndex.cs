@@ -1,16 +1,8 @@
-﻿using System;
+﻿using CRH.Framework.Common;
 using System.Collections.Generic;
-using CRH.Framework.Common;
 
 namespace CRH.Framework.Disk.DataTrack
 {
-    public enum DataTrackEntriesOrder
-    {
-        DEFAULT   = 0,
-        LBA       = 1,
-        NAME      = 2
-    }
-
     public class DataTrackIndex
     {
         private DataTrackIndexEntry       _root;
@@ -20,8 +12,6 @@ namespace CRH.Framework.Disk.DataTrack
         private int _entriesCount;
         private int _directoryEntriesCount;
         private int _fileEntriesCount;
-
-    // Constructors
 
         internal DataTrackIndex(DirectoryEntry root)
         {
@@ -34,8 +24,6 @@ namespace CRH.Framework.Disk.DataTrack
             _fileEntriesCount      = 0;
         }
 
-    // Methods
-
         /// <summary>
         /// Add entry to index
         /// </summary>
@@ -43,13 +31,20 @@ namespace CRH.Framework.Disk.DataTrack
         internal void AddToIndex(DataTrackIndexEntry entry)
         {
             if (_mappedEntries.ContainsKey(entry.FullPath))
+            {
                 throw new FrameworkException("Error while adding entry to index : entry \"{0}\" already exists", entry.FullPath);
+            }
 
             _entriesCount++;
+
             if (entry.IsDirectory)
+            {
                 _directoryEntriesCount++;
+            }
             else
+            {
                 _fileEntriesCount++;
+            }
 
             _entries.Add(entry);
             _mappedEntries.Add(entry.FullPath, entry);
@@ -61,10 +56,11 @@ namespace CRH.Framework.Disk.DataTrack
         private List<DataTrackIndexEntry> EntriesByLba()
         {
             var sortedEntries = new List<DataTrackIndexEntry>(_entries);
-            sortedEntries.Sort((DataTrackIndexEntry e1, DataTrackIndexEntry e2) =>
-            {
-                return e1.Lba.CompareTo(e2.Lba);
-            });
+
+            sortedEntries.Sort(
+                (DataTrackIndexEntry e1, DataTrackIndexEntry e2) => e1.Lba.CompareTo(e2.Lba)
+            );
+
             return sortedEntries;
         }
 
@@ -74,10 +70,11 @@ namespace CRH.Framework.Disk.DataTrack
         private List<DataTrackIndexEntry> EntriesByName()
         {
             var sortedEntries = new List<DataTrackIndexEntry>(_entries);
-            sortedEntries.Sort((DataTrackIndexEntry e1, DataTrackIndexEntry e2) =>
-            {
-                return e1.DirectoryEntry.Name.CompareTo(e2.DirectoryEntry.Name);
-            });
+
+            sortedEntries.Sort(
+                (DataTrackIndexEntry e1, DataTrackIndexEntry e2) => e1.DirectoryEntry.Name.CompareTo(e2.DirectoryEntry.Name)
+            );
+
             return sortedEntries;
         }
 
@@ -92,8 +89,10 @@ namespace CRH.Framework.Disk.DataTrack
             {
                 case DataTrackEntriesOrder.LBA:
                     return EntriesByLba();
+
                 case DataTrackEntriesOrder.NAME:
                     return EntriesByName();
+
                 default:
                     return _entries;
             }
@@ -106,7 +105,9 @@ namespace CRH.Framework.Disk.DataTrack
         internal IEnumerable<DataTrackIndexEntry> GetEntries(DataTrackEntriesOrder order = DataTrackEntriesOrder.DEFAULT)
         {
             foreach (DataTrackIndexEntry entry in GetEntriesList(order))
+            {
                 yield return entry;
+            }
         }
 
         /// <summary>
@@ -117,8 +118,10 @@ namespace CRH.Framework.Disk.DataTrack
         {
             foreach (DataTrackIndexEntry entry in GetEntriesList(order))
             {
-                if(entry.IsDirectory)
+                if (entry.IsDirectory)
+                {
                     yield return entry;
+                }
             }
         }
 
@@ -131,7 +134,9 @@ namespace CRH.Framework.Disk.DataTrack
             foreach (DataTrackIndexEntry entry in GetEntriesList(order))
             {
                 if (!entry.IsDirectory)
+                {
                     yield return entry;
+                }
             }
         }
 
@@ -142,10 +147,12 @@ namespace CRH.Framework.Disk.DataTrack
         /// <returns></returns>
         internal DataTrackIndexEntry GetEntry(string fullPath)
         {
-            if (_mappedEntries.ContainsKey(fullPath))
-                return _mappedEntries[fullPath];
-            else
+            if (!_mappedEntries.ContainsKey(fullPath))
+            {
                 return null;
+            }
+
+            return _mappedEntries[fullPath];
         }
 
         /// <summary>
@@ -155,10 +162,12 @@ namespace CRH.Framework.Disk.DataTrack
         /// <returns></returns>
         internal DataTrackIndexEntry GetParent(string fullPath)
         {
-            if (_mappedEntries.ContainsKey(fullPath))
-                return _mappedEntries[fullPath].ParentEntry;
-            else
+            if (!_mappedEntries.ContainsKey(fullPath))
+            {
                 return null;
+            }
+
+            return _mappedEntries[fullPath].ParentEntry;
         }
 
         /// <summary>
@@ -171,37 +180,38 @@ namespace CRH.Framework.Disk.DataTrack
             int lIndex = fullPath.LastIndexOf('/');
 
             if (lIndex == fullPath.Length - 1)
+            {
                 lIndex = fullPath.LastIndexOf('/', lIndex - 1);
+            }
 
             if (lIndex == 0)
+            {
                 return _root;
+            }
             else
             {
                 fullPath = fullPath.Substring(0, lIndex);
-                if (_mappedEntries.ContainsKey(fullPath))
-                    return _mappedEntries[fullPath];
-                else
+                if (!_mappedEntries.ContainsKey(fullPath))
+                {
                     return null;
+                }
+                    
+                return _mappedEntries[fullPath];
             }
         }
-        
-    // Accessors
 
         /// <summary>
         /// The index entry that represents the root of the files tree
         /// </summary>
-        internal DataTrackIndexEntry Root
-        {
-            get { return _root; }
-        }
+        internal DataTrackIndexEntry Root => _root;
 
         /// <summary>
         /// Number of entries
         /// </summary>
         internal int EntriesCount
         {
-            get { return _entriesCount; }
-            set { _entriesCount = value; }
+            get => _entriesCount;
+            set => _entriesCount = value;
         }
 
         /// <summary>
@@ -209,8 +219,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal int DirectoryEntriesCount
         {
-            get { return _directoryEntriesCount; }
-            set { _directoryEntriesCount = value; }
+            get => _directoryEntriesCount;
+            set => _directoryEntriesCount = value;
         }
 
         /// <summary>
@@ -218,8 +228,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal int FileEntriesCount
         {
-            get { return _fileEntriesCount; }
-            set { _fileEntriesCount = value; }
+            get => _fileEntriesCount;
+            set => _fileEntriesCount = value;
         }
     }
 }

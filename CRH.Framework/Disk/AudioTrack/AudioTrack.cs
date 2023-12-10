@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using CRH.Framework.Common;
+﻿using System.IO;
 
 namespace CRH.Framework.Disk.AudioTrack
 {
@@ -10,9 +7,6 @@ namespace CRH.Framework.Disk.AudioTrack
     /// </summary>
     public abstract class AudioTrack : Track
     {
-
-    // Constructors
-
         /// <summary>
         /// AudioTrack (abstract)
         /// </summary>

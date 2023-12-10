@@ -1,7 +1,6 @@
-﻿using System;
+﻿using CRH.Framework.Common;
+using System;
 using System.IO;
-using CRH.Framework.IO;
-using CRH.Framework.Common;
 
 namespace CRH.Framework.IO.Compression
 {
@@ -41,8 +40,6 @@ namespace CRH.Framework.IO.Compression
         private byte     _xfl;
         private byte     _os;
 
-    // Constructors
-
         internal GZipMetas()
         {
             _method     = GZipCompressionMethod.DEFLATE;
@@ -53,8 +50,6 @@ namespace CRH.Framework.IO.Compression
             _os         = 0;
             _date       = DateTime.Now;
         }
-
-    // Methods
 
         /// <summary>
         /// Read GZip meta data from stream
@@ -84,13 +79,19 @@ namespace CRH.Framework.IO.Compression
                 }
 
                 if (HasName)
+                {
                     _name = reader.ReadAsciiString();
+                }
 
                 if (HasComment)
+                {
                     _comment = reader.ReadAsciiString();
+                }
 
                 if (HasCrc)
+                {
                     _crc = reader.ReadUInt16();
+                }
 
                 _dataOffset = (uint)reader.Position;
                 _dataSize = size - _dataOffset - FOOTER_SIZE;
@@ -98,9 +99,9 @@ namespace CRH.Framework.IO.Compression
                 _crc32 = reader.ReadUInt32();
                 _dataRealSize = reader.ReadUInt32();
             }
-            catch(FrameworkException ex)
+            catch(FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch(Exception)
             {
@@ -116,7 +117,7 @@ namespace CRH.Framework.IO.Compression
         {
             try
             {
-                CBinaryWriter writer = new CBinaryWriter(stream);
+                var writer = new CBinaryWriter(stream);
 
                 writer.Write(SIGNATURE);
                 writer.Write((byte)_method);
@@ -144,11 +145,13 @@ namespace CRH.Framework.IO.Compression
                 }
 
                 if (HasCrc)
+                {
                     writer.Write(_crc);
+                }
             }
-            catch(FrameworkException ex)
+            catch(FrameworkException )
             {
-                throw ex;
+                throw;
             }
             catch(Exception)
             {
@@ -169,9 +172,9 @@ namespace CRH.Framework.IO.Compression
                 writer.Write(_crc32);
                 writer.Write(_dataRealSize);
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch (Exception)
             {
@@ -193,9 +196,13 @@ namespace CRH.Framework.IO.Compression
         private void SetFlag(GZipFlag mask, bool value)
         {
             if (value)
+            {
                 _flags |= (byte)mask;
+            }
             else
+            {
                 _flags &= (byte)(0xFF ^ (byte)mask);
+            }
         }
 
     // Accessors
@@ -206,8 +213,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal GZipCompressionMethod Method
         {
-            get { return _method; }
-            set { _method = value; }
+            get => _method;
+            set => _method = value;
         }
 
         /// <summary>
@@ -215,8 +222,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal byte Flags
         {
-            get { return _flags; }
-            set { _flags = value; }
+            get => _flags;
+            set => _flags = value;
         }
 
         /// <summary>
@@ -224,8 +231,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal bool HasComment
         {
-            get { return GetFlag(GZipFlag.HAS_COMMENT); }
-            set { SetFlag(GZipFlag.HAS_COMMENT, value); }
+            get => GetFlag(GZipFlag.HAS_COMMENT);
+            set => SetFlag(GZipFlag.HAS_COMMENT, value);
         }
 
         /// <summary>
@@ -233,8 +240,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal bool HasName
         {
-            get { return GetFlag(GZipFlag.HAS_NAME); }
-            set { SetFlag(GZipFlag.HAS_NAME, value); }
+            get => GetFlag(GZipFlag.HAS_NAME);
+            set => SetFlag(GZipFlag.HAS_NAME, value);
         }
 
         /// <summary>
@@ -242,8 +249,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal bool HasExtra
         {
-            get { return GetFlag(GZipFlag.HAS_EXTRA); }
-            set { SetFlag(GZipFlag.HAS_EXTRA, value); }
+            get => GetFlag(GZipFlag.HAS_EXTRA);
+            set => SetFlag(GZipFlag.HAS_EXTRA, value);
         }
 
         /// <summary>
@@ -251,8 +258,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal bool HasCrc
         {
-            get { return GetFlag(GZipFlag.HAS_CRC); }
-            set { SetFlag(GZipFlag.HAS_CRC, value); }
+            get => GetFlag(GZipFlag.HAS_CRC);
+            set => SetFlag(GZipFlag.HAS_CRC, value);
         }
 
         /// <summary>
@@ -260,8 +267,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         public bool IsBinary
         {
-            get { return !GetFlag(GZipFlag.IS_TEXT); }
-            set { SetFlag(GZipFlag.IS_TEXT, !value); }
+            get => !GetFlag(GZipFlag.IS_TEXT);
+            set => SetFlag(GZipFlag.IS_TEXT, !value);
         }
 
         /// <summary>
@@ -269,8 +276,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         public bool IsText
         {
-            get { return GetFlag(GZipFlag.IS_TEXT); }
-            set { SetFlag(GZipFlag.IS_TEXT, value); }
+            get => GetFlag(GZipFlag.IS_TEXT);
+            set => SetFlag(GZipFlag.IS_TEXT, value);
         }
 
         /// <summary>
@@ -278,8 +285,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal uint DataOffset
         {
-            get { return _dataOffset; }
-            set { _dataOffset = value; }
+            get => _dataOffset;
+            set => _dataOffset = value;
         }
 
         /// <summary>
@@ -287,8 +294,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal uint DataSize
         {
-            get { return _dataSize; }
-            set { _dataSize = value; }
+            get => _dataSize;
+            set => _dataSize = value;
         }
 
         /// <summary>
@@ -296,8 +303,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal uint DataRealSize
         {
-            get { return _dataRealSize; }
-            set { _dataRealSize = value; }
+            get => _dataRealSize;
+            set => _dataRealSize = value;
         }
 
         /// <summary>
@@ -305,8 +312,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         internal uint Crc32
         {
-            get { return _crc32; }
-            set { _crc32 = value; }
+            get => _crc32;
+            set => _crc32 = value;
         }
 
         /// <summary>
@@ -314,12 +321,14 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         public string Comment
         {
-            get { return _comment; }
+            get => _comment;
             set
             {
                 _comment = value;
                 if (!HasComment)
+                {
                     HasComment = true;
+                }
             }
         }
 
@@ -328,12 +337,14 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         public ushort Crc
         {
-            get { return _crc; }
+            get => _crc;
             set
             {
                 _crc = value;
                 if (!HasCrc)
+                {
                     HasCrc = true;
+                }
             }
         }
 
@@ -342,12 +353,14 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         public string Extra
         {
-            get { return _extra; }
+            get => _extra;
             set
             { 
                 _extra = value;
                 if (!HasExtra)
+                {
                     HasExtra = true;
+                }
             }
         }
 
@@ -356,12 +369,14 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         public string Name
         {
-            get { return _name; }
+            get => _name;
             set
             {
                 _name = value;
                 if (!HasName)
+                {
                     HasName = true;
+                }
             }
         }
 
@@ -370,8 +385,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         public DateTime Date
         {
-            get { return _date; }
-            set { _date = value; }
+            get => _date;
+            set => _date = value;
         }
 
         /// <summary>
@@ -379,8 +394,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         public byte Xfl
         {
-            get { return _xfl; }
-            set { _xfl = value; }
+            get => _xfl;
+            set => _xfl = value;
         }
 
         /// <summary>
@@ -388,8 +403,8 @@ namespace CRH.Framework.IO.Compression
         /// </summary>
         public byte Os
         {
-            get { return _os; }
-            set { _os = value; }
+            get => _os;
+            set => _os = value;
         }
     }
 }

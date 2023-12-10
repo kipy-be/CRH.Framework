@@ -1,7 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace CRH.Framework.Common
 {
@@ -9,7 +7,7 @@ namespace CRH.Framework.Common
     {
         public const string NAME          = "CRHack Framework";
         public const string INTERNAL_NAME = "CRH.Framework";
-        public const string COPYRIGHT = "(c) 2015 by CRHack Crew (crhack.romhack.org)";
+        public const string COPYRIGHT = "(c) 2015 - 2024 by CRHack Crew (crhack.romhack.org)";
 
         public static readonly string[] AUTHORS = new string[] { "kipy" };
         public static readonly string[] CONTRIBUTORS = new string[] { };

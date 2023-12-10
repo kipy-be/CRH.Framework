@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using CRH.Framework.IO;
-
-namespace CRH.Framework.Common
+﻿namespace CRH.Framework.Common
 {
     internal static class ExtensionMethods
     {

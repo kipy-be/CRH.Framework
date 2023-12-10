@@ -1,6 +1,6 @@
-﻿using System;
+﻿using CRH.Framework.Common;
+using System;
 using System.IO;
-using CRH.Framework.Common;
 
 namespace CRH.Framework.Disk
 {
@@ -19,8 +19,6 @@ namespace CRH.Framework.Disk
         protected uint _pauseSize;
         protected bool _hasPause;
 
-    // Constructors
-
         /// <summary>
         /// Track (abstract)
         /// </summary>
@@ -37,8 +35,6 @@ namespace CRH.Framework.Disk
             _pauseSize   = 0;
             _hasPause    = false;
         }
-
-    // Methods
 
         /// <summary>
         /// Get offset from LBA
@@ -70,36 +66,25 @@ namespace CRH.Framework.Disk
         /// <summary>
         /// Position (current LBA)
         /// </summary>
-        public long SectorPosition
-        {
-            get { return _fileStream.Position / _sectorSize; }
-        }
+        public long SectorPosition => _fileStream.Position / _sectorSize;
 
         /// <summary>
         /// Number of sectors
         /// </summary>
-        public long SectorCount
-        {
-            get { return _fileStream.Length / _sectorSize; }
-        }
-
-    // Accessors
+        public long SectorCount => _fileStream.Length / _sectorSize;
 
         /// <summary>
         /// Number of the track
         /// </summary>
-        public int TrackNumber
-        {
-            get { return _trackNumber; }
-        }
+        public int TrackNumber => _trackNumber;
 
         /// <summary>
         /// Offset of the track
         /// </summary>
         public long Offset
         {
-            get { return _offset; }
-            internal set { _offset = value; }
+            get => _offset;
+            internal set => _offset = value;
         }
 
         /// <summary>
@@ -107,8 +92,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         public long Size
         {
-            get { return _size; }
-            internal set { _size = value; }
+            get => _size;
+            internal set => _size = value;
         }
 
         /// <summary>
@@ -116,8 +101,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         public uint PregapSize
         {
-            get { return _pregapSize; }
-            internal set { _pregapSize = value; }
+            get => _pregapSize;
+            internal set => _pregapSize = value;
         }
 
         /// <summary>
@@ -125,8 +110,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         public uint PostgapSize
         {
-            get { return _postgapSize; }
-            internal set { _postgapSize = value; }
+            get => _postgapSize;
+            internal set => _postgapSize = value;
         }
 
         /// <summary>
@@ -134,8 +119,8 @@ namespace CRH.Framework.Disk
         /// </summary>
         public long PauseOffset
         {
-            get { return _pauseOffset; }
-            internal set { _pauseOffset = value; }
+            get => _pauseOffset;
+            internal set => _pauseOffset = value;
         }
 
         /// <summary>
@@ -143,7 +128,7 @@ namespace CRH.Framework.Disk
         /// </summary>
         public uint PauseSize
         {
-            get { return _pauseSize; }
+            get => _pauseSize;
             internal set
             {
                 _pauseSize = value;
@@ -156,41 +141,23 @@ namespace CRH.Framework.Disk
         /// </summary>
         internal bool HasPause
         {
-            get { return _hasPause; }
-            set { _hasPause = value; }
+            get => _hasPause;
+            set => _hasPause = value;
         }
 
         /// <summary>
         /// Is data track
         /// </summary>
-        public bool IsData
-        {
-            get { return _type == TrackType.DATA; }
-        }
+        public bool IsData => _type == TrackType.DATA;
 
         /// <summary>
         /// Is audio track
         /// </summary>
-        public bool IsAudio
-        {
-            get { return _type == TrackType.AUDIO; }
-        }
+        public bool IsAudio => _type == TrackType.AUDIO;
 
         /// <summary>
         /// Size of the sector
         /// </summary>
-        public int SectorSize
-        {
-            get { return _sectorSize; }
-        }
-    }
-
-    interface ITrackReader
-    { }
-
-    interface ITrackWriter
-    {
-        void Finalize();
-        bool IsFinalized { get; }
+        public int SectorSize => _sectorSize;
     }
 }

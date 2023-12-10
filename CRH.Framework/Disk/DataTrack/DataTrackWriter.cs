@@ -1,9 +1,9 @@
-﻿using System;
+﻿using CRH.Framework.Common;
+using CRH.Framework.IO;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using CRH.Framework.Common;
-using CRH.Framework.IO;
 
 namespace CRH.Framework.Disk.DataTrack
 {
@@ -17,8 +17,6 @@ namespace CRH.Framework.Disk.DataTrack
 
         private static Regex _regDirectoryName = new Regex("[\\/]([^\\/]+)[\\/]?$");
         private static Regex _regFileName = new Regex("[\\/]([^\\/]+?)$");
-
-    // Constructors
 
         /// <summary>
         /// DataTrackWriter
@@ -40,17 +38,15 @@ namespace CRH.Framework.Disk.DataTrack
                 // Allocation for system area
                 WriteEmptySectors(16);
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch (Exception)
             {
                 throw new FrameworkException("Error while while writing data track : unable to write the data track");
             }
         }
-
-    // Methods
 
         /// <summary>
         /// Init the pvd and allocate some space for the path table and the root directory
@@ -63,7 +59,9 @@ namespace CRH.Framework.Disk.DataTrack
             try
             {
                 if (_prepared)
+                {
                     return;
+                }
 
                 SeekSector(16);
                 WriteEmptySectors(2 + pathTableSize * 4);
@@ -89,9 +87,9 @@ namespace CRH.Framework.Disk.DataTrack
 
                 _prepared = true;
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch (Exception)
             {
@@ -102,15 +100,19 @@ namespace CRH.Framework.Disk.DataTrack
         /// <summary>
         /// Finalise the track
         /// </summary>
-        public void Finalize()
+        public void FinalizeTrack()
         {
             try
             {
                 if (_finalized)
+                {
                     return;
+                }
 
                 if (!_prepared)
+                {
                     throw new FrameworkException("Error while finalizing ISO : DataTrack has not been prepared, it will be unreadable");
+                }
 
                 // Write 2 minutes of empty sectors at the end of the track
                 SeekSector(SectorCount);
@@ -118,9 +120,9 @@ namespace CRH.Framework.Disk.DataTrack
 
                 _finalized = true;
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch (Exception)
             {
@@ -137,6 +139,7 @@ namespace CRH.Framework.Disk.DataTrack
             _primaryVolumeDescriptor.VolumeSpaceSize = (uint)SectorCount;
             _primaryVolumeDescriptor.TypeLPathTableLBA = 16 + 2;
             _primaryVolumeDescriptor.TypeMPathTableLBA = 16 + 2 + pathTableSectorSize * 2;
+
             if (_hasOptionalPathTable)
             {
                 _primaryVolumeDescriptor.OptTypeLPathTableLBA = 16 + 2 + pathTableSectorSize;
@@ -146,7 +149,9 @@ namespace CRH.Framework.Disk.DataTrack
             // Write directory entries
             WriteDirectoryEntry(_index.Root);
             foreach (var entry in _index.GetDirectories(DataTrackEntriesOrder.DEFAULT))
+            {
                 WriteDirectoryEntry(entry);
+            }
 
             // Write path tables
             WritePathTables();
@@ -175,30 +180,42 @@ namespace CRH.Framework.Disk.DataTrack
 
                 // Second directory entry is the parent directory entry.
                 if (entry.ParentEntry != null)
+                {
                     stream.Write(GetDirectoryEntryBuffer(entry.ParentEntry.DirectoryEntry, false, true));
+                }
                 else
+                {
                     stream.Write(GetDirectoryEntryBuffer(entry.DirectoryEntry, false, true));
+                }
 
                 foreach (var subEntry in entry.SubEntries)
                 {
                     // DirectoryEntry cannot be "splitted" on two sectors
                     if ((stream.Position - (stream.Position / sectorSize) * sectorSize) + subEntry.Length >= sectorSize)
+                    {
                         stream.Position = ((stream.Position / sectorSize) + 1) * sectorSize;
+                    }
 
                     if (stream.Position + subEntry.DirectoryEntry.Length < size)
+                    {
                         stream.Write(GetDirectoryEntryBuffer(subEntry.DirectoryEntry));
+                    }
                     else
+                    {
                         throw new FrameworkException("Error while finalizing disk : directory \"{0}\" is too small", entry.FullPath);
+                    }
                 }
             }
 
             for (int i = 0; i < size; i += sectorSize)
+            {
                 WriteSector
                 (
                     CBuffer.Create(data, i, sectorSize),
                     _defaultSectorMode,
                     (i + sectorSize >= size) ? XaSubHeader.EndOfFile : XaSubHeader.Basic
                 );
+            }
         }
 
         /// <summary>
@@ -254,12 +271,14 @@ namespace CRH.Framework.Disk.DataTrack
             int sectorSize = GetSectorDataSize(_defaultSectorMode);
 
             for (int i = 0; i < data.Length; i += sectorSize)
+            {
                 WriteSector
                 (
                     CBuffer.Create(data, i, sectorSize),
                     _defaultSectorMode,
                     (i + sectorSize >= data.Length) ? XaSubHeader.EndOfFile : XaSubHeader.Basic
                 );
+            }
         }
 
         /// <summary>
@@ -290,7 +309,9 @@ namespace CRH.Framework.Disk.DataTrack
                     if(mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
                     {
                         if (subHeader == null)
+                        {
                             subHeader = new XaSubHeader();
+                        }
                         subHeader.IsForm2 = (mode == SectorMode.XA_FORM2);
 
                         bufferStream.Write(subHeader.File);
@@ -308,7 +329,9 @@ namespace CRH.Framework.Disk.DataTrack
                     bufferStream.Write(data, 0, data.Length);
 
                     if (mode == SectorMode.MODE1 || mode == SectorMode.XA_FORM1 || mode == SectorMode.XA_FORM2)
+                    {
                         EccEdc.EccEdcCompute(buffer, mode);
+                    }
 
                     _stream.Write(buffer);
                 }
@@ -359,10 +382,14 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public void WriteEmptySector()
         {
-            if(_mode == DataTrackMode.RAW)
+            if (_mode == DataTrackMode.RAW)
+            {
                 WriteSector(new byte[2048], SectorMode.RAW);
+            }
             else
+            {
                 WriteSector(new byte[2048], SectorMode.MODE0);
+            }
         }
 
         /// <summary>
@@ -375,12 +402,16 @@ namespace CRH.Framework.Disk.DataTrack
             if (_mode == DataTrackMode.RAW)
             {
                 for (int i = 0; i < count; i++)
+                {
                     WriteSector(data, SectorMode.RAW);
+                }
             }
             else
             {
                 for (int i = 0; i < count; i++)
+                {
                     WriteSector(data, SectorMode.MODE0);
+                }
             }
         }
 
@@ -396,12 +427,16 @@ namespace CRH.Framework.Disk.DataTrack
             {
                 XaSubHeader subHeader;
                 for (int i = 0; i < count; i++)
+                {
                     WriteSector(diskIn.ReadSector(mode, out subHeader), mode, subHeader);
+                }
             }
             else
             {
                 for (int i = 0; i < count; i++)
+                {
                     WriteSector(diskIn.ReadSector());
+                }
             }
         }
 
@@ -577,7 +612,9 @@ namespace CRH.Framework.Disk.DataTrack
                         stream.WriteAsciiString(entry.Name);
 
                         if (entry.Name.Length % 2 == 0)
+                        {
                             stream.Write((byte)0);
+                        }
                     }
                     else
                     {
@@ -633,7 +670,9 @@ namespace CRH.Framework.Disk.DataTrack
                 stream.WriteAsciiString(entry.Name);
 
                 if (entry.Name.Length % 2 != 0)
+                {
                     stream.Write((byte)0);
+                }
             }
 
             return buffer;
@@ -647,11 +686,15 @@ namespace CRH.Framework.Disk.DataTrack
         public void CreateDirectory(string path, int size = 1)
         {
             if (_index.GetEntry(path) != null)
+            {
                 throw new FrameworkException("Error while creating directory \"{0}\" : entry already exists", path);
+            }
 
             var parent = _index.FindAParent(path);
-            if(parent == null)
+            if (parent == null)
+            {
                 throw new FrameworkException("Error while creating directory \"{0}\" : parent directory does not exists", path);
+            }
 
             var entry = new DirectoryEntry(_isXa);
             entry.IsDirectory    = true;
@@ -697,7 +740,9 @@ namespace CRH.Framework.Disk.DataTrack
                 if (dataRead < dataSize)
                 {
                     for (int i = dataRead; i < dataSize; i++)
+                    {
                         buffer[i] = 0;
+                    }
                 }
 
                 WriteSector
@@ -717,11 +762,15 @@ namespace CRH.Framework.Disk.DataTrack
         public void CreateFileEntry(string filePath, uint lba, uint size)
         {
             if (_index.GetEntry(filePath) != null)
+            {
                 throw new FrameworkException("Error while creating file \"{0}\" : entry already exists", filePath);
+            }
 
             var parent = _index.FindAParent(filePath);
             if (parent == null)
+            {
                 throw new FrameworkException("Error while creating file \"{0}\" : parent directory does not exists", filePath);
+            }
 
             var entry = new DirectoryEntry(_isXa);
             entry.Name = _regFileName.Match(filePath).Groups[1].Value + (_appendVersionToFileName ? ";1" : "");
@@ -731,7 +780,9 @@ namespace CRH.Framework.Disk.DataTrack
             entry.ExtentLba = lba;
 
             if (_isXa)
+            {
                 entry.XaEntry.IsForm1 = true;
+            }
 
             var indexEntry = new DataTrackIndexEntry(parent, entry);
             _index.AddToIndex(indexEntry);
@@ -748,7 +799,9 @@ namespace CRH.Framework.Disk.DataTrack
             var entry = _index.GetEntry(filePath);
 
             if (entry == null)
+            {
                 throw new FrameworkException("Error while setting file content of \"{0}\" : entry does not exists", filePath);
+            }
 
             entry.DirectoryEntry.ExtentLba  = lba;
             entry.DirectoryEntry.ExtentSize = size;
@@ -763,11 +816,15 @@ namespace CRH.Framework.Disk.DataTrack
         public void CopyStream(string filePath, DataTrackReader diskIn, DataTrackIndexEntry inEntry)
         {
             if (_index.GetEntry(filePath) != null)
+            {
                 throw new FrameworkException("Error while creating file \"{0}\" : entry already exists", filePath);
+            }
 
             var parent = _index.FindAParent(filePath);
             if (parent == null)
+            {
                 throw new FrameworkException("Error while creating file \"{0}\" : parent directory does not exists", filePath);
+            }
 
             var entry = new DirectoryEntry(_isXa);
             entry.Name = _regFileName.Match(filePath).Groups[1].Value + (_appendVersionToFileName ? ";1" : "");
@@ -808,15 +865,10 @@ namespace CRH.Framework.Disk.DataTrack
             CBuffer.Copy(diskIn.PrimaryVolumeDescriptor.ApplicationData, _primaryVolumeDescriptor.ApplicationData);
         }
 
-    // Accessors
-
         /// <summary>
         /// Is the track finalized
         /// </summary>
-        public bool IsFinalized
-        {
-            get { return _finalized; }
-        }
+        public bool IsFinalized => _finalized;
 
         /// <summary>
         /// Entries
@@ -826,7 +878,10 @@ namespace CRH.Framework.Disk.DataTrack
             get
             {
                 if (!_prepared)
+                {
                     throw new FrameworkException("Error : You must prepare the iso first");
+                }
+
                 return _index.GetEntries();
             }
         }
@@ -839,7 +894,10 @@ namespace CRH.Framework.Disk.DataTrack
             get
             {
                 if (!_prepared)
+                {
                     throw new FrameworkException("Error : You must prepare the iso first");
+                }
+
                 return _index.GetDirectories();
             }
         }
@@ -853,7 +911,10 @@ namespace CRH.Framework.Disk.DataTrack
             get
             {
                 if (!_prepared)
+                {
                     throw new FrameworkException("Error : You must prepare the iso first");
+                }
+
                 return _index.GetFiles();
             }
         }
@@ -866,7 +927,10 @@ namespace CRH.Framework.Disk.DataTrack
             get
             {
                 if (!_prepared)
+                {
                     throw new FrameworkException("Error : You must prepare the iso first");
+                }
+
                 return _index.EntriesCount;
             }
         }
@@ -879,7 +943,10 @@ namespace CRH.Framework.Disk.DataTrack
             get
             {
                 if (!_prepared)
+                {
                     throw new FrameworkException("Error : You must prepare the iso first");
+                }
+
                 return _index.EntriesCount;
             }
         }
@@ -892,7 +959,10 @@ namespace CRH.Framework.Disk.DataTrack
             get
             {
                 if (!_prepared)
+                {
                     throw new FrameworkException("Error : You must prepare the iso first");
+                }
+
                 return _index.FileEntriesCount;
             }
         }
@@ -902,8 +972,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         public bool AppendVersionToFileName
         {
-            get { return _appendVersionToFileName; }
-            set { _appendVersionToFileName = value; }
+            get => _appendVersionToFileName;
+            set => _appendVersionToFileName = value;
         }
     }
 }

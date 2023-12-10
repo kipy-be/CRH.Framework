@@ -1,19 +1,15 @@
-﻿using System;
+﻿using CRH.Framework.Common;
+using System;
 using System.IO;
 using System.IO.Compression;
-using CRH.Framework.Common;
 
 namespace CRH.Framework.IO.Compression
 {
     public class GZipReader : GZip
     {
-    // Constructors
-
         public GZipReader()
             : base()
         { }
-
-    // Methods
 
         /// <summary>
         /// Decompress streamIn into streamOut
@@ -31,9 +27,9 @@ namespace CRH.Framework.IO.Compression
                     dfIn.CopyTo(streamOut);
                 }
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch(Exception)
             {

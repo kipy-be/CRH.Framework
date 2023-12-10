@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using CRH.Framework.IO;
+﻿using System.IO;
 
 namespace CRH.Framework.IO
 {
@@ -15,7 +13,6 @@ namespace CRH.Framework.IO
             {
                 stream.Close();
                 stream.Dispose();
-                stream = null;
             }
         }
 
@@ -28,7 +25,6 @@ namespace CRH.Framework.IO
             {
                 stream.Close();
                 stream.Dispose();
-                stream = null;
             }
         }
 
@@ -41,7 +37,6 @@ namespace CRH.Framework.IO
             {
                 stream.Close();
                 stream.Dispose();
-                stream = null;
             }
         }
 
@@ -54,7 +49,6 @@ namespace CRH.Framework.IO
             {
                 stream.Close();
                 stream.Dispose();
-                stream = null;
             }
         }
 
@@ -67,7 +61,6 @@ namespace CRH.Framework.IO
             {
                 stream.Close();
                 stream.Dispose();
-                stream = null;
             }
         }
 

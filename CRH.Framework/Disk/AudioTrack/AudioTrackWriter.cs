@@ -12,8 +12,6 @@ namespace CRH.Framework.Disk.AudioTrack
         private bool _prepared;
         private bool _finalized;
 
-    // Constructors
-
         /// <summary>
         /// AudioTrackWriter
         /// </summary>
@@ -25,8 +23,6 @@ namespace CRH.Framework.Disk.AudioTrack
             _stream    = stream;
             _finalized = false;
         }
-
-    // Methods
 
         /// <summary>
         /// Prepare the track (Add pregap and pause if set)
@@ -50,9 +46,9 @@ namespace CRH.Framework.Disk.AudioTrack
 
                 _prepared = true;
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch (Exception)
             {
@@ -63,26 +59,32 @@ namespace CRH.Framework.Disk.AudioTrack
         /// <summary>
         /// Finalise the track
         /// </summary>
-        public void Finalize()
+        public void FinalizeTrack()
         {
             try
             {
                 if (_finalized)
+                {
                     return;
+                }
 
                 if (!_prepared)
+                { 
                     throw new FrameworkException("Error while finalizing ISO : AudioTrack has not been prepared");
+                }
 
                 _fileStream.Position = _fileStream.Length;
 
                 if (_postgapSize > 0)
+                {
                     WriteEmptySectors((int)_postgapSize);
+                }
 
                 _finalized = true;
             }
-            catch (FrameworkException ex)
+            catch (FrameworkException)
             {
-                throw ex;
+                throw;
             }
             catch (Exception)
             {
@@ -130,8 +132,11 @@ namespace CRH.Framework.Disk.AudioTrack
         public void WriteEmptySectors(int count)
         {
             byte[] data = new byte[_sectorSize];
+
             for (int i = 0; i < count; i++)
+            { 
                 WriteSector(data);
+            }
         }
 
         /// <summary>
@@ -156,7 +161,9 @@ namespace CRH.Framework.Disk.AudioTrack
                     if (dataRead < _sectorSize)
                     {
                         for (int i = dataRead; i < _sectorSize; i++)
+                        {
                             buffer[i] = 0;
+                        }
                     }
 
                     WriteSector(buffer);
@@ -168,14 +175,9 @@ namespace CRH.Framework.Disk.AudioTrack
             }
         }
 
-    // Accessors
-
         /// <summary>
         /// Is the track finalized
         /// </summary>
-        public bool IsFinalized
-        {
-            get { return _finalized; }
-        }
+        public bool IsFinalized => _finalized;
     }
 }

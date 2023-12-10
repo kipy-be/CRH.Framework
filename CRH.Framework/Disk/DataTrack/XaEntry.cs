@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace CRH.Framework.Disk.DataTrack
+﻿namespace CRH.Framework.Disk.DataTrack
 {
     internal enum XaEntryFlag : ushort
     {
@@ -51,7 +46,7 @@ namespace CRH.Framework.Disk.DataTrack
                             | (ushort)XaEntryFlag.PERM_OTHERS_X;
             _signature  = XA_SIGNATURE;
             _fileNumber = 1;
-            _unused     = new byte[5] { 0, 0, 0, 0, 0 };
+            _unused     = [0, 0, 0, 0, 0];
         }
 
     // Methods
@@ -73,9 +68,13 @@ namespace CRH.Framework.Disk.DataTrack
         private void SetAttribute(XaEntryFlag mask, bool value)
         {
             if (value)
+            {
                 _attributes |= (ushort)mask;
+            }
             else
+            {
                 _attributes &= (ushort)(0xFFFF ^ (ushort)mask);
+            }
         }
 
     // Accessors
@@ -85,8 +84,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal ushort GroupId
         {
-            get { return _groupId; }
-            set { _groupId = value; }
+            get => _groupId;
+            set => _groupId = value;
         }
 
         /// <summary>
@@ -94,8 +93,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal ushort UserId
         {
-            get { return _userId; }
-            set { _userId = value; }
+            get => _userId;
+            set => _userId = value;
         }
 
         /// <summary>
@@ -103,8 +102,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal ushort Attributes
         {
-            get { return _attributes; }
-            set { _attributes = value; }
+            get => _attributes;
+            set => _attributes = value;
         }
 
         /// <summary>
@@ -112,8 +111,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool UserReadPermission
         {
-            get { return GetAttribute(XaEntryFlag.PERM_USER_R); }
-            set { SetAttribute(XaEntryFlag.PERM_USER_R, value); }
+            get => GetAttribute(XaEntryFlag.PERM_USER_R);
+            set => SetAttribute(XaEntryFlag.PERM_USER_R, value);
         }
 
         /// <summary>
@@ -121,8 +120,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool UserExecPermission
         {
-            get { return GetAttribute(XaEntryFlag.PERM_USER_X); }
-            set { SetAttribute(XaEntryFlag.PERM_USER_X, value); }
+            get => GetAttribute(XaEntryFlag.PERM_USER_X);
+            set => SetAttribute(XaEntryFlag.PERM_USER_X, value);
         }
 
         /// <summary>
@@ -130,8 +129,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool GroupReadPermission
         {
-            get { return GetAttribute(XaEntryFlag.PERM_GROUP_R); }
-            set { SetAttribute(XaEntryFlag.PERM_GROUP_R, value); }
+            get => GetAttribute(XaEntryFlag.PERM_GROUP_R);
+            set => SetAttribute(XaEntryFlag.PERM_GROUP_R, value);
         }
 
         /// <summary>
@@ -139,8 +138,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool GroupExecPermission
         {
-            get { return GetAttribute(XaEntryFlag.PERM_GROUP_X); }
-            set { SetAttribute(XaEntryFlag.PERM_GROUP_X, value); }
+            get => GetAttribute(XaEntryFlag.PERM_GROUP_X);
+            set => SetAttribute(XaEntryFlag.PERM_GROUP_X, value);
         }
 
         /// <summary>
@@ -148,8 +147,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool OthersReadPermission
         {
-            get { return GetAttribute(XaEntryFlag.PERM_OTHERS_R); }
-            set { SetAttribute(XaEntryFlag.PERM_OTHERS_R, value); }
+            get => GetAttribute(XaEntryFlag.PERM_OTHERS_R);
+            set => SetAttribute(XaEntryFlag.PERM_OTHERS_R, value);
         }
 
         /// <summary>
@@ -157,8 +156,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool OthersExecPermission
         {
-            get { return GetAttribute(XaEntryFlag.PERM_OTHERS_X); }
-            set { SetAttribute(XaEntryFlag.PERM_OTHERS_X, value); }
+            get => GetAttribute(XaEntryFlag.PERM_OTHERS_X);
+            set => SetAttribute(XaEntryFlag.PERM_OTHERS_X, value);
         }
 
         /// <summary>
@@ -167,12 +166,14 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool IsForm1
         {
-            get { return GetAttribute(XaEntryFlag.FORM1); }
+            get => GetAttribute(XaEntryFlag.FORM1);
             set
             { 
                 SetAttribute(XaEntryFlag.FORM1, value);
-                if(value)
+                if (value)
+                {
                     SetAttribute(XaEntryFlag.FORM2, false);
+                }
             }
         }
 
@@ -182,12 +183,14 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool IsForm2
         {
-            get { return GetAttribute(XaEntryFlag.FORM2); }
+            get => GetAttribute(XaEntryFlag.FORM2);
             set
             { 
                 SetAttribute(XaEntryFlag.FORM2, value);
-                if(value)
+                if (value)
+                {
                     SetAttribute(XaEntryFlag.FORM1, false);
+                }
             }
         }
 
@@ -196,8 +199,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool IsCdda
         {
-            get { return GetAttribute(XaEntryFlag.CDDA); }
-            set { SetAttribute(XaEntryFlag.CDDA, value); }
+            get => GetAttribute(XaEntryFlag.CDDA);
+            set => SetAttribute(XaEntryFlag.CDDA, value);
         }
 
         /// <summary>
@@ -205,8 +208,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool IsInterleaved
         {
-            get { return GetAttribute(XaEntryFlag.INTERLEAVED); }
-            set { SetAttribute(XaEntryFlag.INTERLEAVED, value); }
+            get => GetAttribute(XaEntryFlag.INTERLEAVED);
+            set => SetAttribute(XaEntryFlag.INTERLEAVED, value);
         }
 
         /// <summary>
@@ -214,8 +217,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal bool IsDirectory
         {
-            get { return GetAttribute(XaEntryFlag.DIRECTORY); }
-            set { SetAttribute(XaEntryFlag.DIRECTORY, value); }
+            get => GetAttribute(XaEntryFlag.DIRECTORY);
+            set => SetAttribute(XaEntryFlag.DIRECTORY, value);
         }
 
         /// <summary>
@@ -225,8 +228,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal string Signature
         {
-            get { return _signature; }
-            set { _signature = value; }
+            get => _signature;
+            set => _signature = value;
         }
 
         /// <summary>
@@ -234,8 +237,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal byte FileNumber
         {
-            get { return _fileNumber; }
-            set { _fileNumber = value; }
+            get => _fileNumber;
+            set => _fileNumber = value;
         }
 
         /// <summary>
@@ -244,8 +247,8 @@ namespace CRH.Framework.Disk.DataTrack
         /// </summary>
         internal byte[] Unused
         {
-            get { return _unused; }
-            set { _unused = value; }
+            get => _unused;
+            set => _unused = value;
         }
     }
 }
