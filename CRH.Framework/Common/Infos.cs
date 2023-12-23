@@ -21,7 +21,7 @@ namespace CRH.Framework.Common
             return String.Format
             (
                 "{0} " +
-                "version {1}.{2} (Build ID : {3}.{4})\n" +
+                "version {1}.{2}.{3})\n" +
                 "{5}\n" +
                 "Developped by {6}\n" +
                 (CONTRIBUTORS.Length > 0 ? "Contributors : {7}\n" : "{7}"),
